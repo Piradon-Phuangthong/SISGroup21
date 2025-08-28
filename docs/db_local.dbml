@@ -1,0 +1,98 @@
+Project local_db_username_shares {
+  database_type: "Local/Isar"
+  Note: 'Encrypted Isar store on device. Mirrors cloud; adds is_dirty & source flags for offline and shared-in data.'
+}
+
+Table local_settings {
+  id int [pk, note: 'Always 1 — singleton settings row.']
+  device_id text [not null, note: 'Stable device id.']
+  user_id text [note: 'Supabase user id (uuid as string) when signed in.']
+  global_default_call_app text [note: 'App-wide default call app.']
+  global_default_msg_app text [note: 'App-wide default messaging app.']
+  last_full_sync_at datetime [note: 'Cursor for last successful full sync.']
+
+  Note: 'Small app configuration + sync timing.'
+}
+
+Table contact {
+  id int [pk, note: 'Local Isar id.']
+  cloud_id text [note: 'Cloud contacts.id (uuid) once synced; null if local-only.']
+  owner_user_id text [note: 'Cloud owner profile id — for shared-in contacts this is the other user.']
+
+  full_name text [note: 'Display name.']
+  given_name text [note: 'Optional given/first name.']
+  family_name text [note: 'Optional family/last name.']
+  middle_name text [note: 'Optional middle name.']
+  prefix text [note: 'Name prefix.']
+  suffix text [note: 'Name suffix.']
+
+  primary_mobile text [note: 'Main mobile (for quick dial/search).']
+  primary_email text [note: 'Main email (for quick compose/search).']
+
+  avatar_path text [note: 'Local file path for avatar (if any).']
+  notes text [note: 'Your private notes (never pushed unless you design for it).']
+  custom_fields json [note: 'JSON string for custom fields; keep simple.']
+
+  default_call_app text [note: 'Per-contact override for calling.']
+  default_msg_app text [note: 'Per-contact override for messaging.']
+
+  is_deleted bool [not null, default: false, note: 'Soft delete flag.']
+  created_at datetime [not null, note: 'Local created time.']
+  updated_at datetime [not null, note: 'Local last update time.']
+
+  is_dirty bool [not null, default: false, note: 'True when this contact needs pushing to cloud (owned contacts only).']
+  source text [not null, default: 'local', note: '"local" (you own it) or "external" (shared-in).']
+  local_only_edits bool [not null, default: false, note: 'Set true for shared-in contacts; do not push these edits.']
+
+  Indexes {
+    (full_name) [name: 'contact_name_idx']
+    (primary_mobile) [name: 'contact_mobile_idx']
+  }
+
+  Note: 'Single source of truth for UI. Channels/addresses/tags link here.'
+}
+
+Table contact_channel {
+  id int [pk, note: 'Local channel row id.']
+  contact_id int [not null, ref: > contact.id, note: 'Parent contact (denormalized for fast queries).']
+
+  kind text [not null, note: 'mobile|phone|email|whatsapp|telegram|imessage|signal|wechat|instagram|linkedin|github|x|facebook|tiktok|website|payid|beem|bank|address|other']
+  label text [note: 'work|home|main|etc.']
+  value text [note: 'Number/email/handle/payment id/etc.']
+  url text [note: 'Canonical URL if applicable.']
+  extra json [note: 'Optional extras JSON.']
+  is_primary bool [not null, default: false, note: 'Primary entry for this kind.']
+
+  updated_at datetime [not null, note: 'Last update time.']
+  is_dirty bool [not null, default: false, note: 'True when this row needs pushing (owned contacts only).']
+
+  Indexes {
+    (contact_id)
+    (value) [name: 'channel_value_idx']
+  }
+
+  Note: 'Unified local storage for all contact methods.'
+}
+
+Table tag {
+  id int [pk, note: 'Local tag id.']
+  name text [not null, note: 'Tag text (unique locally).']
+
+  Indexes { (name) [unique, name: 'tag_name_uniq'] }
+
+  Note: 'Free-text tags for grouping and filters.'
+}
+
+Table contact_tag {
+  id int [pk, note: 'Local junction id.']
+  contact_id int [not null, ref: > contact.id, note: 'Contact id.']
+  tag_id int [not null, ref: > tag.id, note: 'Tag id.']
+  created_at datetime [not null, note: 'When the tag was applied.']
+
+  Indexes {
+    (contact_id, tag_id) [unique, name: 'contact_tag_uniq']
+    (tag_id)
+  }
+
+  Note: 'Many-to-many link between contacts and tags.'
+}
