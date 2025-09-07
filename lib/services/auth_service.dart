@@ -1,204 +1,175 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:uuid/uuid.dart';
 import 'supabase_client.dart';
+import 'supabase_config.dart';
 import 'models/profile_model.dart';
 
 /// Authentication service for user sign up, sign in, and profile management
 class AuthService {
-  static const _uuid = Uuid();
-
-  /// Sign up new user with email and password
-  /// TODO: Implement user registration with profile creation
+  // -----------------------------
+  // Sign up
+  // -----------------------------
   static Future<AuthResponse> signUp({
     required String email,
     required String password,
     required String username,
   }) async {
-    try {
-      // TODO: First check if username is available
-      final isUsernameAvailable = await checkUsernameAvailability(username);
-      if (!isUsernameAvailable) {
-        throw Exception('Username is already taken');
-      }
+    final client = SupabaseClientService.client;
+    final uname = username.trim().toLowerCase();
 
-      // TODO: Sign up user with Supabase Auth
-      final response = await SupabaseClientService.client.auth.signUp(
-        email: email,
-        password: password,
-      );
-
-      if (response.user != null) {
-        // TODO: Create profile record with username
-        await _createUserProfile(response.user!.id, username);
-      }
-
-      return response;
-    } catch (e) {
-      // TODO: Add proper error handling and logging
-      rethrow;
+    // 1) Check username availability (fast-fail)
+    final available = await checkUsernameAvailability(uname);
+    if (!available) {
+      throw AuthException('Username is already taken');
     }
+
+    // 2) Sign up (store username in user_metadata as well)
+    final res = await client.auth.signUp(
+      email: email.trim(),
+      password: password,
+      data: {'username': uname},
+      // If you want confirm-email flow to return to app:
+      // emailRedirectTo: SupabaseConfig.redirectUri,
+    );
+
+    // 3) Create profile row if we have a user
+    final uid = res.user?.id;
+    if (uid != null) {
+      try {
+        await client.from('profiles').insert({
+          'id': uid,
+          'username': uname,
+        });
+      } on PostgrestException catch (e) {
+        // If a trigger already created it or unique constraint hit, ignore
+        final msg = (e.message ?? '').toLowerCase();
+        if (!(msg.contains('duplicate') || msg.contains('unique'))) {
+          rethrow;
+        }
+      }
+    }
+
+    return res;
   }
 
-  /// Sign in existing user with email and password
-  /// TODO: Implement user authentication
+  // -----------------------------
+  // Sign in
+  // -----------------------------
   static Future<AuthResponse> signIn({
     required String email,
     required String password,
   }) async {
     try {
-      // TODO: Sign in user with Supabase Auth
-      final response = await SupabaseClientService.client.auth
-          .signInWithPassword(email: email, password: password);
-
-      return response;
-    } catch (e) {
-      // TODO: Add proper error handling and logging
+      return await SupabaseClientService.client.auth.signInWithPassword(
+        email: email.trim(),
+        password: password,
+      );
+    } on AuthException catch (e) {
+      // Surface a friendly message
+      final code = (e.message).toLowerCase();
+      if (code.contains('invalid login') || code.contains('invalid credentials')) {
+        throw AuthException('Invalid email or password');
+      }
       rethrow;
     }
   }
 
-  /// Sign out current user
-  /// TODO: Implement user sign out
+  // -----------------------------
+  // Sign out
+  // -----------------------------
   static Future<void> signOut() async {
-    try {
-      // TODO: Sign out from Supabase Auth
-      await SupabaseClientService.signOut();
-    } catch (e) {
-      // TODO: Add proper error handling and logging
-      rethrow;
-    }
+    await SupabaseClientService.signOut(all: true);
   }
 
-  /// Check if username is available
-  /// TODO: Implement username availability check
+  // -----------------------------
+  // Username availability
+  // -----------------------------
   static Future<bool> checkUsernameAvailability(String username) async {
-    try {
-      // TODO: Query profiles table to check if username exists
-      final response = await SupabaseClientService.client
-          .from('profiles')
-          .select('username')
-          .eq('username', username.toLowerCase())
-          .maybeSingle();
+    final uname = username.trim().toLowerCase();
 
-      return response == null;
-    } catch (e) {
-      // TODO: Add proper error handling and logging
-      return false;
-    }
+    // Rely on a case-insensitive unique in DB if you have one; otherwise use ilike.
+    // (Best: UNIQUE index on lower(username).)
+    final row = await SupabaseClientService.client
+        .from('profiles')
+        .select('id')
+        .eq('username', uname)
+        .maybeSingle();
+
+    return row == null; // available if no row found
   }
 
-  /// Get current user profile
-  /// TODO: Implement profile retrieval
+  // -----------------------------
+  // Current user profile
+  // -----------------------------
   static Future<ProfileModel?> getCurrentUserProfile() async {
-    try {
-      final user = SupabaseClientService.currentUser;
-      if (user == null) return null;
+    final user = SupabaseClientService.currentUser;
+    if (user == null) return null;
 
-      // TODO: Query profiles table for current user
-      final response = await SupabaseClientService.client
-          .from('profiles')
-          .select()
-          .eq('id', user.id)
-          .maybeSingle();
+    final row = await SupabaseClientService.client
+        .from('profiles')
+        .select()
+        .eq('id', user.id)
+        .maybeSingle();
 
-      if (response != null) {
-        return ProfileModel.fromJson(response);
-      }
-
-      return null;
-    } catch (e) {
-      // TODO: Add proper error handling and logging
-      return null;
-    }
+    return row != null ? ProfileModel.fromJson(row) : null;
   }
 
-  /// Update user profile
-  /// TODO: Implement profile updates
+  // -----------------------------
+  // Update profile (username)
+  // -----------------------------
   static Future<ProfileModel> updateProfile({required String username}) async {
-    try {
-      final user = SupabaseClientService.currentUser;
-      if (user == null) {
-        throw Exception('User not authenticated');
+    final user = SupabaseClientService.currentUser;
+    if (user == null) throw AuthException('User not authenticated');
+
+    final uname = username.trim().toLowerCase();
+    final current = await getCurrentUserProfile();
+
+    if (current?.username != uname) {
+      final available = await checkUsernameAvailability(uname);
+      if (!available) {
+        throw AuthException('Username is already taken');
       }
-
-      // TODO: Check if new username is available (if changed)
-      final currentProfile = await getCurrentUserProfile();
-      if (currentProfile?.username != username.toLowerCase()) {
-        final isUsernameAvailable = await checkUsernameAvailability(username);
-        if (!isUsernameAvailable) {
-          throw Exception('Username is already taken');
-        }
-      }
-
-      // TODO: Update profile in database
-      final response = await SupabaseClientService.client
-          .from('profiles')
-          .update({'username': username.toLowerCase()})
-          .eq('id', user.id)
-          .select()
-          .single();
-
-      return ProfileModel.fromJson(response);
-    } catch (e) {
-      // TODO: Add proper error handling and logging
-      rethrow;
     }
+
+    final updated = await SupabaseClientService.client
+        .from('profiles')
+        .update({'username': uname})
+        .eq('id', user.id)
+        .select()
+        .single();
+
+    return ProfileModel.fromJson(updated);
   }
 
-  /// Reset password
-  /// TODO: Implement password reset
+  // -----------------------------
+  // Reset password (email link)
+  // -----------------------------
   static Future<void> resetPassword(String email) async {
-    try {
-      // TODO: Send password reset email
-      await SupabaseClientService.client.auth.resetPasswordForEmail(email);
-    } catch (e) {
-      // TODO: Add proper error handling and logging
-      rethrow;
-    }
+    await SupabaseClientService.client.auth.resetPasswordForEmail(
+      email.trim(),
+      // So the user gets routed back into your app for password update:
+      redirectTo: SupabaseConfig.redirectUri,  //HEREEEEEE
+    );
   }
 
-  /// Create user profile after successful sign up
-  /// TODO: Implement profile creation
-  static Future<void> _createUserProfile(String userId, String username) async {
-    try {
-      // TODO: Insert new profile record
-      await SupabaseClientService.client.from('profiles').insert({
-        'id': userId,
-        'username': username.toLowerCase(),
-      });
-    } catch (e) {
-      // TODO: Add proper error handling and logging
-      rethrow;
-    }
-  }
-
-  /// Delete user account and all associated data
-  /// TODO: Implement account deletion
+  // -----------------------------
+  // Delete account (client side)
+  // -----------------------------
   static Future<void> deleteAccount() async {
-    try {
-      final user = SupabaseClientService.currentUser;
-      if (user == null) {
-        throw Exception('User not authenticated');
-      }
+    final user = SupabaseClientService.currentUser;
+    if (user == null) throw AuthException('User not authenticated');
 
-      // TODO: Delete all user data (contacts, tags, shares, etc.)
-      // This should be handled by database triggers or RLS policies
-      // For now, just delete the profile (which should cascade)
-      await SupabaseClientService.client
-          .from('profiles')
-          .delete()
-          .eq('id', user.id);
+    // Delete profile (and let ON DELETE CASCADE clean up dependent rows if set)
+    await SupabaseClientService.client.from('profiles').delete().eq('id', user.id);
 
-      // TODO: Delete auth user account
-      // Note: This might require admin privileges depending on setup
-    } catch (e) {
-      // TODO: Add proper error handling and logging
-      rethrow;
-    }
+    // Deleting the auth user itself requires a SERVICE ROLE key and
+    // should be done via a secure server/Edge Function you control.
+    // Example (server side):
+    // await supabaseAdmin.auth.admin.deleteUser(user.id);
   }
 
-  /// Listen to auth state changes
-  /// TODO: Implement auth state monitoring
+  // -----------------------------
+  // Auth state stream passthrough
+  // -----------------------------
   static Stream<AuthState> get authStateChanges =>
       SupabaseClientService.authStateChanges;
 }

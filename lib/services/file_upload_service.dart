@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:supabase_flutter/supabase_flutter.dart'; // for FileObject
 import 'package:uuid/uuid.dart';
 import 'supabase_client.dart';
 
@@ -6,370 +7,253 @@ import 'supabase_client.dart';
 class FileUploadService {
   static const _uuid = Uuid();
 
-  /// Storage bucket name for contact avatars
-  /// TODO: Create this bucket in Supabase Storage
+  /// Storage bucket names
   static const String _avatarBucket = 'contact-avatars';
-
-  /// Storage bucket name for attachments
-  /// TODO: Create this bucket in Supabase Storage
   static const String _attachmentsBucket = 'contact-attachments';
 
-  /// Upload contact avatar image
-  /// TODO: Implement avatar upload
+  /// Upload contact avatar image -> returns public URL
   static Future<String> uploadContactAvatar({
     required String contactId,
     required File imageFile,
   }) async {
     try {
-      // TODO: Generate unique file name
-      final fileExtension = imageFile.path.split('.').last.toLowerCase();
-      final fileName = '${contactId}_${_uuid.v4()}.$fileExtension';
+      final ext = imageFile.path.split('.').last.toLowerCase();
+      final fileName = '${contactId}_${_uuid.v4()}.$ext';
       final filePath = 'contacts/$fileName';
 
-      // TODO: Upload file to Supabase Storage
-      final response = await SupabaseClientService.client.storage
+      await SupabaseClientService.client.storage
           .from(_avatarBucket)
           .upload(filePath, imageFile);
 
-      // TODO: Get public URL for the uploaded file
       final publicUrl = SupabaseClientService.client.storage
           .from(_avatarBucket)
           .getPublicUrl(filePath);
 
       return publicUrl;
     } catch (e) {
-      // TODO: Add proper error handling and logging
       rethrow;
     }
   }
 
-  /// Update contact avatar (replaces existing)
-  /// TODO: Implement avatar replacement
+  /// Replace avatar (delete old if provided) -> returns new public URL
   static Future<String> updateContactAvatar({
     required String contactId,
     required File imageFile,
     String? oldAvatarUrl,
   }) async {
     try {
-      // TODO: Delete old avatar if exists
       if (oldAvatarUrl != null) {
         await deleteFileFromUrl(oldAvatarUrl, _avatarBucket);
       }
-
-      // TODO: Upload new avatar
-      return await uploadContactAvatar(
-        contactId: contactId,
-        imageFile: imageFile,
-      );
+      return uploadContactAvatar(contactId: contactId, imageFile: imageFile);
     } catch (e) {
-      // TODO: Add proper error handling and logging
       rethrow;
     }
   }
 
-  /// Delete contact avatar
-  /// TODO: Implement avatar deletion
+  /// Delete avatar by its public URL
   static Future<void> deleteContactAvatar(String avatarUrl) async {
-    try {
-      // TODO: Delete file from storage
-      await deleteFileFromUrl(avatarUrl, _avatarBucket);
-    } catch (e) {
-      // TODO: Add proper error handling and logging
-      rethrow;
-    }
+    await deleteFileFromUrl(avatarUrl, _avatarBucket);
   }
 
-  /// Upload attachment file
-  /// TODO: Implement attachment upload
+  /// Upload attachment -> returns public URL
   static Future<String> uploadAttachment({
     required String contactId,
     required File file,
-    String? description,
+    String? description, // not used yet, keep for future metadata
   }) async {
     try {
-      // TODO: Generate unique file name preserving original name
       final originalName = file.path.split('/').last;
-      final fileExtension = originalName.contains('.')
-          ? originalName.split('.').last
-          : '';
-      final baseName = originalName.contains('.')
-          ? originalName.substring(0, originalName.lastIndexOf('.'))
-          : originalName;
-
-      final fileName = '${contactId}_${_uuid.v4()}_$baseName.$fileExtension';
+      final idx = originalName.lastIndexOf('.');
+      final base = idx >= 0 ? originalName.substring(0, idx) : originalName;
+      final ext = idx >= 0 ? originalName.substring(idx + 1) : '';
+      final fileName = '${contactId}_${_uuid.v4()}_$base${ext.isNotEmpty ? '.$ext' : ''}';
       final filePath = 'contacts/$contactId/attachments/$fileName';
 
-      // TODO: Upload file to Supabase Storage
       await SupabaseClientService.client.storage
           .from(_attachmentsBucket)
           .upload(filePath, file);
 
-      // TODO: Get public URL for the uploaded file
       final publicUrl = SupabaseClientService.client.storage
           .from(_attachmentsBucket)
           .getPublicUrl(filePath);
 
       return publicUrl;
     } catch (e) {
-      // TODO: Add proper error handling and logging
       rethrow;
     }
   }
 
-  /// Delete attachment file
-  /// TODO: Implement attachment deletion
+  /// Delete attachment by its public URL
   static Future<void> deleteAttachment(String attachmentUrl) async {
-    try {
-      // TODO: Delete file from storage
-      await deleteFileFromUrl(attachmentUrl, _attachmentsBucket);
-    } catch (e) {
-      // TODO: Add proper error handling and logging
-      rethrow;
-    }
+    await deleteFileFromUrl(attachmentUrl, _attachmentsBucket);
   }
 
-  /// Get file info from URL
-  /// TODO: Implement file info retrieval
+  /// Get basic file info from a public URL
   static Future<Map<String, dynamic>?> getFileInfo(
     String fileUrl,
     String bucket,
   ) async {
     try {
-      // TODO: Extract file path from URL
-      final filePath = extractFilePathFromUrl(fileUrl, bucket);
-      if (filePath == null) return null;
-
-      // TODO: Get file metadata from Supabase Storage
-      // Note: This might require additional Supabase client methods
-      // For now, return basic info
-      return {'url': fileUrl, 'path': filePath, 'bucket': bucket};
-    } catch (e) {
-      // TODO: Add proper error handling and logging
+      final path = extractFilePathFromUrl(fileUrl, bucket);
+      if (path == null) return null;
+      // For richer metadata you’d need a head/stat API; return basic info for now.
+      return {'url': fileUrl, 'path': path, 'bucket': bucket};
+    } catch (_) {
       return null;
     }
   }
 
-  /// List files in a directory
-  /// TODO: Implement file listing
-  static Future<List<Map<String, dynamic>>> listFiles({
+  /// List files in a bucket (optionally inside a folder/prefix)
+  static Future<List<FileObject>> listFiles({
     required String bucket,
-    String? folder,
+    String? folder, // e.g. 'contacts/123/attachments'
   }) async {
     try {
-      // TODO: List files in bucket/folder
-      final response = await SupabaseClientService.client.storage
+      final items = await SupabaseClientService.client.storage
           .from(bucket)
           .list(path: folder);
-
-      return response;
+      return items; // List<FileObject>
     } catch (e) {
-      // TODO: Add proper error handling and logging
-      return [];
+      return <FileObject>[];
     }
   }
 
-  /// Get file download URL with expiration
-  /// TODO: Implement signed URL generation
+  /// Create a signed URL that expires after [expiresInSeconds]
   static Future<String> getSignedUrl({
     required String bucket,
     required String filePath,
     int expiresInSeconds = 3600,
   }) async {
     try {
-      // TODO: Generate signed URL for temporary access
-      final signedUrl = await SupabaseClientService.client.storage
+      final url = await SupabaseClientService.client.storage
           .from(bucket)
           .createSignedUrl(filePath, expiresInSeconds);
-
-      return signedUrl;
+      return url;
     } catch (e) {
-      // TODO: Add proper error handling and logging
       rethrow;
     }
   }
 
-  /// Delete file using its public URL
-  /// TODO: Implement file deletion by URL
+  /// Delete file by its public URL
   static Future<void> deleteFileFromUrl(String fileUrl, String bucket) async {
-    try {
-      // TODO: Extract file path from public URL
-      final filePath = extractFilePathFromUrl(fileUrl, bucket);
-      if (filePath == null) {
-        throw Exception('Could not extract file path from URL: $fileUrl');
-      }
-
-      // TODO: Delete file from storage
-      await SupabaseClientService.client.storage.from(bucket).remove([
-        filePath,
-      ]);
-    } catch (e) {
-      // TODO: Add proper error handling and logging
-      rethrow;
+    final path = extractFilePathFromUrl(fileUrl, bucket);
+    if (path == null) {
+      throw Exception('Could not extract file path from URL: $fileUrl');
     }
+    await SupabaseClientService.client.storage.from(bucket).remove([path]);
   }
 
-  /// Extract file path from Supabase public URL
-  /// TODO: Implement URL parsing
+  /// Extract `<path>` from: https://<proj>.supabase.co/storage/v1/object/public/<bucket>/<path>
   static String? extractFilePathFromUrl(String fileUrl, String bucket) {
     try {
-      // TODO: Parse Supabase public URL to extract file path
-      // Format: https://project.supabase.co/storage/v1/object/public/bucket/path
       final uri = Uri.parse(fileUrl);
-      final pathSegments = uri.pathSegments;
-
-      // Find bucket in path segments
-      int bucketIndex = -1;
-      for (int i = 0; i < pathSegments.length; i++) {
-        if (pathSegments[i] == bucket) {
-          bucketIndex = i;
-          break;
-        }
-      }
-
-      if (bucketIndex == -1 || bucketIndex >= pathSegments.length - 1) {
-        return null;
-      }
-
-      // Extract path after bucket name
-      final filePath = pathSegments.sublist(bucketIndex + 1).join('/');
-      return filePath;
-    } catch (e) {
+      final segs = uri.pathSegments;
+      final i = segs.indexOf(bucket);
+      if (i == -1 || i >= segs.length - 1) return null;
+      return segs.sublist(i + 1).join('/');
+    } catch (_) {
       return null;
     }
   }
 
-  /// Validate file type for avatars
-  /// TODO: Implement file type validation
+  /// Validate image extension
   static bool isValidImageFile(File file) {
-    final allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
-    final extension = file.path.split('.').last.toLowerCase();
-    return allowedExtensions.contains(extension);
+    const allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+    final ext = file.path.split('.').last.toLowerCase();
+    return allowed.contains(ext);
   }
 
-  /// Validate file size
-  /// TODO: Implement file size validation
-  static bool isValidFileSize(File file, {int maxSizeInMB = 10}) async {
+  /// Validate file size (async)
+  static Future<bool> isValidFileSize(File file, {int maxSizeInMB = 10}) async {
     try {
-      final fileSize = await file.length();
-      final maxSizeInBytes = maxSizeInMB * 1024 * 1024;
-      return fileSize <= maxSizeInBytes;
-    } catch (e) {
+      final size = await file.length();
+      return size <= maxSizeInMB * 1024 * 1024;
+    } catch (_) {
       return false;
     }
   }
 
-  /// Get file size in bytes
-  /// TODO: Implement file size retrieval
   static Future<int> getFileSize(File file) async {
     try {
       return await file.length();
-    } catch (e) {
+    } catch (_) {
       return 0;
     }
   }
 
-  /// Get file extension
-  /// TODO: Implement file extension extraction
   static String getFileExtension(File file) {
-    final path = file.path;
-    if (path.contains('.')) {
-      return path.split('.').last.toLowerCase();
+    final idx = file.path.lastIndexOf('.');
+    return idx >= 0 ? file.path.substring(idx + 1).toLowerCase() : '';
     }
-    return '';
-  }
 
-  /// Check if file exists in storage
-  /// TODO: Implement file existence check
+  /// Check if a file exists (lists the exact path’s parent and looks for name)
   static Future<bool> fileExists({
     required String bucket,
     required String filePath,
   }) async {
     try {
-      // TODO: Check if file exists in bucket
-      final files = await SupabaseClientService.client.storage
-          .from(bucket)
-          .list(path: filePath);
+      // Split to parent folder + basename
+      final parts = filePath.split('/');
+      final name = parts.removeLast();
+      final parent = parts.isEmpty ? null : parts.join('/');
 
-      return files.isNotEmpty;
-    } catch (e) {
+      final items = await SupabaseClientService.client.storage
+          .from(bucket)
+          .list(path: parent);
+
+      return items.any((f) => f.name == name);
+    } catch (_) {
       return false;
     }
   }
 
-  /// Copy file to another location
-  /// TODO: Implement file copying
+  /// Copy/move helpers – left unimplemented intentionally
   static Future<String> copyFile({
     required String sourceBucket,
     required String sourceFilePath,
     required String destinationBucket,
     required String destinationFilePath,
   }) async {
-    try {
-      // TODO: Implement file copying logic
-      // This might require downloading and re-uploading
-      throw UnimplementedError('File copying not yet implemented');
-    } catch (e) {
-      // TODO: Add proper error handling and logging
-      rethrow;
-    }
+    // Implement by downloading bytes and re-uploading; Supabase Storage
+    // doesn't yet expose a server-side cross-bucket copy in the Flutter SDK.
+    throw UnimplementedError('File copying not yet implemented');
   }
 
-  /// Move file to another location
-  /// TODO: Implement file moving
   static Future<String> moveFile({
     required String sourceBucket,
     required String sourceFilePath,
     required String destinationBucket,
     required String destinationFilePath,
   }) async {
-    try {
-      // TODO: Copy file to new location then delete original
-      final newUrl = await copyFile(
-        sourceBucket: sourceBucket,
-        sourceFilePath: sourceFilePath,
-        destinationBucket: destinationBucket,
-        destinationFilePath: destinationFilePath,
-      );
-
-      await SupabaseClientService.client.storage.from(sourceBucket).remove([
-        sourceFilePath,
-      ]);
-
-      return newUrl;
-    } catch (e) {
-      // TODO: Add proper error handling and logging
-      rethrow;
-    }
+    final newUrl = await copyFile(
+      sourceBucket: sourceBucket,
+      sourceFilePath: sourceFilePath,
+      destinationBucket: destinationBucket,
+      destinationFilePath: destinationFilePath,
+    );
+    await SupabaseClientService.client.storage
+        .from(sourceBucket)
+        .remove([sourceFilePath]);
+    return newUrl;
   }
 
-  /// Clean up orphaned files
-  /// TODO: Implement cleanup operations
+  /// Remove files that aren’t in [validFilePaths]
   static Future<void> cleanupOrphanedFiles({
     required String bucket,
     required List<String> validFilePaths,
   }) async {
     try {
-      // TODO: List all files in bucket and compare with valid paths
-      final allFiles = await listFiles(bucket: bucket);
-      final allFilePaths = allFiles
-          .map((file) => file['name'] as String?)
-          .where((name) => name != null)
-          .cast<String>()
-          .toList();
+      final items = await listFiles(bucket: bucket);
+      // list() returns only names relative to the provided folder.
+      // If you call with no folder, this is top-level names.
+      final names = items.map((f) => f.name).toList();
 
-      // TODO: Identify orphaned files
-      final orphanedFiles = allFilePaths
-          .where((path) => !validFilePaths.contains(path))
-          .toList();
-
-      // TODO: Delete orphaned files
-      if (orphanedFiles.isNotEmpty) {
-        await SupabaseClientService.client.storage
-            .from(bucket)
-            .remove(orphanedFiles);
+      final orphaned = names.where((p) => !validFilePaths.contains(p)).toList();
+      if (orphaned.isNotEmpty) {
+        await SupabaseClientService.client.storage.from(bucket).remove(orphaned);
       }
     } catch (e) {
-      // TODO: Add proper error handling and logging
       rethrow;
     }
   }

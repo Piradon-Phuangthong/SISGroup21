@@ -1,14 +1,12 @@
 import 'package:uuid/uuid.dart';
 import 'supabase_client.dart';
 import 'models/contact_model.dart';
-import 'models/contact_channel_model.dart';
 
 /// Contact management service for CRUD operations
 class ContactService {
   static const _uuid = Uuid();
 
   /// Create new contact
-  /// TODO: Implement contact creation
   static Future<ContactModel> createContact({
     required String ownerId,
     String? fullName,
@@ -26,11 +24,13 @@ class ContactService {
     String? defaultMsgApp,
   }) async {
     try {
-      final contactId = _uuid.v4();
       final now = DateTime.now();
 
       final contact = ContactModel(
-        id: contactId,
+        // Let DB generate UUID if your table has default uuid_generate_v4()
+        // If you really need client IDs, uncomment the next line:
+        // id: _uuid.v4(),
+        id: _uuid.v4(),
         ownerId: ownerId,
         fullName: fullName,
         givenName: givenName,
@@ -49,7 +49,6 @@ class ContactService {
         updatedAt: now,
       );
 
-      // TODO: Insert contact into database
       final response = await SupabaseClientService.client
           .from('contacts')
           .insert(contact.toInsertJson())
@@ -58,80 +57,67 @@ class ContactService {
 
       return ContactModel.fromJson(response);
     } catch (e) {
-      // TODO: Add proper error handling and logging
       rethrow;
     }
   }
 
-  /// Get all contacts for a user
-  /// TODO: Implement contact retrieval with filtering
+  /// Get all contacts for a user, with optional search
   static Future<List<ContactModel>> getContacts({
     required String ownerId,
     bool includeDeleted = false,
     String? searchQuery,
-    List<String>? tagIds,
+    List<String>? tagIds, // not implemented (join needed)
   }) async {
     try {
-      var query = SupabaseClientService.client
-          .from('contacts')
-          .select()
-          .eq('owner_id', ownerId)
-          .order('updated_at', ascending: false);
+      final table = SupabaseClientService.client.from('contacts');
 
-      // TODO: Apply filters
+      // Keep it as a filterable builder while we add filters
+      var qb = table.select().eq('owner_id', ownerId);
+
       if (!includeDeleted) {
-        query = query.eq('is_deleted', false);
+        qb = qb.eq('is_deleted', false);
       }
 
       if (searchQuery != null && searchQuery.isNotEmpty) {
-        // TODO: Implement text search across name fields
-        query = query.or(
-          'full_name.ilike.%$searchQuery%,'
-          'given_name.ilike.%$searchQuery%,'
-          'family_name.ilike.%$searchQuery%,'
-          'primary_mobile.ilike.%$searchQuery%,'
-          'primary_email.ilike.%$searchQuery%',
+        final q = searchQuery.trim();
+        qb = qb.or(
+          'full_name.ilike.%$q%,'
+          'given_name.ilike.%$q%,'
+          'family_name.ilike.%$q%,'
+          'primary_mobile.ilike.%$q%,'
+          'primary_email.ilike.%$q%',
         );
       }
 
-      // TODO: Implement tag filtering if provided
-      if (tagIds != null && tagIds.isNotEmpty) {
-        // This would require a join with contact_tags table
-        // For now, we'll fetch all contacts and filter in memory
-      }
+      // Only transform AFTER filters
+      final response = await qb
+          .order('updated_at', ascending: false)
+          .order('created_at', ascending: false);
 
-      final response = await query;
-      return response.map((json) => ContactModel.fromJson(json)).toList();
+      return (response as List)
+          .map((json) => ContactModel.fromJson(json))
+          .toList();
     } catch (e) {
-      // TODO: Add proper error handling and logging
       rethrow;
     }
   }
 
   /// Get specific contact by ID
-  /// TODO: Implement single contact retrieval
   static Future<ContactModel?> getContactById(String contactId) async {
     try {
-      // TODO: Query single contact
       final response = await SupabaseClientService.client
           .from('contacts')
           .select()
           .eq('id', contactId)
           .maybeSingle();
 
-      if (response != null) {
-        return ContactModel.fromJson(response);
-      }
-
-      return null;
+      return response != null ? ContactModel.fromJson(response) : null;
     } catch (e) {
-      // TODO: Add proper error handling and logging
       return null;
     }
   }
 
   /// Update existing contact
-  /// TODO: Implement contact updates
   static Future<ContactModel> updateContact({
     required String contactId,
     String? fullName,
@@ -149,7 +135,6 @@ class ContactService {
     String? defaultMsgApp,
   }) async {
     try {
-      // TODO: Build update data
       final updateData = <String, dynamic>{
         'updated_at': DateTime.now().toIso8601String(),
       };
@@ -165,11 +150,9 @@ class ContactService {
       if (avatarUrl != null) updateData['avatar_url'] = avatarUrl;
       if (notes != null) updateData['notes'] = notes;
       if (customFields != null) updateData['custom_fields'] = customFields;
-      if (defaultCallApp != null)
-        updateData['default_call_app'] = defaultCallApp;
+      if (defaultCallApp != null) updateData['default_call_app'] = defaultCallApp;
       if (defaultMsgApp != null) updateData['default_msg_app'] = defaultMsgApp;
 
-      // TODO: Update contact in database
       final response = await SupabaseClientService.client
           .from('contacts')
           .update(updateData)
@@ -179,50 +162,41 @@ class ContactService {
 
       return ContactModel.fromJson(response);
     } catch (e) {
-      // TODO: Add proper error handling and logging
       rethrow;
     }
   }
 
   /// Soft delete contact
-  /// TODO: Implement contact deletion
   static Future<void> deleteContact(String contactId) async {
     try {
-      // TODO: Soft delete by setting is_deleted flag
       await SupabaseClientService.client
           .from('contacts')
           .update({
+            'is_deleted': false == true, // leave explicit boolean
             'is_deleted': true,
             'updated_at': DateTime.now().toIso8601String(),
           })
           .eq('id', contactId);
     } catch (e) {
-      // TODO: Add proper error handling and logging
       rethrow;
     }
   }
 
-  /// Permanently delete contact and all related data
-  /// TODO: Implement hard deletion
+  /// Hard delete contact (cascade in DB if configured)
   static Future<void> hardDeleteContact(String contactId) async {
     try {
-      // TODO: Delete contact and all related data
-      // This should cascade to channels, tags, shares, etc.
       await SupabaseClientService.client
           .from('contacts')
           .delete()
           .eq('id', contactId);
     } catch (e) {
-      // TODO: Add proper error handling and logging
       rethrow;
     }
   }
 
   /// Restore soft-deleted contact
-  /// TODO: Implement contact restoration
   static Future<ContactModel> restoreContact(String contactId) async {
     try {
-      // TODO: Restore contact by setting is_deleted to false
       final response = await SupabaseClientService.client
           .from('contacts')
           .update({
@@ -235,76 +209,74 @@ class ContactService {
 
       return ContactModel.fromJson(response);
     } catch (e) {
-      // TODO: Add proper error handling and logging
       rethrow;
     }
   }
 
-  /// Search contacts across multiple fields
-  /// TODO: Implement advanced contact search
+  /// Search contacts across multiple fields (quick search)
   static Future<List<ContactModel>> searchContacts({
     required String ownerId,
     required String query,
     int limit = 50,
   }) async {
     try {
-      // TODO: Implement full-text search across contact fields
-      final response = await SupabaseClientService.client
+      final q = query.trim();
+
+      var qb = SupabaseClientService.client
           .from('contacts')
           .select()
           .eq('owner_id', ownerId)
           .eq('is_deleted', false)
           .or(
-            'full_name.ilike.%$query%,'
-            'given_name.ilike.%$query%,'
-            'family_name.ilike.%$query%,'
-            'primary_mobile.ilike.%$query%,'
-            'primary_email.ilike.%$query%',
-          )
-          .limit(limit);
+            'full_name.ilike.%$q%,'
+            'given_name.ilike.%$q%,'
+            'family_name.ilike.%$q%,'
+            'primary_mobile.ilike.%$q%,'
+            'primary_email.ilike.%$q%',
+          );
 
-      return response.map((json) => ContactModel.fromJson(json)).toList();
+      final response = await qb.limit(limit);
+      return (response as List)
+          .map((json) => ContactModel.fromJson(json))
+          .toList();
     } catch (e) {
-      // TODO: Add proper error handling and logging
       rethrow;
     }
   }
 
-  /// Get contacts count for user
-  /// TODO: Implement contact counting
+  /// Count contacts (simple, SDK-agnostic)
   static Future<int> getContactsCount({
     required String ownerId,
     bool includeDeleted = false,
   }) async {
     try {
-      var query = SupabaseClientService.client
+      var qb = SupabaseClientService.client
           .from('contacts')
-          .select('id', const FetchOptions(count: CountOption.exact))
+          .select('id')
           .eq('owner_id', ownerId);
 
       if (!includeDeleted) {
-        query = query.eq('is_deleted', false);
+        qb = qb.eq('is_deleted', false);
       }
 
-      final response = await query;
-      return response.count ?? 0;
+      final list = await qb; // returns List
+      return (list as List).length;
     } catch (e) {
-      // TODO: Add proper error handling and logging
       return 0;
     }
   }
 
-  /// Subscribe to contact changes for real-time updates
-  /// TODO: Implement real-time subscriptions
+  /// Realtime: subscribe to user’s contacts (filter in Dart to avoid SDK diffs)
   static Stream<List<ContactModel>> subscribeToContacts(String ownerId) {
-    // TODO: Set up real-time subscription for contact changes
     return SupabaseClientService.client
         .from('contacts')
         .stream(primaryKey: ['id'])
-        .eq('owner_id', ownerId)
-        .eq('is_deleted', false)
-        .map(
-          (data) => data.map((json) => ContactModel.fromJson(json)).toList(),
-        );
+        // Some SDK versions don’t expose `.eq` on the stream builder;
+        // so we filter client-side for compatibility.
+        .map((rows) {
+          final filtered = rows.where((r) =>
+              r['owner_id'] == ownerId && (r['is_deleted'] == false || r['is_deleted'] == null));
+          return filtered.map((json) => ContactModel.fromJson(json)).toList();
+        });
   }
 }

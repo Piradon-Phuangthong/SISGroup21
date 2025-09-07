@@ -4,11 +4,13 @@
 class SupabaseConfig {
   /// TODO: Replace with your Supabase project URL
   /// Get this from: https://app.supabase.io/project/YOUR_PROJECT/settings/api
-  static const String supabaseUrl = 'YOUR_SUPABASE_URL_HERE';
+  static const String supabaseUrl = 'https://cbxqcsnqtgtxqxoetmwz.supabase.co';
 
   /// TODO: Replace with your Supabase anon/public key
   /// Get this from: https://app.supabase.io/project/YOUR_PROJECT/settings/api
-  static const String supabaseAnonKey = 'YOUR_SUPABASE_ANON_KEY_HERE';
+  static const String supabaseAnonKey = 'puAvjXK5gQ04EBm8';
+
+  static const String redirectUri = 'com.myapp.contacts://login-callback'; 
 
   /// Storage bucket configurations
   /// TODO: Create these buckets in Supabase Storage
