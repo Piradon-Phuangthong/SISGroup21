@@ -1,5 +1,3 @@
-import 'package:uuid/uuid.dart';
-
 /// Enhanced Contact model matching cloud database schema
 class ContactModel {
   final String id;

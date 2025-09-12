@@ -6,7 +6,7 @@ import 'models/contact_channel_model.dart';
 
 /// Utility functions for data formatting, validation, and helper operations
 class UtilityService {
-  static const ImagePicker _imagePicker = ImagePicker();
+  static final ImagePicker _imagePicker = ImagePicker();
 
   /// Generate initials from a full name
   /// TODO: Implement intelligent initials generation

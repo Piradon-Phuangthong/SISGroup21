@@ -88,15 +88,14 @@ class SharingService {
       var query = SupabaseClientService.client
           .from('share_requests')
           .select()
-          .eq('recipient_id', userId)
-          .order('created_at', ascending: false);
+          .eq('recipient_id', userId);
 
       // TODO: Filter by status if specified
       if (status != null) {
         query = query.eq('status', status);
       }
 
-      final response = await query;
+      final response = await query.order('created_at', ascending: false);
       return response.map((json) => ShareRequestModel.fromJson(json)).toList();
     } catch (e) {
       // TODO: Add proper error handling and logging
@@ -114,15 +113,14 @@ class SharingService {
       var query = SupabaseClientService.client
           .from('share_requests')
           .select()
-          .eq('requester_id', userId)
-          .order('created_at', ascending: false);
+          .eq('requester_id', userId);
 
       // TODO: Filter by status if specified
       if (status != null) {
         query = query.eq('status', status);
       }
 
-      final response = await query;
+      final response = await query.order('created_at', ascending: false);
       return response.map((json) => ShareRequestModel.fromJson(json)).toList();
     } catch (e) {
       // TODO: Add proper error handling and logging

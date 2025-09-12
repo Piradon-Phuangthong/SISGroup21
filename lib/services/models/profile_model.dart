@@ -1,5 +1,3 @@
-import 'package:uuid/uuid.dart';
-
 /// Profile model representing a user profile in the cloud database
 class ProfileModel {
   final String id;

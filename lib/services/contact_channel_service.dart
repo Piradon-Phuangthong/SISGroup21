@@ -69,16 +69,16 @@ class ContactChannelService {
       var query = SupabaseClientService.client
           .from('contact_channels')
           .select()
-          .eq('contact_id', contactId)
-          .order('is_primary', ascending: false)
-          .order('updated_at', ascending: false);
+          .eq('contact_id', contactId);
 
       // TODO: Filter by channel kind if specified
       if (kind != null) {
         query = query.eq('kind', kind);
       }
 
-      final response = await query;
+      final response = await query
+          .order('is_primary', ascending: false)
+          .order('updated_at', ascending: false);
       return response
           .map((json) => ContactChannelModel.fromJson(json))
           .toList();

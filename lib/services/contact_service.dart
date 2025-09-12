@@ -1,7 +1,6 @@
 import 'package:uuid/uuid.dart';
 import 'supabase_client.dart';
 import 'models/contact_model.dart';
-import 'models/contact_channel_model.dart';
 
 /// Contact management service for CRUD operations
 class ContactService {
@@ -75,8 +74,7 @@ class ContactService {
       var query = SupabaseClientService.client
           .from('contacts')
           .select()
-          .eq('owner_id', ownerId)
-          .order('updated_at', ascending: false);
+          .eq('owner_id', ownerId);
 
       // TODO: Apply filters
       if (!includeDeleted) {
@@ -100,7 +98,7 @@ class ContactService {
         // For now, we'll fetch all contacts and filter in memory
       }
 
-      final response = await query;
+      final response = await query.order('updated_at', ascending: false);
       return response.map((json) => ContactModel.fromJson(json)).toList();
     } catch (e) {
       // TODO: Add proper error handling and logging
@@ -279,7 +277,7 @@ class ContactService {
     try {
       var query = SupabaseClientService.client
           .from('contacts')
-          .select('id', const FetchOptions(count: CountOption.exact))
+          .select('id')
           .eq('owner_id', ownerId);
 
       if (!includeDeleted) {
@@ -287,7 +285,7 @@ class ContactService {
       }
 
       final response = await query;
-      return response.count ?? 0;
+      return response.length;
     } catch (e) {
       // TODO: Add proper error handling and logging
       return 0;
@@ -298,13 +296,18 @@ class ContactService {
   /// TODO: Implement real-time subscriptions
   static Stream<List<ContactModel>> subscribeToContacts(String ownerId) {
     // TODO: Set up real-time subscription for contact changes
+    // Note: Stream filtering may need to be done client-side for complex queries
     return SupabaseClientService.client
         .from('contacts')
         .stream(primaryKey: ['id'])
-        .eq('owner_id', ownerId)
-        .eq('is_deleted', false)
         .map(
-          (data) => data.map((json) => ContactModel.fromJson(json)).toList(),
+          (data) => data
+              .where(
+                (json) =>
+                    json['owner_id'] == ownerId && json['is_deleted'] != true,
+              )
+              .map((json) => ContactModel.fromJson(json))
+              .toList(),
         );
   }
 }

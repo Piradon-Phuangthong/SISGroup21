@@ -1,12 +1,9 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:uuid/uuid.dart';
 import 'supabase_client.dart';
 import 'models/profile_model.dart';
 
 /// Authentication service for user sign up, sign in, and profile management
 class AuthService {
-  static const _uuid = Uuid();
-
   /// Sign up new user with email and password
   /// TODO: Implement user registration with profile creation
   static Future<AuthResponse> signUp({

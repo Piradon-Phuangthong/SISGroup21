@@ -27,7 +27,7 @@ class FileUploadService {
       final filePath = 'contacts/$fileName';
 
       // TODO: Upload file to Supabase Storage
-      final response = await SupabaseClientService.client.storage
+      await SupabaseClientService.client.storage
           .from(_avatarBucket)
           .upload(filePath, imageFile);
 
@@ -161,7 +161,18 @@ class FileUploadService {
           .from(bucket)
           .list(path: folder);
 
-      return response;
+      return response
+          .map(
+            (fileObject) => {
+              'name': fileObject.name,
+              'id': fileObject.id,
+              'updated_at': fileObject.updatedAt,
+              'created_at': fileObject.createdAt,
+              'last_accessed_at': fileObject.lastAccessedAt,
+              'metadata': fileObject.metadata,
+            },
+          )
+          .toList();
     } catch (e) {
       // TODO: Add proper error handling and logging
       return [];
@@ -248,7 +259,7 @@ class FileUploadService {
 
   /// Validate file size
   /// TODO: Implement file size validation
-  static bool isValidFileSize(File file, {int maxSizeInMB = 10}) async {
+  static Future<bool> isValidFileSize(File file, {int maxSizeInMB = 10}) async {
     try {
       final fileSize = await file.length();
       final maxSizeInBytes = maxSizeInMB * 1024 * 1024;

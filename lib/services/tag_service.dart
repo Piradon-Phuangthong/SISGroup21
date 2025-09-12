@@ -312,12 +312,7 @@ class TagService {
   static Future<Map<String, int>> getTagUsageStats(String ownerId) async {
     try {
       // TODO: Get count of contacts for each tag
-      final response = await SupabaseClientService.client.rpc(
-        'get_tag_usage_stats',
-        params: {'owner_user_id': ownerId},
-      );
-
-      // Note: This requires a custom RPC function in Supabase
+      // Note: This would require a custom RPC function in Supabase
       // For now, we'll implement client-side aggregation
       final tags = await getTags(ownerId: ownerId);
       final stats = <String, int>{};
