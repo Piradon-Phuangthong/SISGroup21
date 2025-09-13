@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-// import 'screens/contacts_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'services/contact_service.dart';
+import 'services/models/contact_model.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,7 +19,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(title: 'Instruments', home: HomePage());
+    return const MaterialApp(title: 'Contacts', home: HomePage());
   }
 }
 
@@ -30,7 +31,26 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  final _future = Supabase.instance.client.from('instruments').select();
+  Future<List<ContactModel>> _future = Future.value([]);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadContacts();
+  }
+
+  void _loadContacts() {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null) {
+      setState(() {
+        _future = ContactService.getContacts(ownerId: user.id);
+      });
+    } else {
+      setState(() {
+        _future = Future.error('User not authenticated');
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -38,16 +58,35 @@ class _HomePageState extends State<HomePage> {
       body: FutureBuilder(
         future: _future,
         builder: (context, snapshot) {
-          if (!snapshot.hasData) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
-          final instruments = snapshot.data!;
+
+          if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          }
+
+          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('No contacts found'));
+          }
+
+          final contacts = snapshot.data!;
           return ListView.builder(
-            itemCount: instruments.length,
-            itemBuilder: ((context, index) {
-              final instrument = instruments[index];
-              return ListTile(title: Text(instrument['name']));
-            }),
+            itemCount: contacts.length,
+            itemBuilder: (context, index) {
+              final contact = contacts[index];
+              return ListTile(
+                leading: contact.avatarUrl != null
+                    ? CircleAvatar(
+                        backgroundImage: NetworkImage(contact.avatarUrl!),
+                      )
+                    : const CircleAvatar(child: Icon(Icons.person)),
+                title: Text(contact.fullName ?? 'Unnamed Contact'),
+                subtitle: Text(
+                  contact.primaryEmail ?? contact.primaryMobile ?? '',
+                ),
+              );
+            },
           );
         },
       ),
