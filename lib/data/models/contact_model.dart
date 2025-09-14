@@ -1,4 +1,5 @@
-/// Enhanced Contact model matching cloud database schema
+/// Represents a contact in the system
+/// Maps to the 'contacts' table in Supabase
 class ContactModel {
   final String id;
   final String ownerId;
@@ -19,7 +20,7 @@ class ContactModel {
   final DateTime createdAt;
   final DateTime updatedAt;
 
-  ContactModel({
+  const ContactModel({
     required this.id,
     required this.ownerId,
     this.fullName,
@@ -40,7 +41,7 @@ class ContactModel {
     required this.updatedAt,
   });
 
-  /// Create ContactModel from JSON response
+  /// Creates a ContactModel from a JSON map (from Supabase)
   factory ContactModel.fromJson(Map<String, dynamic> json) {
     return ContactModel(
       id: json['id'] as String,
@@ -55,7 +56,7 @@ class ContactModel {
       primaryEmail: json['primary_email'] as String?,
       avatarUrl: json['avatar_url'] as String?,
       notes: json['notes'] as String?,
-      customFields: (json['custom_fields'] as Map<String, dynamic>?) ?? {},
+      customFields: json['custom_fields'] as Map<String, dynamic>? ?? {},
       defaultCallApp: json['default_call_app'] as String?,
       defaultMsgApp: json['default_msg_app'] as String?,
       isDeleted: json['is_deleted'] as bool? ?? false,
@@ -64,7 +65,7 @@ class ContactModel {
     );
   }
 
-  /// Convert ContactModel to JSON for API requests
+  /// Converts the ContactModel to a JSON map (for Supabase)
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -88,78 +89,61 @@ class ContactModel {
     };
   }
 
-  /// Create insert JSON (excludes computed fields)
+  /// Converts to JSON for insertion (excludes read-only fields)
   Map<String, dynamic> toInsertJson() {
-    return {
-      'id': id,
-      'owner_id': ownerId,
-      'full_name': fullName,
-      'given_name': givenName,
-      'family_name': familyName,
-      'middle_name': middleName,
-      'prefix': prefix,
-      'suffix': suffix,
-      'primary_mobile': primaryMobile,
-      'primary_email': primaryEmail,
-      'avatar_url': avatarUrl,
-      'notes': notes,
-      'custom_fields': customFields,
-      'default_call_app': defaultCallApp,
-      'default_msg_app': defaultMsgApp,
-      'is_deleted': isDeleted,
-    };
+    final json = toJson();
+    json.remove('id'); // Let Supabase generate the ID
+    json.remove('created_at');
+    json.remove('updated_at');
+    return json;
   }
 
-  /// Create update JSON (excludes id and created_at)
+  /// Converts to JSON for updates (excludes read-only fields)
   Map<String, dynamic> toUpdateJson() {
-    return {
-      'full_name': fullName,
-      'given_name': givenName,
-      'family_name': familyName,
-      'middle_name': middleName,
-      'prefix': prefix,
-      'suffix': suffix,
-      'primary_mobile': primaryMobile,
-      'primary_email': primaryEmail,
-      'avatar_url': avatarUrl,
-      'notes': notes,
-      'custom_fields': customFields,
-      'default_call_app': defaultCallApp,
-      'default_msg_app': defaultMsgApp,
-      'is_deleted': isDeleted,
-      'updated_at': DateTime.now().toIso8601String(),
-    };
+    final json = toJson();
+    json.remove('id');
+    json.remove('owner_id');
+    json.remove('created_at');
+    json.remove('updated_at');
+    return json;
   }
 
-  /// Get display name with fallback logic
+  /// Gets the display name for this contact
   String get displayName {
     if (fullName?.isNotEmpty == true) return fullName!;
-    if (givenName?.isNotEmpty == true && familyName?.isNotEmpty == true) {
-      return '${givenName!} ${familyName!}';
-    }
-    if (givenName?.isNotEmpty == true) return givenName!;
-    if (familyName?.isNotEmpty == true) return familyName!;
-    if (primaryEmail?.isNotEmpty == true) return primaryEmail!;
-    if (primaryMobile?.isNotEmpty == true) return primaryMobile!;
-    return 'Unknown Contact';
+
+    final parts = <String>[];
+    if (prefix?.isNotEmpty == true) parts.add(prefix!);
+    if (givenName?.isNotEmpty == true) parts.add(givenName!);
+    if (middleName?.isNotEmpty == true) parts.add(middleName!);
+    if (familyName?.isNotEmpty == true) parts.add(familyName!);
+    if (suffix?.isNotEmpty == true) parts.add(suffix!);
+
+    if (parts.isNotEmpty) return parts.join(' ');
+
+    // Fallback to email or phone
+    return primaryEmail ?? primaryMobile ?? 'Unknown Contact';
   }
 
-  /// Generate initials for display
+  /// Gets the initials for this contact
   String get initials {
-    if (givenName?.isNotEmpty == true && familyName?.isNotEmpty == true) {
-      return '${givenName![0].toUpperCase()}${familyName![0].toUpperCase()}';
+    final name = displayName;
+    final words = name.split(' ').where((word) => word.isNotEmpty).toList();
+
+    if (words.isEmpty) return '??';
+    if (words.length == 1) {
+      return words.first.length >= 2
+          ? words.first.substring(0, 2).toUpperCase()
+          : words.first.toUpperCase();
     }
-    if (fullName?.isNotEmpty == true) {
-      final parts = fullName!.split(' ');
-      if (parts.length >= 2) {
-        return '${parts[0][0].toUpperCase()}${parts[1][0].toUpperCase()}';
-      }
-      return fullName![0].toUpperCase();
-    }
-    return '?';
+
+    return words
+        .take(2)
+        .map((word) => word.substring(0, 1).toUpperCase())
+        .join();
   }
 
-  /// Create copy with updated fields
+  /// Creates a copy of this ContactModel with optionally updated fields
   ContactModel copyWith({
     String? id,
     String? ownerId,
@@ -203,16 +187,17 @@ class ContactModel {
   }
 
   @override
-  String toString() {
-    return 'ContactModel(id: $id, displayName: $displayName, isDeleted: $isDeleted)';
-  }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is ContactModel && other.id == id;
-  }
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ContactModel &&
+          runtimeType == other.runtimeType &&
+          id == other.id;
 
   @override
   int get hashCode => id.hashCode;
+
+  @override
+  String toString() {
+    return 'ContactModel(id: $id, displayName: $displayName, primaryMobile: $primaryMobile)';
+  }
 }

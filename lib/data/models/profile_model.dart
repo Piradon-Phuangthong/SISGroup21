@@ -1,16 +1,17 @@
-/// Profile model representing a user profile in the cloud database
+/// Represents a user profile in the system
+/// Maps to the 'profiles' table in Supabase
 class ProfileModel {
   final String id;
   final String username;
   final DateTime createdAt;
 
-  ProfileModel({
+  const ProfileModel({
     required this.id,
     required this.username,
     required this.createdAt,
   });
 
-  /// Create ProfileModel from JSON response
+  /// Creates a ProfileModel from a JSON map (from Supabase)
   factory ProfileModel.fromJson(Map<String, dynamic> json) {
     return ProfileModel(
       id: json['id'] as String,
@@ -19,7 +20,7 @@ class ProfileModel {
     );
   }
 
-  /// Convert ProfileModel to JSON for API requests
+  /// Converts the ProfileModel to a JSON map (for Supabase)
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -28,12 +29,7 @@ class ProfileModel {
     };
   }
 
-  /// Create new profile for insert operations
-  Map<String, dynamic> toInsertJson() {
-    return {'id': id, 'username': username};
-  }
-
-  /// Create copy with updated fields
+  /// Creates a copy of this ProfileModel with optionally updated fields
   ProfileModel copyWith({String? id, String? username, DateTime? createdAt}) {
     return ProfileModel(
       id: id ?? this.id,
@@ -43,19 +39,18 @@ class ProfileModel {
   }
 
   @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ProfileModel &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          username == other.username;
+
+  @override
+  int get hashCode => id.hashCode ^ username.hashCode;
+
+  @override
   String toString() {
     return 'ProfileModel(id: $id, username: $username, createdAt: $createdAt)';
   }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    return other is ProfileModel &&
-        other.id == id &&
-        other.username == username &&
-        other.createdAt == createdAt;
-  }
-
-  @override
-  int get hashCode => id.hashCode ^ username.hashCode ^ createdAt.hashCode;
 }
