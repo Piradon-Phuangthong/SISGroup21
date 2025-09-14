@@ -1,0 +1,128 @@
+Project cloud_db_username_shares {
+  database_type: "PostgreSQL"
+  Note: 'Offline-first contacts app — Cloud schema. Sharing is request-by-username only. Owners choose what to share per contact.'
+}
+
+Table profiles {
+  id uuid [pk, note: 'Auth user id (matches auth.users.id).']
+  username text [not null, unique, note: 'Unique handle used to find users and send requests.']
+  created_at timestamptz [not null, default: `now()`, note: 'Row creation time.']
+  Note: 'Mirror of the authenticated user so we have a unique username in SQL.'
+}
+
+Table contacts {
+  id uuid [pk, default: `gen_random_uuid()`, note: 'Contact id.']
+  owner_id uuid [not null, ref: > profiles.id, note: 'Who owns this contact; only owner can edit in cloud.']
+
+  full_name text [note: 'Convenience full name for display/search.']
+  given_name text [note: 'Optional given/first name.']
+  family_name text [note: 'Optional family/last name.']
+  middle_name text [note: 'Optional middle name.']
+  prefix text [note: 'Name prefix (Dr, Mr, etc.).']
+  suffix text [note: 'Name suffix (Jr, PhD, etc.).']
+
+  primary_mobile text [note: 'Main mobile number (not the DB primary key).']
+  primary_email text [note: 'Main email address.']
+
+  avatar_url text [note: 'Cloud path/URL to profile image.']
+  notes text [note: 'Private notes (owner only).']
+  custom_fields jsonb [default: '{}', note: 'Freeform key/values for simple extension.']
+
+  default_call_app text [note: 'Per-contact default call app.']
+  default_msg_app text [note: 'Per-contact default messaging app.']
+
+  is_deleted bool [not null, default: false, note: 'Soft delete flag.']
+  created_at timestamptz [not null, default: `now()`, note: 'Created time.']
+  updated_at timestamptz [not null, default: `now()`, note: 'Last update time.']
+
+  Indexes {
+    (owner_id, is_deleted, updated_at) [name: 'contacts_owner_isdel_updated_idx']
+    (primary_mobile) [name: 'contacts_primary_mobile_idx']
+  }
+
+  Note: 'Core contact card owned by a user. Child rows (channels, addresses, tags) attach here.'
+}
+
+Table contact_channels {
+  id uuid [pk, default: `gen_random_uuid()`, note: 'Channel row id.']
+  owner_id uuid [not null, ref: > profiles.id, note: 'Owner of the parent contact.']
+  contact_id uuid [not null, ref: > contacts.id, note: 'Parent contact.']
+
+  kind text [not null, note: 'Type: mobile|phone|email|whatsapp|telegram|imessage|signal|wechat|instagram|linkedin|github|x|facebook|tiktok|website|payid|beem|bank|addresses|other']
+  label text [note: 'Human label: work|home|main|etc.']
+  value text [note: 'Number, email, @handle, payment id, etc.']
+  url text [note: 'Canonical URL if applicable (e.g., profile link).']
+  extra jsonb [note: 'Optional structured extras, e.g., {"bsb":"062000","acct":"123456"}.']
+  is_primary bool [not null, default: false, note: 'Marks the primary entry for this kind.']
+
+  updated_at timestamptz [not null, default: `now()`, note: 'Last update time.']
+
+  Indexes {
+    (contact_id)
+    (owner_id, kind)
+    (value) [name: 'channels_value_idx']
+  }
+
+  Note: 'Unified table for phones, emails, socials, addresses, and payments to keep schema small.'
+}
+
+Table tags {
+  id uuid [pk, default: `gen_random_uuid()`, note: 'Tag id.']
+  owner_id uuid [not null, ref: > profiles.id, note: 'Tag owner.']
+  name text [not null, note: 'Tag text; unique per owner.']
+  created_at timestamptz [not null, default: `now()`, note: 'Created time.']
+
+  Indexes { (owner_id, name) [unique, name: 'tags_owner_name_uniq'] }
+
+  Note: 'Free-text tags for grouping and filtering contacts.'
+}
+
+Table contact_tags {
+  contact_id uuid [not null, ref: > contacts.id, note: 'Contact id.']
+  tag_id uuid [not null, ref: > tags.id, note: 'Tag id.']
+  created_at timestamptz [not null, default: `now()`, note: 'When tag was applied.']
+
+  Indexes {
+    (contact_id, tag_id) [unique, name: 'contact_tags_uniq']
+    (tag_id)
+  }
+
+  Note: 'Junction table for contact↔tag many-to-many.'
+}
+
+Table share_requests {
+  id uuid [pk, default: `gen_random_uuid()`, note: 'Share request id.']
+  requester_id uuid [not null, ref: > profiles.id, note: 'User who sent the request.']
+  recipient_id uuid [not null, ref: > profiles.id, note: 'User who received the request.']
+  message text [note: 'Optional note with the request.']
+  status text [not null, default: 'pending', note: 'pending|accepted|declined|blocked (kept as text for simplicity).']
+  created_at timestamptz [not null, default: `now()`, note: 'Created time.']
+  responded_at timestamptz [note: 'When recipient acted.']
+
+  Indexes {
+    (recipient_id, status)
+    (requester_id, status)
+  }
+
+  Note: 'Username-based handshake. Accepting enables owners to grant shares; it does not share anything by itself.'
+}
+
+Table contact_shares {
+  id uuid [pk, default: `gen_random_uuid()`, note: 'Share grant id.']
+  owner_id uuid [not null, ref: > profiles.id, note: 'Contact owner granting access.']
+  to_user_id uuid [not null, ref: > profiles.id, note: 'Recipient user who can view.']
+  contact_id uuid [not null, ref: > contacts.id, note: 'Contact being shared.']
+
+  field_mask jsonb [not null, default: '[]', note: 'Allowed fields, e.g. ["full_name","primary_mobile","primary_email","channels","addresses"].']
+
+  created_at timestamptz [not null, default: `now()`, note: 'When grant was created.']
+  revoked_at timestamptz [note: 'When access was revoked (if ever).']
+
+  Indexes {
+    (owner_id, to_user_id)
+    (to_user_id, contact_id)
+    (owner_id, contact_id, to_user_id) [unique, name: 'contact_share_uniq']
+  }
+
+  Note: 'Actual permission. Recipient gets read-only cloud view; their local edits are private and never pushed back.'
+}
