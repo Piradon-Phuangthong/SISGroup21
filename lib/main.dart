@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+
+// UNCOMMENT FOR NEW USER MANAGEMENT APP
 import 'user_management_test.dart';
 import 'supabase/supabase_instance.dart';
 
@@ -7,6 +9,9 @@ Future<void> main() async {
   await initSupabase();
   runApp(const UserManagementTest());
 }
+
+// // UNCOMMENT FOR OLD CONTACT APP POC
+// import 'package:omada/screens/contacts_screen.dart';
 
 // void main() {
 //   runApp(const ContactsApp());
