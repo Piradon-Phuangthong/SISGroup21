@@ -5,6 +5,8 @@ import '../features/contacts_test_page.dart';
 import '../features/tags_test_page.dart';
 import '../features/sharing_test_page.dart';
 import '../features/my_contact_card_page.dart';
+import '../features/my_overview_page.dart';
+import '../features/my_channels_page.dart';
 import '../features/tag_assignment_test_page.dart';
 
 class EpicHomePage extends StatelessWidget {
@@ -22,6 +24,10 @@ class EpicHomePage extends StatelessWidget {
             items: [
               _EpicNav('US-E1-2/3: Auth (Sign up/in/out)', AuthTestPage()),
               _EpicNav('US-E1-4: View/Update Profile', ProfilesTestPage()),
+              _EpicNav(
+                'US-E1-5: My Overview (Profile+Contact+Channels+Tags)',
+                MyOverviewPage(),
+              ),
             ],
           ),
           _EpicCard(
@@ -34,6 +40,10 @@ class EpicHomePage extends StatelessWidget {
               _EpicNav(
                 'US-E3-1/2: Contact Card & Channels',
                 MyContactCardPage(),
+              ),
+              _EpicNav(
+                'US-E3-3: My Channels (Presets + Edit)',
+                MyChannelsPage(),
               ),
             ],
           ),
