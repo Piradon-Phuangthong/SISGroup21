@@ -122,7 +122,11 @@ class SharingRepository extends BaseRepository {
       }
 
       final response = await query;
-      return response.map((data) => ShareRequestModel.fromJson(data)).toList();
+      return response
+          .map<ShareRequestModel>(
+            (data) => ShareRequestModel.fromJson(data as Map<String, dynamic>),
+          )
+          .toList();
     });
   }
 
@@ -155,7 +159,11 @@ class SharingRepository extends BaseRepository {
       }
 
       final response = await query;
-      return response.map((data) => ShareRequestModel.fromJson(data)).toList();
+      return response
+          .map<ShareRequestModel>(
+            (data) => ShareRequestModel.fromJson(data as Map<String, dynamic>),
+          )
+          .toList();
     });
   }
 
@@ -350,7 +358,11 @@ class SharingRepository extends BaseRepository {
       }
 
       final response = await query;
-      return response.map((data) => ContactShareModel.fromJson(data)).toList();
+      return response
+          .map<ContactShareModel>(
+            (data) => ContactShareModel.fromJson(data as Map<String, dynamic>),
+          )
+          .toList();
     });
   }
 
@@ -383,7 +395,11 @@ class SharingRepository extends BaseRepository {
       }
 
       final response = await query;
-      return response.map((data) => ContactShareModel.fromJson(data)).toList();
+      return response
+          .map<ContactShareModel>(
+            (data) => ContactShareModel.fromJson(data as Map<String, dynamic>),
+          )
+          .toList();
     });
   }
 

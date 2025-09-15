@@ -57,7 +57,11 @@ class ContactRepository extends BaseRepository {
       }
 
       final response = await query;
-      return response.map((data) => ContactModel.fromJson(data)).toList();
+      return response
+          .map<ContactModel>(
+            (data) => ContactModel.fromJson(data as Map<String, dynamic>),
+          )
+          .toList();
     });
   }
 
@@ -70,7 +74,7 @@ class ContactRepository extends BaseRepository {
           .filter('tag_id', 'in', '(${tagIds.join(',')})');
 
       return response
-          .map((data) => data['contact_id'] as String)
+          .map<String>((data) => data['contact_id'] as String)
           .toSet()
           .toList();
     });
@@ -163,6 +167,7 @@ class ContactRepository extends BaseRepository {
     Map<String, dynamic>? customFields,
     String? defaultCallApp,
     String? defaultMsgApp,
+    bool? isDeleted,
   }) async {
     // Verify ownership
     final existingContact = await getContact(contactId);
@@ -203,6 +208,7 @@ class ContactRepository extends BaseRepository {
       updateData['default_call_app'] = defaultCallApp.trim();
     if (defaultMsgApp != null)
       updateData['default_msg_app'] = defaultMsgApp.trim();
+    if (isDeleted != null) updateData['is_deleted'] = isDeleted;
 
     if (updateData.isEmpty) {
       throw ValidationException('No fields to update');
@@ -220,7 +226,7 @@ class ContactRepository extends BaseRepository {
 
   /// Soft deletes a contact
   Future<void> deleteContact(String contactId) async {
-    await updateContact(contactId, customFields: {'is_deleted': true});
+    await updateContact(contactId, isDeleted: true);
   }
 
   /// Permanently deletes a contact
@@ -236,7 +242,7 @@ class ContactRepository extends BaseRepository {
 
   /// Restores a soft-deleted contact
   Future<ContactModel> restoreContact(String contactId) async {
-    return await updateContact(contactId, customFields: {'is_deleted': false});
+    return await updateContact(contactId, isDeleted: false);
   }
 
   /// Gets recently updated contacts
@@ -261,7 +267,11 @@ class ContactRepository extends BaseRepository {
       query = query.order('updated_at', ascending: false).limit(limit);
 
       final response = await query;
-      return response.map((data) => ContactModel.fromJson(data)).toList();
+      return response
+          .map<ContactModel>(
+            (data) => ContactModel.fromJson(data as Map<String, dynamic>),
+          )
+          .toList();
     });
   }
 
@@ -304,7 +314,11 @@ class ContactRepository extends BaseRepository {
       }
 
       final response = await query;
-      return response.map((data) => ContactModel.fromJson(data)).toList();
+      return response
+          .map<ContactModel>(
+            (data) => ContactModel.fromJson(data as Map<String, dynamic>),
+          )
+          .toList();
     });
   }
 

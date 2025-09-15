@@ -37,7 +37,11 @@ class TagRepository extends BaseRepository {
       }
 
       final response = await query;
-      return response.map((data) => TagModel.fromJson(data)).toList();
+      return response
+          .map<TagModel>(
+            (data) => TagModel.fromJson(Map<String, dynamic>.from(data)),
+          )
+          .toList();
     });
   }
 
@@ -145,7 +149,11 @@ class TagRepository extends BaseRepository {
           .eq('contact_id', contactId);
 
       return response
-          .map((data) => TagModel.fromJson(data['tags']))
+          .map<TagModel>(
+            (data) => TagModel.fromJson(
+              (data['tags'] as Map).cast<String, dynamic>(),
+            ),
+          )
           .where((tag) => tag.ownerId == userId) // Additional security check
           .toList();
     });
@@ -165,7 +173,9 @@ class TagRepository extends BaseRepository {
           .select('contact_id')
           .eq('tag_id', tagId);
 
-      return response.map((data) => data['contact_id'] as String).toList();
+      return response
+          .map<String>((data) => data['contact_id'] as String)
+          .toList();
     });
   }
 
@@ -276,7 +286,11 @@ class TagRepository extends BaseRepository {
           .eq('owner_id', userId)
           .order('name');
 
-      return response.map((data) => TagModel.fromJson(data)).toList();
+      return response
+          .map<TagModel>(
+            (data) => TagModel.fromJson(Map<String, dynamic>.from(data)),
+          )
+          .toList();
     });
   }
 
@@ -327,7 +341,11 @@ class TagRepository extends BaseRepository {
           .order('created_at', ascending: false)
           .limit(limit);
 
-      return response.map((data) => TagModel.fromJson(data)).toList();
+      return response
+          .map<TagModel>(
+            (data) => TagModel.fromJson(Map<String, dynamic>.from(data)),
+          )
+          .toList();
     });
   }
 }

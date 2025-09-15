@@ -111,7 +111,11 @@ class ProfileRepository extends BaseRepository {
           .limit(limit)
           .range(offset, offset + limit - 1);
 
-      return response.map((data) => ProfileModel.fromJson(data)).toList();
+      return response
+          .map<ProfileModel>(
+            (data) => ProfileModel.fromJson(Map<String, dynamic>.from(data)),
+          )
+          .toList();
     });
   }
 
@@ -125,7 +129,11 @@ class ProfileRepository extends BaseRepository {
           .select()
           .filter('id', 'in', '(${userIds.join(',')})');
 
-      return response.map((data) => ProfileModel.fromJson(data)).toList();
+      return response
+          .map<ProfileModel>(
+            (data) => ProfileModel.fromJson(Map<String, dynamic>.from(data)),
+          )
+          .toList();
     });
   }
 
