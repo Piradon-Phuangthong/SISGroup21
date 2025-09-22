@@ -1,29 +1,56 @@
 import 'package:flutter/material.dart';
-
-// UNCOMMENT FOR NEW USER MANAGEMENT APP
-// import 'user_management_test.dart';
-import 'test_db/test_db_app.dart' as testdb; // ignore: unused_import
 import 'supabase/supabase_instance.dart';
+import 'test_db/epics/epic_home_entry.dart';
+import 'screens/contacts_screen.dart';
+import 'pages/profile_management_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initSupabase();
-  // To run the Test DB app instead of the current app, uncomment the next line:
-  await testdb.runTestDb();
+  runApp(const OmadaRootApp());
 }
 
-// // UNCOMMENT FOR OLD CONTACT APP POC
-// import 'package:omada/screens/contacts_screen.dart';
+class OmadaRootApp extends StatelessWidget {
+  const OmadaRootApp({super.key});
 
-// void main() {
-//   runApp(const ContactsApp());
-// }
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      title: 'Omada',
+      routes: {
+        '/': (_) => const _RouteSelectorPage(),
+        '/debug': (_) => const EpicHomeEntry(),
+        '/app': (_) => const ContactsScreen(),
+        '/profile': (_) => const ProfileManagementPage(),
+      },
+      initialRoute: '/',
+    );
+  }
+}
 
-// class ContactsApp extends StatelessWidget {
-//   const ContactsApp({super.key});
+class _RouteSelectorPage extends StatelessWidget {
+  const _RouteSelectorPage({super.key});
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return MaterialApp(title: 'Contacts App', home: const ContactsScreen());
-//   }
-// }
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Omada Entry')),
+      body: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pushNamed('/debug'),
+              child: const Text('Open DB Debug (Test Suite)'),
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pushNamed('/app'),
+              child: const Text('Open Main App'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}

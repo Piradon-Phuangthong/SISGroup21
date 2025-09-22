@@ -3,6 +3,7 @@ import '../models/contact.dart';
 import '../models/tag.dart';
 import '../themes/color_palette.dart';
 import '../widgets/custom_app_bar.dart';
+import '../widgets/app_bottom_nav.dart';
 import '../widgets/theme_selector.dart';
 import '../widgets/filter_row.dart';
 import '../widgets/contact_tile.dart';
@@ -100,6 +101,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
           ),
         ],
       ),
+      bottomNavigationBar: const AppBottomNav(active: AppNav.contacts),
     );
   }
 }
