@@ -22,6 +22,12 @@ This directory contains reusable UI components for the Omada Contacts app.
   - Tap handler for quick edit access
   - Color-coded avatars using theme palette
 
+### Channel Management
+- `add_channel_sheet.dart` - Bottom sheet to add a contact channel with presets
+  - Preset kinds: mobile, email, instagram, linkedin, whatsapp, messenger
+  - Auto-computes a read-only URL preview per kind (e.g., wa.me, m.me, instagram)
+  - Validates basic input and shows progress while saving
+
 ### UI Components
 - `custom_app_bar.dart` - Custom app bar component
   - Consistent app bar styling
@@ -41,6 +47,8 @@ These widgets are designed to:
 - Support composition into larger UI structures
 - Improve code reusability and maintainability
 - Follow material design principles
+
+The channel add sheet works together with the utilities in `lib/data/utils/channel_presets.dart` and the launcher in `lib/data/utils/channel_launcher.dart`.
 
 ## Usage Examples
 

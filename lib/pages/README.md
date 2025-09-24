@@ -15,7 +15,10 @@ This directory contains page-level components for the Omada Contacts app.
   - Sign out functionality
 - `profile_management_page.dart` - Contact card management
   - Edit personal contact information
-  - Manage contact channels
+  - Manage contact channels (Epic 3)
+    - Tap a channel to launch the corresponding app or web fallback
+    - Long-press a channel for actions (open, set/unset primary, SMS when applicable)
+    - Quick-call action prefers primary mobile/phone
   - Configure sharing settings
 
 ### Contact Management Pages
@@ -24,6 +27,10 @@ This directory contains page-level components for the Omada Contacts app.
   - Supports both create and edit modes
   - Required: name fields + phone, optional: email
   - Real-time validation with error display
+
+### Add Channel Flow (Presets)
+- `AddChannelSheet` (bottom sheet) provides preset kinds: mobile, email, instagram, linkedin, whatsapp, messenger
+- URL is auto-generated and read-only based on the value (e.g., instagram username → https://instagram.com/<username>)
 
 ## Navigation Flow
 

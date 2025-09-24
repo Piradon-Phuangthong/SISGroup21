@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../data/models/models.dart';
 import '../data/services/contact_service.dart';
 import '../data/repositories/profile_repository.dart';
 import '../data/repositories/contact_channel_repository.dart';
 import '../data/services/sharing_service.dart';
 import '../widgets/app_bottom_nav.dart';
+import '../data/utils/channel_launcher.dart';
+import '../widgets/add_channel_sheet.dart';
 
 class ProfileManagementPage extends StatefulWidget {
   const ProfileManagementPage({super.key});
@@ -17,6 +20,7 @@ class ProfileManagementPage extends StatefulWidget {
 class _ProfileManagementPageState extends State<ProfileManagementPage> {
   late Future<_ProfileData> _future;
   final Set<String> _selectedChannelIds = <String>{};
+  final ChannelLauncher _launcher = const ChannelLauncher();
 
   @override
   void initState() {
@@ -244,15 +248,14 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                             colorText: colorText,
                             channels: data.channels,
                             selectedIds: _selectedChannelIds,
-                            onToggle: (id) {
-                              setState(() {
-                                if (_selectedChannelIds.contains(id)) {
-                                  _selectedChannelIds.remove(id);
-                                } else {
-                                  _selectedChannelIds.add(id);
-                                }
-                              });
+                            onOpen: (id) {
+                              final ch = data.channels.firstWhere(
+                                (c) => c.id == id,
+                              );
+                              _launcher.openChannel(context, ch);
                             },
+                            onLongPress: (id) =>
+                                _onChannelLongPress(context, data, id),
                           ),
                         ),
 
@@ -283,7 +286,9 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                                   value: 'Channel',
                                   onTap: () => _openAddChannel(context, data),
                                 ),
-                                _CallButton(),
+                                _CallButton(
+                                  onTap: () => _quickCall(context, data),
+                                ),
                                 _CtaItem(
                                   icon: Icons.share,
                                   title: 'Share',
@@ -313,85 +318,155 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
     );
   }
 
-  Future<void> _openAddChannel(BuildContext context, _ProfileData data) async {
-    final kindCtrl = TextEditingController(text: 'mobile');
-    final labelCtrl = TextEditingController(text: 'Mobile');
-    final valueCtrl = TextEditingController();
-    final urlCtrl = TextEditingController();
+  void _toggleSelection(String id) {
+    setState(() {
+      if (_selectedChannelIds.contains(id)) {
+        _selectedChannelIds.remove(id);
+      } else {
+        _selectedChannelIds.add(id);
+      }
+    });
+  }
 
-    final result = await showModalBottomSheet<bool>(
+  Future<void> _onChannelLongPress(
+    BuildContext context,
+    _ProfileData data,
+    String id,
+  ) async {
+    _toggleSelection(id);
+    await _showChannelActions(context, data, id);
+  }
+
+  Future<void> _showChannelActions(
+    BuildContext context,
+    _ProfileData data,
+    String id,
+  ) async {
+    final ch = data.channels.firstWhere((c) => c.id == id);
+    final repo = ContactChannelRepository(Supabase.instance.client);
+
+    final selected = await showModalBottomSheet<String>(
       context: context,
-      isScrollControlled: true,
       builder: (ctx) {
-        return Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
-            left: 16,
-            right: 16,
-            top: 16,
-          ),
+        return SafeArea(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Add Channel',
-                style: TextStyle(fontWeight: FontWeight.bold),
+              ListTile(
+                leading: const Icon(Icons.open_in_new),
+                title: const Text('Open'),
+                onTap: () => Navigator.pop(ctx, 'open'),
               ),
-              const SizedBox(height: 12),
-              TextField(
-                decoration: const InputDecoration(
-                  labelText: 'Kind (e.g., mobile, email)',
+              if ((ch.kind.toLowerCase() == 'phone' ||
+                      ch.kind.toLowerCase() == 'mobile' ||
+                      ch.kind.toLowerCase() == 'sms') &&
+                  (ch.value?.isNotEmpty == true))
+                ListTile(
+                  leading: const Icon(Icons.sms),
+                  title: const Text('Send SMS'),
+                  onTap: () => Navigator.pop(ctx, 'sms'),
                 ),
-                controller: kindCtrl,
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                decoration: const InputDecoration(labelText: 'Label'),
-                controller: labelCtrl,
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                decoration: const InputDecoration(labelText: 'Value'),
-                controller: valueCtrl,
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                decoration: const InputDecoration(labelText: 'URL'),
-                controller: urlCtrl,
-              ),
-              const SizedBox(height: 12),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(ctx, false),
-                    child: const Text('Cancel'),
-                  ),
-                  const SizedBox(width: 8),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(ctx, true),
-                    child: const Text('Add'),
-                  ),
-                ],
-              ),
+              if (!ch.isPrimary)
+                ListTile(
+                  leading: const Icon(Icons.push_pin_outlined),
+                  title: const Text('Set as primary'),
+                  onTap: () => Navigator.pop(ctx, 'primary'),
+                ),
+              if (ch.isPrimary)
+                ListTile(
+                  leading: const Icon(Icons.push_pin),
+                  title: const Text('Unset primary'),
+                  onTap: () => Navigator.pop(ctx, 'unprimary'),
+                ),
+              const SizedBox(height: 4),
             ],
           ),
         );
       },
     );
 
-    if (result == true) {
-      final repo = ContactChannelRepository(Supabase.instance.client);
-      await repo.createChannel(
-        contactId: data.contact.id,
-        kind: kindCtrl.text.trim(),
-        label: labelCtrl.text.trim().isEmpty ? null : labelCtrl.text.trim(),
-        value: valueCtrl.text.trim().isEmpty ? null : valueCtrl.text.trim(),
-        url: urlCtrl.text.trim().isEmpty ? null : urlCtrl.text.trim(),
-      );
-      _refresh();
+    switch (selected) {
+      case 'open':
+        await _launcher.openChannel(context, ch);
+        break;
+      case 'primary':
+        await repo.setPrimaryForKind(
+          contactId: data.contact.id,
+          kind: ch.kind,
+          channelId: ch.id,
+        );
+        _refresh();
+        break;
+      case 'unprimary':
+        await repo.updateChannel(ch.id, isPrimary: false);
+        _refresh();
+        break;
+      case 'sms':
+        final num = ch.value;
+        if (num == null || num.isEmpty) break;
+        final smsUri = Uri.parse('sms:$num');
+        await launchUrl(smsUri);
+        break;
+      default:
+        break;
     }
+  }
+
+  Future<void> _quickCall(BuildContext context, _ProfileData data) async {
+    String? number = data.contact.primaryMobile;
+    if (number == null || number.isEmpty) {
+      final primaryPhone = data.channels.firstWhere(
+        (c) =>
+            (c.kind.toLowerCase() == 'phone' ||
+                c.kind.toLowerCase() == 'mobile') &&
+            c.isPrimary &&
+            (c.value?.isNotEmpty == true),
+        orElse: () => data.channels.firstWhere(
+          (c) =>
+              (c.kind.toLowerCase() == 'phone' ||
+                  c.kind.toLowerCase() == 'mobile') &&
+              (c.value?.isNotEmpty == true),
+          orElse: () => ContactChannelModel(
+            id: '_',
+            ownerId: data.contact.ownerId,
+            contactId: data.contact.id,
+            kind: 'phone',
+            label: null,
+            value: '',
+            url: null,
+            extra: null,
+            isPrimary: false,
+            updatedAt: DateTime.now(),
+          ),
+        ),
+      );
+      number = primaryPhone.value;
+    }
+
+    if (number == null || number.isEmpty) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('No number available')));
+      return;
+    }
+
+    final telUri = Uri.parse('tel:$number');
+    if (!await launchUrl(telUri)) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Unable to open dialer')));
+    }
+  }
+
+  Future<void> _openAddChannel(BuildContext context, _ProfileData data) async {
+    final result = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) => AddChannelSheet(contactId: data.contact.id),
+    );
+    if (result == true) _refresh();
   }
 
   Future<void> _openShare(BuildContext context, _ProfileData data) async {
@@ -447,14 +522,16 @@ class _ChannelGrid extends StatelessWidget {
   final Color colorText;
   final List<ContactChannelModel> channels;
   final Set<String> selectedIds;
-  final void Function(String id) onToggle;
+  final void Function(String id) onOpen;
+  final void Function(String id)? onLongPress;
   const _ChannelGrid({
     required this.colorPill,
     required this.colorPillActive,
     required this.colorText,
     required this.channels,
     required this.selectedIds,
-    required this.onToggle,
+    required this.onOpen,
+    this.onLongPress,
   });
 
   @override
@@ -486,7 +563,8 @@ class _ChannelGrid extends StatelessWidget {
         final isSelected = selectedIds.contains(ch.id);
         return InkWell(
           borderRadius: BorderRadius.circular(999),
-          onTap: () => onToggle(ch.id),
+          onTap: () => onOpen(ch.id),
+          onLongPress: onLongPress == null ? null : () => onLongPress!(ch.id),
           child: Container(
             decoration: BoxDecoration(
               color: isPrimary ? null : colorPill,
@@ -610,33 +688,40 @@ class _CtaItem extends StatelessWidget {
 }
 
 class _CallButton extends StatelessWidget {
+  final VoidCallback? onTap;
+  const _CallButton({this.onTap});
+
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 74,
-      height: 74,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        gradient: const RadialGradient(
-          center: Alignment(0, -0.4),
-          radius: 0.8,
-          colors: [
-            Color(0xFF93c5fd), // Blue-300
-            Color(0xFF60a5fa), // Blue-400
-            Color(0xFF3b82f6), // Blue-500
-          ],
-          stops: [0.0, 0.7, 1.0],
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Colors.black45,
-            blurRadius: 18,
-            offset: Offset(0, 6),
+    return InkWell(
+      customBorder: const CircleBorder(),
+      onTap: onTap,
+      child: Container(
+        width: 74,
+        height: 74,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: const RadialGradient(
+            center: Alignment(0, -0.4),
+            radius: 0.8,
+            colors: [
+              Color(0xFF93c5fd), // Blue-300
+              Color(0xFF60a5fa), // Blue-400
+              Color(0xFF3b82f6), // Blue-500
+            ],
+            stops: [0.0, 0.7, 1.0],
           ),
-        ],
-        border: Border.all(color: Colors.black.withOpacity(0.08), width: 6),
+          boxShadow: const [
+            BoxShadow(
+              color: Colors.black45,
+              blurRadius: 18,
+              offset: Offset(0, 6),
+            ),
+          ],
+          border: Border.all(color: Colors.black.withOpacity(0.08), width: 6),
+        ),
+        child: const Icon(Icons.bolt, size: 34, color: Colors.black87),
       ),
-      child: const Icon(Icons.bolt, size: 34, color: Colors.black87),
     );
   }
 }
