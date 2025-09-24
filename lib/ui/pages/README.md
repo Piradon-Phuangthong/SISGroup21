@@ -19,3 +19,11 @@ This directory contains the main pages and screens of the Omada Contacts app.
 ## Architecture
 
 Pages are organized to separate business logic from UI presentation. They typically use controllers from the core directory to manage state and data operations.
+
+## Design System Usage
+
+- Spacing and sizes via `OmadaTokens` (e.g., `space16`, `radius12`, `iconMd`).
+- Typography via `Theme.of(context).textTheme` configured in `OmadaTheme`.
+- Colors via `Theme.of(context).colorScheme` and palette via `AppPaletteTheme`:
+  - `Theme.of(context).extension<AppPaletteTheme>()?.colorForId(id)`
+- Theme selection UI has been removed; a single palette is used app-wide.

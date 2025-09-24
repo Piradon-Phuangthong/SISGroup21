@@ -29,41 +29,34 @@ class ColorPalette {
   int get hashCode => name.hashCode;
 }
 
-/// Modern Ocean Theme - Cool blues and teals with coral accent
-final ColorPalette oceanTheme = ColorPalette(
-  name: 'Ocean',
-  colors: [
-    Color(0xFF2196F3), // Bright Blue
-    Color(0xFF00BCD4), // Cyan
-    Color(0xFF009688), // Teal
-    Color(0xFF4CAF50), // Green
-    Color(0xFFFF5722), // Deep Orange (coral accent)
-  ],
-);
+/// Catppuccin Latte accent colors (light)
+const List<Color> catppuccinLatteAccents = <Color>[
+  Color(0xFF8839EF), // mauve
+  Color(0xFF1E66F5), // blue
+  Color(0xFF04A5E5), // sky
+  Color(0xFF179299), // teal
+  Color(0xFF40A02B), // green
+  Color(0xFFDF8E1D), // yellow
+  Color(0xFFFE640B), // peach
+  Color(0xFFD20F39), // red
+  Color(0xFFEA76CB), // pink
+];
 
-/// Sunset Warm Theme - Warm oranges, pinks, and purples
-final ColorPalette sunsetTheme = ColorPalette(
-  name: 'Sunset',
-  colors: [
-    Color(0xFFFF6B6B), // Coral Pink
-    Color(0xFFFF8E53), // Orange
-    Color(0xFFFFBE0B), // Golden Yellow
-    Color(0xFFE056FD), // Purple
-    Color(0xFF845EC2), // Deep Purple
-  ],
-);
+/// Catppuccin Mocha accent colors (dark)
+const List<Color> catppuccinMochaAccents = <Color>[
+  Color(0xFFCBA6F7), // mauve
+  Color(0xFF89B4FA), // blue
+  Color(0xFF89DCEB), // sky
+  Color(0xFF94E2D5), // teal
+  Color(0xFFA6E3A1), // green
+  Color(0xFFF9E2AF), // yellow
+  Color(0xFFFAB387), // peach
+  Color(0xFFF38BA8), // red
+  Color(0xFFF5C2E7), // pink
+];
 
-/// Forest Earth Theme - Natural greens and earth tones
-final ColorPalette forestTheme = ColorPalette(
-  name: 'Forest',
-  colors: [
-    Color(0xFF8BC34A), // Light Green
-    Color(0xFF4CAF50), // Green
-    Color(0xFF2E7D32), // Dark Green
-    Color(0xFF8D6E63), // Brown
-    Color(0xFFFF7043), // Deep Orange (autumn accent)
-  ],
+/// Legacy single palette fallback if extension is unavailable
+final ColorPalette appPalette = ColorPalette(
+  name: 'App',
+  colors: catppuccinLatteAccents,
 );
-
-/// List of all available themes
-final List<ColorPalette> allThemes = [oceanTheme, sunsetTheme, forestTheme];

@@ -58,7 +58,6 @@ The channel add sheet works together with the utilities in `lib/data/utils/chann
 ```dart
 ContactTile(
   contact: contactModel,
-  colorPalette: selectedTheme,
   tags: contactTags,
   onTagTap: (tag) => toggleFilterForTag(tag.id),
   onTap: () => editContact(contactModel),
@@ -72,16 +71,12 @@ ContactTile(
 FilterRow(
   tags: allTags,                      // List<TagModel>
   selectedTagIds: selectedTagIds,     // Set<String>
-  colorPalette: selectedTheme,
   onTagToggle: (tag) => toggle(tag.id),
 )
 ```
 
 ### Theme Selection
 ```dart
-ThemeSelector(
-  themes: allThemes,
-  selectedTheme: currentTheme,
-  onThemeChanged: handleThemeChange,
-)
+// ThemeSelector removed. Colors are provided by a single appPalette and
+// available via AppPaletteTheme (ThemeExtension) in the Theme.
 ```

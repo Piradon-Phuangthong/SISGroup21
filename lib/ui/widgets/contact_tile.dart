@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:omada/core/theme/color_palette.dart';
 import 'package:omada/core/data/models/contact_model.dart';
 import 'package:omada/core/data/models/tag_model.dart';
+import 'package:omada/ui/widgets/app_tag_chip.dart';
+import 'package:omada/core/theme/app_theme.dart';
 
 class ContactTile extends StatelessWidget {
   final ContactModel contact;
-  final ColorPalette colorPalette;
   final List<TagModel> tags;
   final void Function(TagModel tag)? onTagTap;
   final VoidCallback? onTap;
@@ -15,7 +15,6 @@ class ContactTile extends StatelessWidget {
   const ContactTile({
     super.key,
     required this.contact,
-    required this.colorPalette,
     this.tags = const [],
     this.onTagTap,
     this.onTap,
@@ -28,7 +27,11 @@ class ContactTile extends StatelessWidget {
     return ListTile(
       onTap: onTap,
       leading: CircleAvatar(
-        backgroundColor: colorPalette.getColorForItem(contact.id),
+        backgroundColor:
+            Theme.of(
+              context,
+            ).extension<AppPaletteTheme>()?.colorForId(contact.id) ??
+            Theme.of(context).colorScheme.secondary,
         child: Text(
           contact.initials,
           style: const TextStyle(color: Colors.white),
@@ -49,29 +52,19 @@ class ContactTile extends StatelessWidget {
             Wrap(
               spacing: 6,
               runSpacing: 6,
-              children: tags.map((t) {
-                final bg = colorPalette.getColorForItem(t.id);
-                final chip = Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: bg,
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Text(
-                    t.name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      height: 1.1,
+              children: tags
+                  .map(
+                    (t) => AppTagChip(
+                      label: t.name,
+                      backgroundColor:
+                          Theme.of(
+                            context,
+                          ).extension<AppPaletteTheme>()?.colorForId(t.id) ??
+                          Theme.of(context).colorScheme.secondary,
+                      onTap: onTagTap == null ? null : () => onTagTap!(t),
                     ),
-                  ),
-                );
-                if (onTagTap == null) return chip;
-                return GestureDetector(onTap: () => onTagTap!(t), child: chip);
-              }).toList(),
+                  )
+                  .toList(),
             ),
           ],
         ],

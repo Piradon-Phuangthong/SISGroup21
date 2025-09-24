@@ -4,6 +4,7 @@ import 'package:omada/core/supabase/supabase_instance.dart';
 import 'package:omada/core/controllers/contact_form_controller.dart';
 import 'package:omada/core/data/utils/validation_utils.dart';
 import 'package:omada/core/data/models/tag_model.dart';
+import 'package:omada/core/theme/design_tokens.dart';
 
 class ContactFormPage extends StatefulWidget {
   final ContactModel? contact;
@@ -117,7 +118,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
         child: Form(
           key: _formKey,
           child: ListView(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(OmadaTokens.space16),
             children: [
               TextFormField(
                 controller: _fullNameController,
@@ -125,7 +126,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
                 textCapitalization: TextCapitalization.words,
                 validator: (_) => _validateNameFields(),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: OmadaTokens.space12),
               Row(
                 children: [
                   Expanded(
@@ -138,7 +139,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
                       validator: (_) => _validateNameFields(),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: OmadaTokens.space12),
                   Expanded(
                     child: TextFormField(
                       controller: _familyNameController,
@@ -151,7 +152,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: OmadaTokens.space16),
               TextFormField(
                 controller: _primaryMobileController,
                 decoration: const InputDecoration(
@@ -168,7 +169,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: OmadaTokens.space12),
               TextFormField(
                 controller: _primaryEmailController,
                 decoration: const InputDecoration(
@@ -184,9 +185,9 @@ class _ContactFormPageState extends State<ContactFormPage> {
                   return null;
                 },
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: OmadaTokens.space24),
               _buildTagSection(),
-              const SizedBox(height: 24),
+              const SizedBox(height: OmadaTokens.space24),
               FilledButton.icon(
                 onPressed: _submitting ? null : _save,
                 icon: _submitting
@@ -237,14 +238,11 @@ class _ContactFormPageState extends State<ContactFormPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Tags',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 8),
+        Text('Tags', style: Theme.of(context).textTheme.titleLarge),
+        const SizedBox(height: OmadaTokens.space8),
         Wrap(
-          spacing: 8,
-          runSpacing: 8,
+          spacing: OmadaTokens.space8,
+          runSpacing: OmadaTokens.space8,
           children: [
             ..._allTags.map((tag) {
               final selected = _selectedTagIds.contains(tag.id);

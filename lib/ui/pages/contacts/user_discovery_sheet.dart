@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:omada/core/data/models/profile_model.dart';
 import 'package:omada/core/data/services/sharing_service.dart';
+import 'package:omada/core/theme/design_tokens.dart';
 
 class UserDiscoverySheet extends StatelessWidget {
   final SharingService sharingService;
@@ -80,18 +81,15 @@ class UserDiscoverySheet extends StatelessWidget {
             }
 
             return Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(OmadaTokens.space16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      const Text(
+                      Text(
                         'Discover users',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const Spacer(),
                       IconButton(
@@ -100,7 +98,7 @@ class UserDiscoverySheet extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: OmadaTokens.space8),
                   TextField(
                     controller: usernameController,
                     decoration: const InputDecoration(
@@ -110,16 +108,16 @@ class UserDiscoverySheet extends StatelessWidget {
                     onChanged: (_) => onUsernameChanged(),
                     autofocus: true,
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: OmadaTokens.space8),
                   TextField(
                     controller: messageController,
                     decoration: const InputDecoration(
                       labelText: 'Optional message',
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: OmadaTokens.space12),
                   if (isSearching) const LinearProgressIndicator(minHeight: 2),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: OmadaTokens.space8),
                   Expanded(
                     child: ListView.builder(
                       controller: controller,

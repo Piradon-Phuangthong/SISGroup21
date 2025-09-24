@@ -6,10 +6,9 @@ This directory contains reusable UI components used throughout the Omada Contact
 
 - `add_channel_sheet.dart` - Bottom sheet for adding new contact channels
 - `app_bottom_nav.dart` - Application's bottom navigation bar
-- `contact_tile.dart` - Reusable contact list item widget
+- `contact_tile.dart` - Reusable contact list item widget (uses AppPaletteTheme)
 - `custom_app_bar.dart` - Customized app bar used across the application
-- `filter_row.dart` - UI component for filtering lists
-- `theme_selector.dart` - Widget for selecting and changing app theme
+- `filter_row.dart` - UI component for filtering lists (tokenized spacing, palette from theme)
 
 ## Usage
 

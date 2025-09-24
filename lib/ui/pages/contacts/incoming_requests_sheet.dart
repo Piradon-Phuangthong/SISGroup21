@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:omada/core/data/models/share_request_model.dart';
 import 'package:omada/core/data/services/sharing_service.dart';
+import 'package:omada/core/theme/design_tokens.dart';
 
 class IncomingRequestsSheet extends StatelessWidget {
   final SharingService sharingService;
@@ -72,18 +73,15 @@ class IncomingRequestsSheet extends StatelessWidget {
             }
 
             return Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(OmadaTokens.space16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      const Text(
+                      Text(
                         'Incoming requests',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const Spacer(),
                       IconButton(
@@ -97,7 +95,7 @@ class IncomingRequestsSheet extends StatelessWidget {
                     ],
                   ),
                   if (loading) const LinearProgressIndicator(minHeight: 2),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: OmadaTokens.space8),
                   Expanded(
                     child: requests.isEmpty
                         ? const Center(child: Text('No pending requests'))
@@ -110,7 +108,9 @@ class IncomingRequestsSheet extends StatelessWidget {
                                   item.requesterProfile?.username ?? 'user';
                               return Card(
                                 child: Padding(
-                                  padding: const EdgeInsets.all(12),
+                                  padding: const EdgeInsets.all(
+                                    OmadaTokens.space12,
+                                  ),
                                   child: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -126,7 +126,7 @@ class IncomingRequestsSheet extends StatelessWidget {
                                           .isNotEmpty)
                                         Padding(
                                           padding: const EdgeInsets.only(
-                                            top: 6.0,
+                                            top: OmadaTokens.space6,
                                           ),
                                           child: Text(
                                             item.request.message!,
@@ -135,7 +135,9 @@ class IncomingRequestsSheet extends StatelessWidget {
                                             ),
                                           ),
                                         ),
-                                      const SizedBox(height: 8),
+                                      const SizedBox(
+                                        height: OmadaTokens.space8,
+                                      ),
                                       Row(
                                         children: [
                                           FilledButton.icon(
@@ -148,7 +150,9 @@ class IncomingRequestsSheet extends StatelessWidget {
                                             ),
                                             label: const Text('Accept'),
                                           ),
-                                          const SizedBox(width: 8),
+                                          const SizedBox(
+                                            width: OmadaTokens.space8,
+                                          ),
                                           OutlinedButton.icon(
                                             onPressed: () => respond(
                                               item,

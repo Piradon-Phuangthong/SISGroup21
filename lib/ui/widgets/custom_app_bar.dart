@@ -6,8 +6,12 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: const Text('Omada', style: TextStyle(color: Colors.white)),
-      backgroundColor: Colors.blue,
+      title: Text(
+        'Omada',
+        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+          color: Theme.of(context).appBarTheme.foregroundColor,
+        ),
+      ),
     );
   }
 

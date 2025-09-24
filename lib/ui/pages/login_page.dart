@@ -5,6 +5,7 @@ import 'package:omada/core/supabase/supabase_instance.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:omada/core/utils/form_validators.dart';
 import 'package:omada/core/controllers/auth_controller.dart';
+import 'package:omada/core/theme/design_tokens.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -147,14 +148,14 @@ class _LoginState extends State<LoginPage> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.all(OmadaTokens.space24),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 // App branding
-                const SizedBox(height: 32),
+                const SizedBox(height: OmadaTokens.space32),
                 Text(
                   'Welcome to Omada',
                   style: Theme.of(context).textTheme.headlineMedium?.copyWith(
@@ -163,7 +164,7 @@ class _LoginState extends State<LoginPage> {
                   ),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: OmadaTokens.space8),
                 Text(
                   _isSignUp ? 'Create your account' : 'Sign in to your account',
                   style: Theme.of(
@@ -171,7 +172,7 @@ class _LoginState extends State<LoginPage> {
                   ).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: OmadaTokens.space48),
 
                 // Email field
                 TextFormField(
@@ -186,7 +187,7 @@ class _LoginState extends State<LoginPage> {
                   validator: _validateEmail,
                   enabled: !_isLoading,
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: OmadaTokens.space16),
 
                 // Username field (only for sign up)
                 if (_isSignUp) ...[
@@ -202,7 +203,7 @@ class _LoginState extends State<LoginPage> {
                     textInputAction: TextInputAction.next,
                     enabled: !_isLoading,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: OmadaTokens.space16),
                 ],
 
                 // Password field
@@ -228,16 +229,13 @@ class _LoginState extends State<LoginPage> {
                   enabled: !_isLoading,
                   onFieldSubmitted: (_) => _isSignUp ? _signUp() : _signIn(),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: OmadaTokens.space24),
 
                 // Submit button
                 ElevatedButton(
                   onPressed: _isLoading
                       ? null
                       : (_isSignUp ? _signUp : _signIn),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                  ),
                   child: _isLoading
                       ? const SizedBox(
                           height: 20,
@@ -246,7 +244,7 @@ class _LoginState extends State<LoginPage> {
                         )
                       : Text(_isSignUp ? 'Sign Up' : 'Sign In'),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: OmadaTokens.space16),
 
                 // Toggle sign up/sign in
                 TextButton(

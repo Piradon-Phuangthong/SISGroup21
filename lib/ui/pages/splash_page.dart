@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:omada/core/supabase/supabase_instance.dart';
 import 'package:flutter/foundation.dart';
 import 'package:omada/core/controllers/auth_controller.dart';
+import 'package:omada/core/theme/design_tokens.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -74,10 +75,10 @@ class _SplashPageState extends State<SplashPage> {
                 color: Theme.of(context).primaryColor,
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: OmadaTokens.space32),
             // Loading indicator
             const CircularProgressIndicator(),
-            const SizedBox(height: 16),
+            const SizedBox(height: OmadaTokens.space16),
             Text(
               'Loading...',
               style: Theme.of(

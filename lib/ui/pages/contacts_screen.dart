@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:omada/core/theme/color_palette.dart';
 import 'package:omada/ui/widgets/custom_app_bar.dart';
+import 'package:omada/core/theme/design_tokens.dart';
 import 'package:omada/ui/widgets/app_bottom_nav.dart';
-import 'package:omada/ui/widgets/theme_selector.dart';
+// import 'package:omada/ui/widgets/theme_selector.dart';
 import 'package:omada/ui/widgets/contact_tile.dart';
 import 'package:omada/core/supabase/supabase_instance.dart';
 import 'package:omada/core/data/models/contact_model.dart';
@@ -24,7 +25,7 @@ class ContactsScreen extends StatefulWidget {
 
 class _ContactsScreenState extends State<ContactsScreen> {
   late final ContactsController _controller;
-  ColorPalette selectedTheme = oceanTheme;
+  final ColorPalette selectedTheme = appPalette;
   List<ContactModel> _contacts = [];
   List<ContactModel> _visibleContacts = [];
   List<TagModel> _tags = [];
@@ -34,8 +35,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
   final TextEditingController _searchController = TextEditingController();
   DateTime? _lastSearchChangeAt;
 
-  void _changeTheme(ColorPalette theme) =>
-      setState(() => selectedTheme = theme);
+  // Single palette; no runtime theme switching needed
 
   @override
   void initState() {
@@ -189,13 +189,12 @@ class _ContactsScreenState extends State<ContactsScreen> {
       appBar: const CustomAppBar(),
       body: Column(
         children: [
-          ThemeSelector(
-            themes: allThemes,
-            selectedTheme: selectedTheme,
-            onThemeChanged: _changeTheme,
-          ),
+          // Color theme selector removed in favor of a single app palette
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(
+              horizontal: OmadaTokens.space16,
+              vertical: OmadaTokens.space8,
+            ),
             child: TextField(
               controller: _searchController,
               decoration: InputDecoration(
@@ -214,10 +213,12 @@ class _ContactsScreenState extends State<ContactsScreen> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(
+              horizontal: OmadaTokens.space16,
+            ),
             child: Wrap(
-              spacing: 8,
-              runSpacing: 8,
+              spacing: OmadaTokens.space8,
+              runSpacing: OmadaTokens.space8,
               children: [
                 TextButton.icon(
                   onPressed: _openUserDiscoverySheet,
@@ -241,7 +242,6 @@ class _ContactsScreenState extends State<ContactsScreen> {
             FilterRow(
               tags: _tags,
               selectedTagIds: _selectedTagIds,
-              colorPalette: selectedTheme,
               onTagToggle: (tag) async {
                 setState(() {
                   if (_selectedTagIds.contains(tag.id)) {
@@ -315,7 +315,6 @@ class _ContactsScreenState extends State<ContactsScreen> {
             final contact = _visibleContacts[index];
             return ContactTile(
               contact: contact,
-              colorPalette: selectedTheme,
               tags: tagsByContact[contact.id] ?? const [],
               onTagTap: (tag) async {
                 setState(() {
@@ -343,7 +342,6 @@ class _ContactsScreenState extends State<ContactsScreen> {
       context: context,
       isScrollControlled: true,
       builder: (context) => ManageTagsSheet(
-        selectedTheme: selectedTheme,
         initialTags: _tags,
         selectedTagIds: _selectedTagIds,
         tagService: _controller.tagService,

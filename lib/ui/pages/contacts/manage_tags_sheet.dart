@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:omada/core/data/models/tag_model.dart';
 import 'package:omada/core/data/services/tag_service.dart';
-import 'package:omada/core/theme/color_palette.dart';
+import 'package:omada/core/theme/design_tokens.dart';
+import 'package:omada/core/theme/app_theme.dart';
 
 class ManageTagsSheet extends StatelessWidget {
-  final ColorPalette selectedTheme;
   final List<TagModel> initialTags;
   final Set<String> selectedTagIds;
   final TagService tagService;
@@ -13,7 +13,6 @@ class ManageTagsSheet extends StatelessWidget {
 
   const ManageTagsSheet({
     super.key,
-    required this.selectedTheme,
     required this.initialTags,
     required this.selectedTagIds,
     required this.tagService,
@@ -70,18 +69,15 @@ class ManageTagsSheet extends StatelessWidget {
             }
 
             return Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(OmadaTokens.space16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Row(
                     children: [
-                      const Text(
+                      Text(
                         'Manage tags',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const Spacer(),
                       IconButton(
@@ -90,7 +86,7 @@ class ManageTagsSheet extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: OmadaTokens.space8),
                   Row(
                     children: [
                       Expanded(
@@ -102,7 +98,7 @@ class ManageTagsSheet extends StatelessWidget {
                           onSubmitted: (_) => addTag(),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: OmadaTokens.space8),
                       FilledButton.icon(
                         onPressed: addTag,
                         icon: const Icon(Icons.add),
@@ -110,7 +106,7 @@ class ManageTagsSheet extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: OmadaTokens.space16),
                   Expanded(
                     child: ListView.builder(
                       controller: controller,
@@ -119,13 +115,15 @@ class ManageTagsSheet extends StatelessWidget {
                         final tag = tags[index];
                         return ListTile(
                           leading: CircleAvatar(
-                            backgroundColor: selectedTheme.getColorForItem(
-                              tag.id,
-                            ),
+                            backgroundColor:
+                                Theme.of(context)
+                                    .extension<AppPaletteTheme>()
+                                    ?.colorForId(tag.id) ??
+                                Theme.of(context).colorScheme.secondary,
                             child: const Icon(
                               Icons.label,
                               color: Colors.white,
-                              size: 18,
+                              size: OmadaTokens.iconMd,
                             ),
                           ),
                           title: Text(tag.name),

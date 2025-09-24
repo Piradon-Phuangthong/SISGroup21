@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:omada/core/supabase/supabase_instance.dart';
 import 'test_db/epics/epic_home_entry.dart';
+import 'package:omada/core/theme/app_theme.dart';
 import 'package:omada/ui/pages/contacts_screen.dart';
 import 'package:omada/ui/pages/profile_management_page.dart';
 import 'package:omada/ui/pages/splash_page.dart';
@@ -20,6 +21,9 @@ class OmadaRootApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Omada',
+      theme: OmadaTheme.light(),
+      darkTheme: OmadaTheme.dark(),
+      themeMode: ThemeMode.system,
       routes: {
         '/': (_) => const SplashPage(),
         '/login': (_) => const LoginPage(),

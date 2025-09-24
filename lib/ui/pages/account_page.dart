@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:omada/core/supabase/supabase_instance.dart';
 import 'package:omada/ui/widgets/app_bottom_nav.dart';
+import 'package:omada/ui/widgets/app_scaffold.dart';
+import 'package:omada/ui/widgets/app_card.dart';
+import 'package:omada/core/theme/design_tokens.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});
@@ -159,53 +162,52 @@ class _AccountPageState extends State<AccountPage> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    return Scaffold(
+    return AppScaffold(
       appBar: AppBar(title: const Text('Account'), elevation: 0),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.symmetric(vertical: OmadaTokens.space16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Profile header
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  children: [
-                    CircleAvatar(
-                      radius: 40,
-                      backgroundColor: Theme.of(context).primaryColor,
-                      child: Text(
-                        _currentUsername?.isNotEmpty == true
-                            ? _currentUsername![0].toUpperCase()
-                            : _userEmail?.isNotEmpty == true
-                            ? _userEmail![0].toUpperCase()
-                            : '?',
-                        style: const TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+            AppCard(
+              padding: const EdgeInsets.all(OmadaTokens.space20),
+              child: Column(
+                children: [
+                  CircleAvatar(
+                    radius: 40,
+                    backgroundColor: Theme.of(context).primaryColor,
+                    child: Text(
+                      _currentUsername?.isNotEmpty == true
+                          ? _currentUsername![0].toUpperCase()
+                          : _userEmail?.isNotEmpty == true
+                          ? _userEmail![0].toUpperCase()
+                          : '?',
+                      style: const TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      _currentUsername ?? 'Loading...',
-                      style: Theme.of(context).textTheme.headlineSmall
-                          ?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: OmadaTokens.space16),
+                  Text(
+                    _currentUsername ?? 'Loading...',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      _userEmail ?? '',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: OmadaTokens.space4),
+                  Text(
+                    _userEmail ?? '',
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: OmadaTokens.space32),
 
             // Edit username
             Text(
@@ -214,7 +216,7 @@ class _AccountPageState extends State<AccountPage> {
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: OmadaTokens.space8),
             TextFormField(
               controller: _usernameController,
               decoration: const InputDecoration(
@@ -225,7 +227,7 @@ class _AccountPageState extends State<AccountPage> {
               enabled: !_isSaving,
               onFieldSubmitted: (_) => _updateUsername(),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: OmadaTokens.space16),
             ElevatedButton(
               onPressed: _isSaving ? null : _updateUsername,
               child: _isSaving
@@ -236,7 +238,7 @@ class _AccountPageState extends State<AccountPage> {
                     )
                   : const Text('Update Username'),
             ),
-            const SizedBox(height: 48),
+            const SizedBox(height: OmadaTokens.space48),
 
             // Account actions
             Text(
@@ -245,7 +247,7 @@ class _AccountPageState extends State<AccountPage> {
                 context,
               ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: OmadaTokens.space16),
             OutlinedButton.icon(
               onPressed: _signOut,
               icon: const Icon(Icons.logout, color: Colors.red),
@@ -254,7 +256,9 @@ class _AccountPageState extends State<AccountPage> {
                 style: TextStyle(color: Colors.red),
               ),
               style: OutlinedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  vertical: OmadaTokens.space16,
+                ),
                 side: const BorderSide(color: Colors.red),
               ),
             ),

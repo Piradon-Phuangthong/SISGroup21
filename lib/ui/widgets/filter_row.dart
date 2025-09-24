@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:omada/core/theme/color_palette.dart';
 import 'package:omada/core/data/models/tag_model.dart';
+import 'package:omada/core/theme/design_tokens.dart';
+import 'package:omada/core/theme/app_theme.dart';
 
 /// Horizontal list of tag filter buttons.
 ///
@@ -9,30 +10,30 @@ import 'package:omada/core/data/models/tag_model.dart';
 class FilterRow extends StatelessWidget {
   final List<TagModel> tags;
   final Set<String> selectedTagIds;
-  final ColorPalette colorPalette;
   final void Function(TagModel tag) onTagToggle;
 
   const FilterRow({
     super.key,
     required this.tags,
     required this.selectedTagIds,
-    required this.colorPalette,
     required this.onTagToggle,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(OmadaTokens.space16),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: Row(
           children: tags
-              .map((tag) => _buildFilterButton(tag))
+              .map((tag) => _buildFilterButton(context, tag))
               .toList()
               .map(
                 (button) => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: OmadaTokens.space4,
+                  ),
                   child: button,
                 ),
               )
@@ -42,17 +43,16 @@ class FilterRow extends StatelessWidget {
     );
   }
 
-  Widget _buildFilterButton(TagModel tag) {
+  Widget _buildFilterButton(BuildContext context, TagModel tag) {
     final bool isSelected = selectedTagIds.contains(tag.id);
+    final palette = Theme.of(context).extension<AppPaletteTheme>();
+    final Color tagColor =
+        palette?.colorForId(tag.id) ?? Theme.of(context).colorScheme.primary;
     return ElevatedButton(
       onPressed: () => onTagToggle(tag),
       style: ElevatedButton.styleFrom(
-        backgroundColor: isSelected
-            ? colorPalette.getColorForItem(tag.id)
-            : null,
-        foregroundColor: isSelected
-            ? Colors.white
-            : colorPalette.getColorForItem(tag.id),
+        backgroundColor: isSelected ? tagColor : null,
+        foregroundColor: isSelected ? Colors.white : tagColor,
       ),
       child: Text(tag.name),
     );

@@ -12,6 +12,7 @@ import 'profile/channel_grid.dart';
 import 'profile/cta_panel.dart';
 import 'profile/about_section.dart';
 import 'profile/avatar.dart';
+import 'package:omada/core/theme/design_tokens.dart';
 
 class ProfileManagementPage extends StatefulWidget {
   const ProfileManagementPage({super.key});
@@ -72,8 +73,8 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
               // Header
               Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
+                  horizontal: OmadaTokens.space16,
+                  vertical: OmadaTokens.space12,
                 ),
                 child: Stack(
                   alignment: Alignment.center,
@@ -82,13 +83,13 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.circle, size: 22, color: colorText),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: OmadaTokens.space8),
                         Text(
                           'Omada',
                           style: TextStyle(
                             color: colorText,
                             fontWeight: FontWeight.w800,
-                            fontSize: 18,
+                            fontSize: OmadaTokens.fontLg,
                           ),
                         ),
                       ],
@@ -139,14 +140,16 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                     return Column(
                       children: [
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: OmadaTokens.space16,
+                          ),
                           child: Column(
                             children: [
                               Avatar(
                                 displayName: displayName,
                                 colorText: colorText,
                               ),
-                              const SizedBox(height: 4),
+                              const SizedBox(height: OmadaTokens.space4),
                               if (notes?.isNotEmpty == true)
                                 Text(
                                   notes!,
@@ -155,17 +158,19 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                                     color: colorText.withOpacity(0.85),
                                   ),
                                 ),
-                              const SizedBox(height: 10),
+                              const SizedBox(height: OmadaTokens.space12),
                               AboutSection(title: about, textColor: colorText),
                             ],
                           ),
                         ),
 
-                        const SizedBox(height: 16),
+                        const SizedBox(height: OmadaTokens.space16),
 
                         // Channel chips grid
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: OmadaTokens.space16,
+                          ),
                           child: ChannelGrid(
                             colorPill: colorPill,
                             colorPillActive: colorPillActive,
@@ -183,11 +188,13 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                           ),
                         ),
 
-                        const SizedBox(height: 12),
+                        const SizedBox(height: OmadaTokens.space12),
 
                         // CTA / actions panel
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: OmadaTokens.space16,
+                          ),
                           child: CtaPanel(
                             centerValue: _selectedChannelIds.isEmpty
                                 ? 'Request'
@@ -205,7 +212,7 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                 ),
               ),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: OmadaTokens.space8),
             ],
           ),
         ),
