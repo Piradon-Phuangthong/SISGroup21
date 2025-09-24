@@ -7,19 +7,20 @@ This directory contains reusable UI components for the Omada Contacts app.
 ### Navigation Components
 - `app_bottom_nav.dart` - Bottom navigation bar component
   - Manages navigation between main app sections:
-    1. Contacts (icon: menu_book)
-    2. My Card (icon: card_membership)
-    3. Account (icon: account_circle)
+  1. Contacts (icon: menu_book)
+  2. My Card (icon: card_membership)
+  3. Account (icon: account_circle)
   - Maintains navigation state
   - Handles route transitions
 
 ### Contact Management
 - `contact_tile.dart` - List tile for displaying contact information
-  - **Epic 2 Updates**: Uses `ContactModel` from data layer
+  - Uses `ContactModel` from data layer
   - Displays contact avatar (generated from `ContactModel.initials`)
   - Shows display name and primary contact method
+  - Renders color-coded tag chips under each contact
+  - Chips are tappable to toggle tag filtering on the list
   - Popup menu for edit/delete actions
-  - Tap handler for quick edit access
   - Color-coded avatars using theme palette
 
 ### Channel Management
@@ -34,7 +35,8 @@ This directory contains reusable UI components for the Omada Contacts app.
   - Action button management
 - `filter_row.dart` - Component for filtering lists
   - Tag-based filtering interface
-  - Selection state management
+  - Multi-select tags; passes the selected set upstream
+  - Intended for use above lists (e.g., contacts list)
 - `theme_selector.dart` - Component for selecting app themes
   - Theme switching interface
   - Visual theme preview
@@ -52,21 +54,26 @@ The channel add sheet works together with the utilities in `lib/data/utils/chann
 
 ## Usage Examples
 
-### Bottom Navigation
-```dart
-AppBottomNav(
-  active: AppNav.contacts, // or .profile, .account
-)
-```
-
 ### Contact Tile
 ```dart
 ContactTile(
-  contact: contactModel,        // ContactModel from data layer
+  contact: contactModel,
   colorPalette: selectedTheme,
-  onTap: () => editContact(contact),      // Optional tap handler
-  onEdit: () => editContact(contact),     // Optional edit action
-  onDelete: () => deleteContact(contact), // Optional delete action
+  tags: contactTags,
+  onTagTap: (tag) => toggleFilterForTag(tag.id),
+  onTap: () => editContact(contactModel),
+  onEdit: () => editContact(contactModel),
+  onDelete: () => deleteContact(contactModel),
+)
+```
+
+### Filter Row
+```dart
+FilterRow(
+  tags: allTags,                      // List<TagModel>
+  selectedTagIds: selectedTagIds,     // Set<String>
+  colorPalette: selectedTheme,
+  onTagToggle: (tag) => toggle(tag.id),
 )
 ```
 

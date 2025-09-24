@@ -19,10 +19,17 @@ A modern contact management application built with Flutter and Supabase.
 - **Empty state**: Friendly UI when no contacts exist
 - **Pull-to-refresh**: Update contact list with gesture
 
+### Tags & Filtering (Epic 4 - ✅ Implemented)
+- **Create/Delete tags**: Manage personal tags in the Manage Tags sheet
+- **Assign/Unassign tags**: Select tag chips on the contact form
+- **Quick add**: "+ Add tag" in the form creates a new tag and selects it
+- **Filter by tags**: Multi-select tags in the contacts screen filter row
+- **Search**: Debounced search field with clear button
+- **Tag visibility**: Contacts list shows color-coded tag chips per contact
+
 ### Additional Features
 - Personal contact card customization
 - Contact sharing and visibility controls
-- Tag-based organization (future epic)
 - Multi-theme support with color palettes
 
 ## Getting Started
@@ -60,7 +67,7 @@ The app has three main sections:
 ### Key Pages
 - `/` - Splash screen with auth check and dev routing
 - `/login` - Authentication (sign in/up)
-- `/app` - Main contacts screen with CRUD functionality
+- `/app` - Main contacts screen with CRUD, tags, and filters
 - `/profile` - Contact card management
 - `/account` - Account settings
 - `/dev-selector` - Development mode: choose between app and debug tools
@@ -84,4 +91,5 @@ For detailed documentation about specific components:
 - [Data Layer](lib/data/README.md)
 - [Pages](lib/pages/README.md)
 - [Widgets](lib/widgets/README.md)
+- [Screens](lib/screens/README.md)
 - [Database](docs/database/schema_documentation.md)

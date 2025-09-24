@@ -8,6 +8,9 @@ import '../supabase/supabase_instance.dart';
 import '../data/services/contact_service.dart';
 import '../data/models/contact_model.dart';
 import '../pages/contact_form_page.dart';
+import '../widgets/filter_row.dart';
+import '../data/services/tag_service.dart';
+import '../data/models/tag_model.dart';
 
 class ContactsScreen extends StatefulWidget {
   const ContactsScreen({super.key});
@@ -18,10 +21,16 @@ class ContactsScreen extends StatefulWidget {
 
 class _ContactsScreenState extends State<ContactsScreen> {
   final ContactService _contactService = ContactService(supabase);
+  late final TagService _tagService;
   ColorPalette selectedTheme = oceanTheme;
   List<ContactModel> _contacts = [];
+  List<ContactModel> _visibleContacts = [];
+  List<TagModel> _tags = [];
+  final Set<String> _selectedTagIds = <String>{};
   bool _isLoading = false;
   String? _error;
+  final TextEditingController _searchController = TextEditingController();
+  DateTime? _lastSearchChangeAt;
 
   void _changeTheme(ColorPalette theme) =>
       setState(() => selectedTheme = theme);
@@ -29,7 +38,20 @@ class _ContactsScreenState extends State<ContactsScreen> {
   @override
   void initState() {
     super.initState();
-    _refreshContacts();
+    _tagService = TagService(supabase);
+    _searchController.addListener(_onSearchChanged);
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    await Future.wait([_refreshContacts(), _refreshTags()]);
+  }
+
+  @override
+  void dispose() {
+    _searchController.removeListener(_onSearchChanged);
+    _searchController.dispose();
+    super.dispose();
   }
 
   Future<void> _refreshContacts() async {
@@ -38,12 +60,19 @@ class _ContactsScreenState extends State<ContactsScreen> {
       _error = null;
     });
     try {
-      final fetched = await _contactService.getContacts(includeDeleted: false);
+      final fetched = await _contactService.getContacts(
+        includeDeleted: false,
+        searchTerm: _serverSearchQuery,
+        tagIds: _selectedTagIds.isEmpty ? null : _selectedTagIds.toList(),
+      );
       fetched.sort(
         (a, b) =>
             a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
       );
-      setState(() => _contacts = fetched);
+      setState(() {
+        _contacts = fetched;
+        _applyClientFilters();
+      });
     } catch (e) {
       setState(() => _error = e.toString());
     } finally {
@@ -51,22 +80,84 @@ class _ContactsScreenState extends State<ContactsScreen> {
     }
   }
 
+  Future<void> _refreshTags() async {
+    try {
+      final fetched = await _tagService.getTags();
+      setState(() => _tags = fetched);
+    } catch (_) {
+      // ignore for MVP
+    }
+  }
+
+  String? get _serverSearchQuery {
+    final q = _searchController.text.trim();
+    if (q.isEmpty) return null;
+    return q;
+  }
+
+  void _onSearchChanged() {
+    _lastSearchChangeAt = DateTime.now();
+    Future.delayed(const Duration(milliseconds: 300)).then((_) {
+      final last = _lastSearchChangeAt;
+      if (last == null) return;
+      // debounce window
+      if (DateTime.now().difference(last) >=
+          const Duration(milliseconds: 290)) {
+        _refreshContacts();
+      }
+    });
+    _applyClientFilters();
+  }
+
+  void _applyClientFilters() {
+    final localQuery = _searchController.text.trim().toLowerCase();
+    List<ContactModel> filtered = List.of(_contacts);
+    if (localQuery.isNotEmpty) {
+      filtered = filtered.where((c) {
+        final fields = [
+          c.displayName,
+          c.givenName ?? '',
+          c.familyName ?? '',
+          c.primaryEmail ?? '',
+          c.primaryMobile ?? '',
+        ].join(' ').toLowerCase();
+        return fields.contains(localQuery);
+      }).toList();
+    }
+    setState(() => _visibleContacts = filtered);
+  }
+
+  Future<Map<String, List<TagModel>>> _getTagsForVisibleContacts() async {
+    // Fetch tags for visible contacts in parallel
+    final entries = await Future.wait(
+      _visibleContacts.map((c) async {
+        try {
+          final tags = await _tagService.getTagsForContact(c.id);
+          return MapEntry(c.id, tags);
+        } catch (_) {
+          return MapEntry(c.id, <TagModel>[]);
+        }
+      }),
+    );
+    return Map.fromEntries(entries);
+  }
+
   Future<void> _onAddContact() async {
     final created = await Navigator.of(
       context,
     ).push<bool>(MaterialPageRoute(builder: (_) => const ContactFormPage()));
-    if (created == true) {
-      await _refreshContacts();
-    }
+    // Always refresh tags so newly created tags appear in filters,
+    // and refresh contacts when something was created.
+    await _refreshTags();
+    if (created == true) await _refreshContacts();
   }
 
   Future<void> _onEditContact(ContactModel contact) async {
     final updated = await Navigator.of(context).push<bool>(
       MaterialPageRoute(builder: (_) => ContactFormPage(contact: contact)),
     );
-    if (updated == true) {
-      await _refreshContacts();
-    }
+    await _refreshTags();
+    if (updated == true) await _refreshContacts();
   }
 
   Future<void> _onDeleteContact(ContactModel contact) async {
@@ -112,6 +203,54 @@ class _ContactsScreenState extends State<ContactsScreen> {
             selectedTheme: selectedTheme,
             onThemeChanged: _changeTheme,
           ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: TextField(
+              controller: _searchController,
+              decoration: InputDecoration(
+                hintText: 'Search by name, email, or phone',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchController.text.isEmpty
+                    ? null
+                    : IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          _refreshContacts();
+                        },
+                      ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                const Spacer(),
+                TextButton.icon(
+                  onPressed: _openManageTagsSheet,
+                  icon: const Icon(Icons.label_outline),
+                  label: const Text('Manage tags'),
+                ),
+              ],
+            ),
+          ),
+          if (_tags.isNotEmpty)
+            FilterRow(
+              tags: _tags,
+              selectedTagIds: _selectedTagIds,
+              colorPalette: selectedTheme,
+              onTagToggle: (tag) async {
+                setState(() {
+                  if (_selectedTagIds.contains(tag.id)) {
+                    _selectedTagIds.remove(tag.id);
+                  } else {
+                    _selectedTagIds.add(tag.id);
+                  }
+                });
+                await _refreshContacts();
+              },
+            ),
           Expanded(
             child: RefreshIndicator(
               onRefresh: _refreshContacts,
@@ -129,7 +268,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
   }
 
   Widget _buildBody() {
-    if (_isLoading && _contacts.isEmpty) {
+    if (_isLoading && _visibleContacts.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
     if (_error != null) {
@@ -152,7 +291,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
         ),
       );
     }
-    if (_contacts.isEmpty) {
+    if (_visibleContacts.isEmpty) {
       return ListView(
         children: const [
           SizedBox(height: 120),
@@ -164,16 +303,188 @@ class _ContactsScreenState extends State<ContactsScreen> {
         ],
       );
     }
-    return ListView.builder(
-      itemCount: _contacts.length,
-      itemBuilder: (context, index) {
-        final contact = _contacts[index];
-        return ContactTile(
-          contact: contact,
-          colorPalette: selectedTheme,
-          onTap: () => _onEditContact(contact),
-          onEdit: () => _onEditContact(contact),
-          onDelete: () => _onDeleteContact(contact),
+    return FutureBuilder<Map<String, List<TagModel>>>(
+      future: _getTagsForVisibleContacts(),
+      builder: (context, snapshot) {
+        final tagsByContact = snapshot.data ?? const {};
+        return ListView.builder(
+          itemCount: _visibleContacts.length,
+          itemBuilder: (context, index) {
+            final contact = _visibleContacts[index];
+            return ContactTile(
+              contact: contact,
+              colorPalette: selectedTheme,
+              tags: tagsByContact[contact.id] ?? const [],
+              onTagTap: (tag) async {
+                setState(() {
+                  if (_selectedTagIds.contains(tag.id)) {
+                    _selectedTagIds.remove(tag.id);
+                  } else {
+                    _selectedTagIds.add(tag.id);
+                  }
+                });
+                await _refreshContacts();
+              },
+              onTap: () => _onEditContact(contact),
+              onEdit: () => _onEditContact(contact),
+              onDelete: () => _onDeleteContact(contact),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _openManageTagsSheet() async {
+    await _refreshTags();
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          builder: (context, controller) {
+            final TextEditingController nameController =
+                TextEditingController();
+            return StatefulBuilder(
+              builder: (context, setSheetState) {
+                Future<void> addTag() async {
+                  final name = nameController.text.trim();
+                  if (name.isEmpty) return;
+                  try {
+                    await _tagService.createTag(name);
+                    nameController.clear();
+                    final fetched = await _tagService.getTags();
+                    setSheetState(() => _tags = fetched);
+                    setState(() => _tags = fetched);
+                  } catch (e) {
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to create tag: $e')),
+                    );
+                  }
+                }
+
+                Future<void> deleteTag(TagModel tag) async {
+                  try {
+                    await _tagService.deleteTag(tag.id);
+                    final fetched = await _tagService.getTags();
+                    setSheetState(() => _tags = fetched);
+                    setState(() => _tags = fetched);
+                    if (_selectedTagIds.contains(tag.id)) {
+                      setState(() => _selectedTagIds.remove(tag.id));
+                      await _refreshContacts();
+                    }
+                  } catch (e) {
+                    if (!mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Failed to delete tag: $e')),
+                    );
+                  }
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Text(
+                            'Manage tags',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const Spacer(),
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: nameController,
+                              decoration: const InputDecoration(
+                                labelText: 'New tag name',
+                              ),
+                              onSubmitted: (_) => addTag(),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          FilledButton.icon(
+                            onPressed: addTag,
+                            icon: const Icon(Icons.add),
+                            label: const Text('Add'),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      Expanded(
+                        child: ListView.builder(
+                          controller: controller,
+                          itemCount: _tags.length,
+                          itemBuilder: (context, index) {
+                            final tag = _tags[index];
+                            return ListTile(
+                              leading: CircleAvatar(
+                                backgroundColor: selectedTheme.getColorForItem(
+                                  tag.id,
+                                ),
+                                child: const Icon(
+                                  Icons.label,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
+                              title: Text(tag.name),
+                              trailing: IconButton(
+                                icon: const Icon(Icons.delete_outline),
+                                onPressed: () async {
+                                  final confirmed = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text('Delete tag?'),
+                                      content: Text(
+                                        'Delete "${tag.name}"? This will remove it from any contacts.',
+                                      ),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, false),
+                                          child: const Text('Cancel'),
+                                        ),
+                                        FilledButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context, true),
+                                          child: const Text('Delete'),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirmed == true) {
+                                    await deleteTag(tag);
+                                  }
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            );
+          },
         );
       },
     );

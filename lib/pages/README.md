@@ -26,7 +26,9 @@ This directory contains page-level components for the Omada Contacts app.
   - Form validation using `ValidationUtils`
   - Supports both create and edit modes
   - Required: name fields + phone, optional: email
-  - Real-time validation with error display
+  - Tag assignment: select/unselect tag chips for the contact
+  - Quick add tag: ActionChip opens a dialog, creates the tag, and selects it
+  - Persists selected `tagIds` on create/update via `ContactService`
 
 ### Add Channel Flow (Presets)
 - `AddChannelSheet` (bottom sheet) provides preset kinds: mobile, email, instagram, linkedin, whatsapp, messenger
@@ -47,7 +49,7 @@ This directory contains page-level components for the Omada Contacts app.
 
 3. **Main App Navigation**
    - Bottom navigation between main sections:
-     1. Contacts List (with CRUD functionality)
+     1. Contacts List (CRUD, tags & filtering)
      2. My Card (`profile_management_page.dart`)
      3. Account (`account_page.dart`)
    - Modal navigation for contact management:

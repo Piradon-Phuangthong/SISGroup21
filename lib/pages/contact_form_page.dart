@@ -3,6 +3,8 @@ import '../data/models/contact_model.dart';
 import '../data/services/contact_service.dart';
 import '../data/utils/validation_utils.dart';
 import '../supabase/supabase_instance.dart';
+import '../data/services/tag_service.dart';
+import '../data/models/tag_model.dart';
 
 class ContactFormPage extends StatefulWidget {
   final ContactModel? contact;
@@ -16,6 +18,7 @@ class ContactFormPage extends StatefulWidget {
 class _ContactFormPageState extends State<ContactFormPage> {
   final _formKey = GlobalKey<FormState>();
   late final ContactService _contactService;
+  late final TagService _tagService;
 
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _givenNameController = TextEditingController();
@@ -25,11 +28,14 @@ class _ContactFormPageState extends State<ContactFormPage> {
   final TextEditingController _primaryEmailController = TextEditingController();
 
   bool _submitting = false;
+  List<TagModel> _allTags = [];
+  final Set<String> _selectedTagIds = <String>{};
 
   @override
   void initState() {
     super.initState();
     _contactService = ContactService(supabase);
+    _tagService = TagService(supabase);
 
     final contact = widget.contact;
     if (contact != null) {
@@ -39,6 +45,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
       _primaryMobileController.text = contact.primaryMobile ?? '';
       _primaryEmailController.text = contact.primaryEmail ?? '';
     }
+    _loadTags(contactId: widget.contact?.id);
   }
 
   @override
@@ -78,6 +85,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
           familyName: familyName,
           primaryMobile: primaryMobile,
           primaryEmail: primaryEmail,
+          tagIds: _selectedTagIds.toList(),
         );
       } else {
         await _contactService.updateContact(
@@ -87,6 +95,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
           familyName: familyName,
           primaryMobile: primaryMobile,
           primaryEmail: primaryEmail,
+          tagIds: _selectedTagIds.toList(),
         );
       }
 
@@ -179,6 +188,8 @@ class _ContactFormPageState extends State<ContactFormPage> {
                 },
               ),
               const SizedBox(height: 24),
+              _buildTagSection(),
+              const SizedBox(height: 24),
               FilledButton.icon(
                 onPressed: _submitting ? null : _save,
                 icon: _submitting
@@ -215,5 +226,149 @@ class _ContactFormPageState extends State<ContactFormPage> {
       return 'Invalid family name';
     }
     return null;
+  }
+
+  Future<void> _loadTags({String? contactId}) async {
+    try {
+      final tags = await _tagService.getTags();
+      if (!mounted) return;
+      setState(() => _allTags = tags);
+
+      if (contactId != null) {
+        final existing = await _tagService.getTagsForContact(contactId);
+        if (!mounted) return;
+        setState(
+          () => _selectedTagIds
+            ..clear()
+            ..addAll(existing.map((t) => t.id)),
+        );
+      }
+    } catch (_) {
+      // ignore
+    }
+  }
+
+  Widget _buildTagSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Tags',
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 8),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            ..._allTags.map((tag) {
+              final selected = _selectedTagIds.contains(tag.id);
+              return FilterChip(
+                label: Text(tag.name),
+                selected: selected,
+                onSelected: (value) {
+                  setState(() {
+                    if (value) {
+                      _selectedTagIds.add(tag.id);
+                    } else {
+                      _selectedTagIds.remove(tag.id);
+                    }
+                  });
+                },
+              );
+            }),
+            ActionChip(
+              avatar: const Icon(Icons.add, size: 18),
+              label: const Text('Add tag'),
+              onPressed: _promptCreateTag,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Future<void> _promptCreateTag() async {
+    final TextEditingController nameController = TextEditingController();
+    bool saving = false;
+
+    Future<void> submit(void Function(void Function()) setDialogState) async {
+      final name = nameController.text.trim();
+      if (name.isEmpty) return;
+      setDialogState(() => saving = true);
+      try {
+        TagModel? tag;
+        try {
+          tag = await _tagService.createTag(name);
+        } catch (e) {
+          // On conflict, fetch existing and select it
+          final existing = await _tagService.getTagByName(name);
+          if (existing != null) {
+            tag = existing;
+          } else {
+            rethrow;
+          }
+        }
+
+        if (!mounted) return;
+        setState(() {
+          final exists = _allTags.any((t) => t.id == tag!.id);
+          if (!exists) {
+            _allTags = [..._allTags, tag!];
+          }
+          _selectedTagIds.add(tag!.id);
+        });
+        if (Navigator.of(context).canPop()) Navigator.of(context).pop();
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to add tag: $e')));
+      } finally {
+        // leave dialog closing to success path
+      }
+    }
+
+    if (!mounted) return;
+    // ignore: use_build_context_synchronously
+    await showDialog<void>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('New tag'),
+              content: TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Tag name',
+                  hintText: 'e.g., Family, Work',
+                ),
+                autofocus: true,
+                onSubmitted: (_) => submit(setDialogState),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: saving
+                      ? null
+                      : () => Navigator.of(context).maybePop(),
+                  child: const Text('Cancel'),
+                ),
+                FilledButton(
+                  onPressed: saving ? null : () => submit(setDialogState),
+                  child: saving
+                      ? const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Text('Add'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 }

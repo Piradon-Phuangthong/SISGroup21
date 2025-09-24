@@ -70,12 +70,30 @@ class ContactRepository extends BaseRepository {
     return await handleSupabaseExceptionAsync(() async {
       final response = await client
           .from('contact_tags')
-          .select('contact_id')
+          .select('contact_id, tag_id')
           .filter('tag_id', 'in', '(${tagIds.join(',')})');
 
-      return response
-          .map<String>((data) => data['contact_id'] as String)
-          .toSet()
+      // Build mapping of contact -> set of matched tagIds
+      final Map<String, Set<String>> contactIdToMatchedTags = {};
+      for (final row in response) {
+        final contactId = row['contact_id'] as String;
+        final tagId = row['tag_id'] as String;
+        final set = contactIdToMatchedTags.putIfAbsent(
+          contactId,
+          () => <String>{},
+        );
+        set.add(tagId);
+      }
+
+      if (tagIds.length <= 1) {
+        return contactIdToMatchedTags.keys.toList();
+      }
+
+      // Intersection: only contacts that have all selected tagIds
+      final required = tagIds.toSet();
+      return contactIdToMatchedTags.entries
+          .where((e) => required.difference(e.value).isEmpty)
+          .map((e) => e.key)
           .toList();
     });
   }
