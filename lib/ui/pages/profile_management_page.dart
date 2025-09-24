@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:omada/core/data/models/models.dart';
-import 'package:omada/core/data/services/contact_service.dart';
-import 'package:omada/core/data/repositories/profile_repository.dart';
 import 'package:omada/core/data/repositories/contact_channel_repository.dart';
 import 'package:omada/core/data/services/sharing_service.dart';
 import 'package:omada/ui/widgets/app_bottom_nav.dart';
 import 'package:omada/ui/widgets/add_channel_sheet.dart';
 import 'package:omada/core/data/utils/channel_launcher.dart';
+import 'package:omada/core/controllers/profile_controller.dart';
 import 'profile/channel_grid.dart';
 import 'profile/cta_panel.dart';
 import 'profile/about_section.dart';
@@ -22,19 +21,19 @@ class ProfileManagementPage extends StatefulWidget {
 }
 
 class _ProfileManagementPageState extends State<ProfileManagementPage> {
-  late Future<_ProfileData> _future;
+  late Future<ProfileData> _future;
   final Set<String> _selectedChannelIds = <String>{};
   final ChannelLauncher _launcher = const ChannelLauncher();
 
   @override
   void initState() {
     super.initState();
-    _future = _loadProfileData();
+    _future = ProfileController(Supabase.instance.client).load();
   }
 
   void _refresh() {
     setState(() {
-      _future = _loadProfileData();
+      _future = ProfileController(Supabase.instance.client).load();
     });
   }
 
@@ -112,7 +111,7 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
 
               // Data-driven content
               Expanded(
-                child: FutureBuilder<_ProfileData>(
+                child: FutureBuilder<ProfileData>(
                   future: _future,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState != ConnectionState.done) {
@@ -227,7 +226,7 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
 
   Future<void> _onChannelLongPress(
     BuildContext context,
-    _ProfileData data,
+    ProfileData data,
     String id,
   ) async {
     _toggleSelection(id);
@@ -236,7 +235,7 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
 
   Future<void> _showChannelActions(
     BuildContext context,
-    _ProfileData data,
+    ProfileData data,
     String id,
   ) async {
     final ch = data.channels.firstWhere((c) => c.id == id);
@@ -309,7 +308,7 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
     }
   }
 
-  Future<void> _quickCall(BuildContext context, _ProfileData data) async {
+  Future<void> _quickCall(BuildContext context, ProfileData data) async {
     String? number = data.contact.primaryMobile;
     if (number == null || number.isEmpty) {
       final primaryPhone = data.channels.firstWhere(
@@ -357,7 +356,7 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
     }
   }
 
-  Future<void> _openAddChannel(BuildContext context, _ProfileData data) async {
+  Future<void> _openAddChannel(BuildContext context, ProfileData data) async {
     final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
@@ -366,7 +365,7 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
     if (result == true) _refresh();
   }
 
-  Future<void> _openShare(BuildContext context, _ProfileData data) async {
+  Future<void> _openShare(BuildContext context, ProfileData data) async {
     final sharing = SharingService(Supabase.instance.client);
     final usernameCtrl = TextEditingController();
 
@@ -416,65 +415,6 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
 // Old local nav item removed; using shared AppBottomNav
 
 // Data aggregation
-class _ProfileData {
-  final ProfileModel? profile;
-  final ContactModel contact;
-  final List<ContactChannelModel> channels;
-  const _ProfileData({
-    this.profile,
-    required this.contact,
-    required this.channels,
-  });
-}
-
-Future<_ProfileData> _loadProfileData() async {
-  final client = Supabase.instance.client;
-  final profiles = ProfileRepository(client);
-  final contacts = ContactService(client);
-  final channelsRepo = ContactChannelRepository(client);
-
-  final profile = await profiles.getCurrentProfile();
-
-  // Fetch a batch of contacts and prefer one that already has channels
-  final candidates = await contacts.getContacts(limit: 25);
-
-  ContactModel contact;
-  List<ContactChannelModel> channels = const [];
-
-  if (candidates.isNotEmpty) {
-    // Load channels for each contact in parallel and pick the first with any channels
-    final results = await Future.wait(
-      candidates.map(
-        (c) async =>
-            MapEntry(c, await channelsRepo.getChannelsForContact(c.id)),
-      ),
-    );
-
-    MapEntry<ContactModel, List<ContactChannelModel>>? withChannels;
-    for (final entry in results) {
-      if (entry.value.isNotEmpty) {
-        withChannels = entry;
-        break;
-      }
-    }
-
-    if (withChannels != null) {
-      contact = withChannels.key;
-      channels = withChannels.value;
-    } else {
-      // No channels on any contact yet; use the most recently updated
-      contact = candidates.first;
-      channels = await channelsRepo.getChannelsForContact(contact.id);
-    }
-  } else {
-    // No contact exists; create a starter card named after username
-    contact = await contacts.createContact(fullName: profile?.username);
-    channels = const [];
-  }
-
-  return _ProfileData(profile: profile, contact: contact, channels: channels);
-}
-
 // Helpers for mapping and display
 String _labelForChannel(ContactChannelModel c) {
   if (c.label?.isNotEmpty == true) return c.label!;
@@ -503,7 +443,7 @@ String _labelForChannel(ContactChannelModel c) {
 
 // _iconForKind moved into ChannelGrid; removed here
 
-String _aboutText(_ProfileData data) {
+String _aboutText(ProfileData data) {
   if (data.contact.notes?.isNotEmpty == true) return data.contact.notes!;
   if (data.channels.isNotEmpty) {
     final kinds = data.channels

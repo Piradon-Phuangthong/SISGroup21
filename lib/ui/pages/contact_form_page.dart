@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:omada/core/data/models/contact_model.dart';
-import 'package:omada/core/data/services/contact_service.dart';
-import 'package:omada/core/data/utils/validation_utils.dart';
 import 'package:omada/core/supabase/supabase_instance.dart';
-import 'package:omada/core/data/services/tag_service.dart';
+import 'package:omada/core/controllers/contact_form_controller.dart';
+import 'package:omada/core/data/utils/validation_utils.dart';
 import 'package:omada/core/data/models/tag_model.dart';
 
 class ContactFormPage extends StatefulWidget {
@@ -17,8 +16,7 @@ class ContactFormPage extends StatefulWidget {
 
 class _ContactFormPageState extends State<ContactFormPage> {
   final _formKey = GlobalKey<FormState>();
-  late final ContactService _contactService;
-  late final TagService _tagService;
+  late final ContactFormController _controller;
 
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _givenNameController = TextEditingController();
@@ -34,8 +32,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
   @override
   void initState() {
     super.initState();
-    _contactService = ContactService(supabase);
-    _tagService = TagService(supabase);
+    _controller = ContactFormController(supabase);
 
     final contact = widget.contact;
     if (contact != null) {
@@ -65,21 +62,21 @@ class _ContactFormPageState extends State<ContactFormPage> {
 
     final fullName = _fullNameController.text.trim().isEmpty
         ? null
-        : ValidationUtils.sanitizeString(_fullNameController.text);
+        : _fullNameController.text.trim();
     final givenName = _givenNameController.text.trim().isEmpty
         ? null
-        : ValidationUtils.sanitizeString(_givenNameController.text);
+        : _givenNameController.text.trim();
     final familyName = _familyNameController.text.trim().isEmpty
         ? null
-        : ValidationUtils.sanitizeString(_familyNameController.text);
+        : _familyNameController.text.trim();
     final primaryMobile = _primaryMobileController.text.trim();
     final primaryEmail = _primaryEmailController.text.trim().isEmpty
         ? null
-        : ValidationUtils.normalizeEmail(_primaryEmailController.text);
+        : _primaryEmailController.text.trim();
 
     try {
       if (widget.contact == null) {
-        await _contactService.createContact(
+        await _controller.createContact(
           fullName: fullName,
           givenName: givenName,
           familyName: familyName,
@@ -88,7 +85,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
           tagIds: _selectedTagIds.toList(),
         );
       } else {
-        await _contactService.updateContact(
+        await _controller.updateContact(
           widget.contact!.id,
           fullName: fullName,
           givenName: givenName,
@@ -209,33 +206,21 @@ class _ContactFormPageState extends State<ContactFormPage> {
   }
 
   String? _validateNameFields() {
-    final full = _fullNameController.text.trim();
-    final given = _givenNameController.text.trim();
-    final family = _familyNameController.text.trim();
-
-    if (full.isEmpty && given.isEmpty && family.isEmpty) {
-      return 'Provide full name or given/family name';
-    }
-    if (full.isNotEmpty && !ValidationUtils.isValidContactName(full)) {
-      return 'Invalid full name';
-    }
-    if (given.isNotEmpty && !ValidationUtils.isValidContactName(given)) {
-      return 'Invalid given name';
-    }
-    if (family.isNotEmpty && !ValidationUtils.isValidContactName(family)) {
-      return 'Invalid family name';
-    }
-    return null;
+    return _controller.validateNameTriplet(
+      full: _fullNameController.text.trim(),
+      given: _givenNameController.text.trim(),
+      family: _familyNameController.text.trim(),
+    );
   }
 
   Future<void> _loadTags({String? contactId}) async {
     try {
-      final tags = await _tagService.getTags();
+      final tags = await _controller.getAllTags();
       if (!mounted) return;
       setState(() => _allTags = tags);
 
       if (contactId != null) {
-        final existing = await _tagService.getTagsForContact(contactId);
+        final existing = await _controller.getTagsForContact(contactId);
         if (!mounted) return;
         setState(
           () => _selectedTagIds
@@ -299,10 +284,10 @@ class _ContactFormPageState extends State<ContactFormPage> {
       try {
         TagModel? tag;
         try {
-          tag = await _tagService.createTag(name);
+          tag = await _controller.createTag(name);
         } catch (e) {
           // On conflict, fetch existing and select it
-          final existing = await _tagService.getTagByName(name);
+          final existing = await _controller.getTagByName(name);
           if (existing != null) {
             tag = existing;
           } else {

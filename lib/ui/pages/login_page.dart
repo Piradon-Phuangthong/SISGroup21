@@ -3,6 +3,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:omada/core/supabase/supabase_instance.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:omada/core/utils/form_validators.dart';
+import 'package:omada/core/controllers/auth_controller.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -21,11 +23,13 @@ class _LoginState extends State<LoginPage> {
   bool _isSignUp = false;
   bool _isLoading = false;
   bool _obscurePassword = true;
+  late final AuthController _auth;
 
   @override
   void initState() {
     super.initState();
-    _authStateSubscription = supabase.auth.onAuthStateChange.listen((event) {
+    _auth = AuthController(supabase);
+    _authStateSubscription = _auth.onAuthStateChange().listen((event) {
       final session = event.session;
       if (session != null && mounted) {
         Navigator.of(context).pushReplacementNamed('/app');
@@ -48,7 +52,7 @@ class _LoginState extends State<LoginPage> {
     setState(() => _isLoading = true);
 
     try {
-      await supabase.auth.signInWithPassword(
+      await _auth.signInWithPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
@@ -90,7 +94,7 @@ class _LoginState extends State<LoginPage> {
         data['username'] = username;
       }
 
-      await supabase.auth.signUp(
+      await _auth.signUp(
         email: _emailController.text.trim(),
         password: _passwordController.text,
         data: data.isNotEmpty ? data : null,
@@ -129,25 +133,10 @@ class _LoginState extends State<LoginPage> {
     }
   }
 
-  String? _validateEmail(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Email is required';
-    }
-    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-      return 'Please enter a valid email';
-    }
-    return null;
-  }
+  String? _validateEmail(String? value) => FormValidators.emailRequired(value);
 
-  String? _validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Password is required';
-    }
-    if (value.length < 6) {
-      return 'Password must be at least 6 characters';
-    }
-    return null;
-  }
+  String? _validatePassword(String? value) =>
+      FormValidators.passwordMinLength(value, min: 6);
 
   @override
   Widget build(BuildContext context) {

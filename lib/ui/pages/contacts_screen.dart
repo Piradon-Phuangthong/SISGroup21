@@ -5,16 +5,14 @@ import 'package:omada/ui/widgets/app_bottom_nav.dart';
 import 'package:omada/ui/widgets/theme_selector.dart';
 import 'package:omada/ui/widgets/contact_tile.dart';
 import 'package:omada/core/supabase/supabase_instance.dart';
-import 'package:omada/core/data/services/contact_service.dart';
 import 'package:omada/core/data/models/contact_model.dart';
 import 'contact_form_page.dart';
 import 'package:omada/ui/widgets/filter_row.dart';
 import 'contacts/manage_tags_sheet.dart';
 import 'contacts/user_discovery_sheet.dart';
 import 'contacts/incoming_requests_sheet.dart';
-import 'package:omada/core/data/services/tag_service.dart';
 import 'package:omada/core/data/models/tag_model.dart';
-import 'package:omada/core/data/services/sharing_service.dart';
+import 'package:omada/core/controllers/contacts_controller.dart';
 // Removed unused imports
 
 class ContactsScreen extends StatefulWidget {
@@ -25,9 +23,7 @@ class ContactsScreen extends StatefulWidget {
 }
 
 class _ContactsScreenState extends State<ContactsScreen> {
-  final ContactService _contactService = ContactService(supabase);
-  late final TagService _tagService;
-  late final SharingService _sharingService;
+  late final ContactsController _controller;
   ColorPalette selectedTheme = oceanTheme;
   List<ContactModel> _contacts = [];
   List<ContactModel> _visibleContacts = [];
@@ -44,8 +40,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
   @override
   void initState() {
     super.initState();
-    _tagService = TagService(supabase);
-    _sharingService = SharingService(supabase);
+    _controller = ContactsController(supabase);
     _searchController.addListener(_onSearchChanged);
     _initialize();
   }
@@ -67,7 +62,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
       _error = null;
     });
     try {
-      final fetched = await _contactService.getContacts(
+      final fetched = await _controller.getContacts(
         includeDeleted: false,
         searchTerm: _serverSearchQuery,
         tagIds: _selectedTagIds.isEmpty ? null : _selectedTagIds.toList(),
@@ -89,7 +84,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
 
   Future<void> _refreshTags() async {
     try {
-      final fetched = await _tagService.getTags();
+      final fetched = await _controller.getTags();
       setState(() => _tags = fetched);
     } catch (_) {
       // ignore for MVP
@@ -135,18 +130,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
   }
 
   Future<Map<String, List<TagModel>>> _getTagsForVisibleContacts() async {
-    // Fetch tags for visible contacts in parallel
-    final entries = await Future.wait(
-      _visibleContacts.map((c) async {
-        try {
-          final tags = await _tagService.getTagsForContact(c.id);
-          return MapEntry(c.id, tags);
-        } catch (_) {
-          return MapEntry(c.id, <TagModel>[]);
-        }
-      }),
-    );
-    return Map.fromEntries(entries);
+    return _controller.getTagsForContacts(_visibleContacts);
   }
 
   Future<void> _onAddContact() async {
@@ -174,7 +158,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
     });
 
     try {
-      await _contactService.deleteContact(removedContact.id);
+      await _controller.deleteContact(removedContact.id);
       if (!mounted) return;
       ScaffoldMessenger.of(context).clearSnackBars();
       ScaffoldMessenger.of(context).showSnackBar(
@@ -183,7 +167,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
           action: SnackBarAction(
             label: 'Undo',
             onPressed: () async {
-              await _contactService.restoreContact(removedContact.id);
+              await _controller.restoreContact(removedContact.id);
               await _refreshContacts();
             },
           ),
@@ -362,7 +346,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
         selectedTheme: selectedTheme,
         initialTags: _tags,
         selectedTagIds: _selectedTagIds,
-        tagService: _tagService,
+        tagService: _controller.tagService,
         onTagsUpdated: (t) => setState(() => _tags = t),
         onSelectedIdsChanged: (ids) async {
           setState(
@@ -380,7 +364,8 @@ class _ContactsScreenState extends State<ContactsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (context) => UserDiscoverySheet(sharingService: _sharingService),
+      builder: (context) =>
+          UserDiscoverySheet(sharingService: _controller.sharingService),
     );
   }
 
@@ -389,7 +374,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
       context: context,
       isScrollControlled: true,
       builder: (context) =>
-          IncomingRequestsSheet(sharingService: _sharingService),
+          IncomingRequestsSheet(sharingService: _controller.sharingService),
     );
   }
 }

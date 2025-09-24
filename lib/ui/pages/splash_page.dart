@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:omada/core/supabase/supabase_instance.dart';
 import 'package:flutter/foundation.dart';
+import 'package:omada/core/controllers/auth_controller.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -10,9 +11,11 @@ class SplashPage extends StatefulWidget {
 }
 
 class _SplashPageState extends State<SplashPage> {
+  late final AuthController _auth;
   @override
   void initState() {
     super.initState();
+    _auth = AuthController(supabase);
     _redirect();
   }
 
@@ -24,11 +27,11 @@ class _SplashPageState extends State<SplashPage> {
 
     try {
       // Check current session and validate with backend
-      final session = supabase.auth.currentSession;
+      final session = _auth.currentSession;
 
       if (session != null) {
         // Additional validation: try to get user to ensure session is still valid
-        final userResponse = await supabase.auth.getUser();
+        final userResponse = await _auth.getUser();
 
         if (!mounted) return;
 
@@ -41,7 +44,7 @@ class _SplashPageState extends State<SplashPage> {
           }
         } else {
           // Invalid session - clear and go to login
-          await supabase.auth.signOut();
+          await _auth.signOut();
           if (mounted) Navigator.of(context).pushReplacementNamed('/login');
         }
       } else {
@@ -51,7 +54,7 @@ class _SplashPageState extends State<SplashPage> {
     } catch (e) {
       // Any error - clear session and go to login
       if (!mounted) return;
-      await supabase.auth.signOut();
+      await _auth.signOut();
       if (mounted) Navigator.of(context).pushReplacementNamed('/login');
     }
   }
