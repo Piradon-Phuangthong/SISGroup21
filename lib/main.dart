@@ -3,6 +3,9 @@ import 'supabase/supabase_instance.dart';
 import 'test_db/epics/epic_home_entry.dart';
 import 'screens/contacts_screen.dart';
 import 'pages/profile_management_page.dart';
+import 'pages/splash_page.dart';
+import 'pages/login_page.dart';
+import 'pages/account_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,10 +21,13 @@ class OmadaRootApp extends StatelessWidget {
     return MaterialApp(
       title: 'Omada',
       routes: {
-        '/': (_) => const _RouteSelectorPage(),
-        '/debug': (_) => const EpicHomeEntry(),
+        '/': (_) => const SplashPage(),
+        '/login': (_) => const LoginPage(),
         '/app': (_) => const ContactsScreen(),
+        '/account': (_) => const AccountPage(),
         '/profile': (_) => const ProfileManagementPage(),
+        '/debug': (_) => const EpicHomeEntry(),
+        '/dev-selector': (_) => const _RouteSelectorPage(),
       },
       initialRoute: '/',
     );
@@ -29,7 +35,7 @@ class OmadaRootApp extends StatelessWidget {
 }
 
 class _RouteSelectorPage extends StatelessWidget {
-  const _RouteSelectorPage({super.key});
+  const _RouteSelectorPage();
 
   @override
   Widget build(BuildContext context) {

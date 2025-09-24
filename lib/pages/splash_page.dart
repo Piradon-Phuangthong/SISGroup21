@@ -16,29 +16,69 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   Future<void> _redirect() async {
-    await Future.delayed(Duration.zero);
+    // Small delay to show splash screen briefly
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    if (!mounted) return;
 
     try {
-      // Validate session with backend; clears any stale local session
-      final userResponse = await supabase.auth.getUser();
+      // Check current session and validate with backend
+      final session = supabase.auth.currentSession;
 
-      if (!mounted) return;
+      if (session != null) {
+        // Additional validation: try to get user to ensure session is still valid
+        final userResponse = await supabase.auth.getUser();
 
-      if (userResponse.user != null) {
-        Navigator.of(context).pushReplacementNamed('/account');
+        if (!mounted) return;
+
+        if (userResponse.user != null) {
+          // Valid session - route to contacts screen
+          if (mounted) Navigator.of(context).pushReplacementNamed('/app');
+        } else {
+          // Invalid session - clear and go to login
+          await supabase.auth.signOut();
+          if (mounted) Navigator.of(context).pushReplacementNamed('/login');
+        }
       } else {
-        await supabase.auth.signOut();
-        Navigator.of(context).pushReplacementNamed('/login');
+        // No session - go to login
+        if (mounted) Navigator.of(context).pushReplacementNamed('/login');
       }
-    } catch (_) {
+    } catch (e) {
+      // Any error - clear session and go to login
       if (!mounted) return;
       await supabase.auth.signOut();
-      Navigator.of(context).pushReplacementNamed('/login');
+      if (mounted) Navigator.of(context).pushReplacementNamed('/login');
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(body: Center(child: CircularProgressIndicator()));
+    return Scaffold(
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // App logo or name
+            Text(
+              'Omada',
+              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).primaryColor,
+              ),
+            ),
+            const SizedBox(height: 32),
+            // Loading indicator
+            const CircularProgressIndicator(),
+            const SizedBox(height: 16),
+            Text(
+              'Loading...',
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

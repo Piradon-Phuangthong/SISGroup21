@@ -1,12 +1,21 @@
 import 'package:flutter/material.dart';
 
-enum AppNav { contacts, profile }
+enum AppNav { contacts, profile, account }
 
 class AppBottomNav extends StatelessWidget {
   final AppNav active;
   const AppBottomNav({super.key, required this.active});
 
-  int get _index => active == AppNav.contacts ? 0 : 1;
+  int get _index {
+    switch (active) {
+      case AppNav.contacts:
+        return 0;
+      case AppNav.profile:
+        return 1;
+      case AppNav.account:
+        return 2;
+    }
+  }
 
   void _onTap(BuildContext context, int index) {
     if (index == _index) return;
@@ -17,6 +26,9 @@ class AppBottomNav extends StatelessWidget {
       case 1:
         Navigator.of(context).pushReplacementNamed('/profile');
         break;
+      case 2:
+        Navigator.of(context).pushReplacementNamed('/account');
+        break;
     }
   }
 
@@ -25,9 +37,17 @@ class AppBottomNav extends StatelessWidget {
     return BottomNavigationBar(
       currentIndex: _index,
       onTap: (i) => _onTap(context, i),
+      type: BottomNavigationBarType.fixed, // Needed for 3+ tabs
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Contacts'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.card_membership),
+          label: 'My Card',
+        ),
+        BottomNavigationBarItem(
+          icon: Icon(Icons.account_circle),
+          label: 'Account',
+        ),
       ],
     );
   }
