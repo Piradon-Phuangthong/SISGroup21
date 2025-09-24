@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import '../models/contact.dart';
-import '../models/tag.dart';
 import '../themes/color_palette.dart';
 import '../widgets/custom_app_bar.dart';
 import '../widgets/app_bottom_nav.dart';
 import '../widgets/theme_selector.dart';
-import '../widgets/filter_row.dart';
 import '../widgets/contact_tile.dart';
+import '../supabase/supabase_instance.dart';
+import '../data/services/contact_service.dart';
+import '../data/models/contact_model.dart';
+import '../pages/contact_form_page.dart';
 
 class ContactsScreen extends StatefulWidget {
   const ContactsScreen({super.key});
@@ -16,58 +17,88 @@ class ContactsScreen extends StatefulWidget {
 }
 
 class _ContactsScreenState extends State<ContactsScreen> {
-  List<Tag> selectedTags = [];
+  final ContactService _contactService = ContactService(supabase);
   ColorPalette selectedTheme = oceanTheme;
+  List<ContactModel> _contacts = [];
+  bool _isLoading = false;
+  String? _error;
 
-  static final List<Tag> tags = [
-    Tag('Family', 0),
-    Tag('Work', 1),
-    Tag('School', 2),
-    Tag('Uni', 3),
-    Tag('Friend', 4),
-    Tag('Gym', 5),
-  ];
+  void _changeTheme(ColorPalette theme) =>
+      setState(() => selectedTheme = theme);
 
-  final List<Contact> contacts = [
-    Contact('Anna Martinez', 'AM', [tags[0], tags[4]], 0),
-    Contact('Ben Johnson', 'BJ', [tags[1], tags[4]], 1),
-    Contact('Clara Liu', 'CL', [tags[2], tags[4]], 2),
-    Contact('David Chen', 'DC', [tags[1], tags[3]], 3),
-    Contact('Emily Foster', 'EF', [tags[2], tags[3]], 4),
-    Contact('Fiona Brown', 'FB', [tags[1], tags[3]], 5),
-    Contact('George Green', 'GG', [tags[0], tags[3]], 6),
-    Contact('Hannah Lee', 'HL', [tags[1], tags[4]], 7),
-    Contact('Isaac Kim', 'IK', [tags[0], tags[4]], 8),
-    Contact('Jasmine Patel', 'JP', [tags[1], tags[5]], 9),
-    Contact('Kevin Nguyen', 'KN', [tags[0], tags[5]], 10),
-    Contact('Liam O\'Connor', 'LO', [tags[1], tags[4]], 11),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _refreshContacts();
+  }
 
-  List<Contact> getFilteredContacts() {
-    if (selectedTags.isEmpty) {
-      return contacts;
+  Future<void> _refreshContacts() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+    try {
+      final fetched = await _contactService.getContacts(includeDeleted: false);
+      fetched.sort(
+        (a, b) =>
+            a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
+      );
+      setState(() => _contacts = fetched);
+    } catch (e) {
+      setState(() => _error = e.toString());
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-    return contacts
-        .where(
-          (contact) => contact.tags.any((tag) => selectedTags.contains(tag)),
-        )
-        .toList();
   }
 
-  void _toggleTag(Tag tag) {
-    setState(() {
-      if (selectedTags.contains(tag)) {
-        selectedTags.remove(tag);
-      } else {
-        selectedTags.add(tag);
-      }
-    });
+  Future<void> _onAddContact() async {
+    final created = await Navigator.of(
+      context,
+    ).push<bool>(MaterialPageRoute(builder: (_) => const ContactFormPage()));
+    if (created == true) {
+      await _refreshContacts();
+    }
   }
 
-  void _changeTheme(ColorPalette theme) {
+  Future<void> _onEditContact(ContactModel contact) async {
+    final updated = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => ContactFormPage(contact: contact)),
+    );
+    if (updated == true) {
+      await _refreshContacts();
+    }
+  }
+
+  Future<void> _onDeleteContact(ContactModel contact) async {
+    final removedContact = contact;
     setState(() {
-      selectedTheme = theme;
+      _contacts = _contacts.where((c) => c.id != removedContact.id).toList();
     });
+
+    try {
+      await _contactService.deleteContact(removedContact.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Deleted ${removedContact.displayName}'),
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () async {
+              await _contactService.restoreContact(removedContact.id);
+              await _refreshContacts();
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      // Revert UI on error
+      setState(() => _contacts = [..._contacts, removedContact]);
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to delete: $e')));
+    }
   }
 
   @override
@@ -81,27 +112,70 @@ class _ContactsScreenState extends State<ContactsScreen> {
             selectedTheme: selectedTheme,
             onThemeChanged: _changeTheme,
           ),
-          FilterRow(
-            tags: tags,
-            selectedTags: selectedTags,
-            colorPalette: selectedTheme,
-            onTagToggle: _toggleTag,
-          ),
           Expanded(
-            child: ListView.builder(
-              itemCount: getFilteredContacts().length,
-              itemBuilder: (context, index) {
-                final contact = getFilteredContacts()[index];
-                return ContactTile(
-                  contact: contact,
-                  colorPalette: selectedTheme,
-                );
-              },
+            child: RefreshIndicator(
+              onRefresh: _refreshContacts,
+              child: _buildBody(),
             ),
           ),
         ],
       ),
       bottomNavigationBar: const AppBottomNav(active: AppNav.contacts),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _onAddContact,
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+
+  Widget _buildBody() {
+    if (_isLoading && _contacts.isEmpty) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (_error != null) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, size: 48),
+              const SizedBox(height: 8),
+              Text(_error!, textAlign: TextAlign.center),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _refreshContacts,
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+    if (_contacts.isEmpty) {
+      return ListView(
+        children: const [
+          SizedBox(height: 120),
+          Icon(Icons.contact_page_outlined, size: 72, color: Colors.grey),
+          SizedBox(height: 12),
+          Center(child: Text('No contacts yet')),
+          SizedBox(height: 4),
+          Center(child: Text('Tap + to add your first contact')),
+        ],
+      );
+    }
+    return ListView.builder(
+      itemCount: _contacts.length,
+      itemBuilder: (context, index) {
+        final contact = _contacts[index];
+        return ContactTile(
+          contact: contact,
+          colorPalette: selectedTheme,
+          onTap: () => _onEditContact(contact),
+          onEdit: () => _onEditContact(contact),
+          onDelete: () => _onDeleteContact(contact),
+        );
+      },
     );
   }
 }

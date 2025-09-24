@@ -10,11 +10,20 @@ A modern contact management application built with Flutter and Supabase.
 - Automatic unique username generation
 - Profile management and account settings
 
-### Contact Management
-- View and manage your contacts
+### Contact Management (Epic 2 - ✅ Implemented)
+- **View contacts**: List all your contacts with search and filtering
+- **Add contacts**: Create new contacts with name, phone, and email
+- **Edit contacts**: Update existing contact information
+- **Delete contacts**: Soft-delete with undo functionality
+- **Real-time sync**: Powered by Supabase with row-level security
+- **Empty state**: Friendly UI when no contacts exist
+- **Pull-to-refresh**: Update contact list with gesture
+
+### Additional Features
 - Personal contact card customization
 - Contact sharing and visibility controls
-- Tag-based organization
+- Tag-based organization (future epic)
+- Multi-theme support with color palettes
 
 ## Getting Started
 
@@ -49,11 +58,13 @@ The app has three main sections:
 3. **Account** - Manage authentication and account settings
 
 ### Key Pages
-- `/` - Splash screen with auth check
+- `/` - Splash screen with auth check and dev routing
 - `/login` - Authentication (sign in/up)
-- `/app` - Main contacts screen
+- `/app` - Main contacts screen with CRUD functionality
 - `/profile` - Contact card management
 - `/account` - Account settings
+- `/dev-selector` - Development mode: choose between app and debug tools
+- `/debug` - Test suite for database operations and epic validation
 
 ## Development
 
@@ -61,6 +72,11 @@ The app has three main sections:
 - Uses Supabase for backend services
 - Follows modern Flutter best practices
 - Implements material design principles
+
+### Development Tools
+- **Debug Mode**: Run in debug to access `/dev-selector` for testing
+- **Database Testing**: Use `/debug` route to test individual epics and features
+- **Contact Seeding**: Use "E2 → Contacts CRUD → Seed 12 contacts" to populate test data
 
 ## Documentation
 

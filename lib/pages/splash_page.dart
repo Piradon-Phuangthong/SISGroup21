@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:omada/supabase/supabase_instance.dart';
+import 'package:flutter/foundation.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -32,8 +33,12 @@ class _SplashPageState extends State<SplashPage> {
         if (!mounted) return;
 
         if (userResponse.user != null) {
-          // Valid session - route to contacts screen
-          if (mounted) Navigator.of(context).pushReplacementNamed('/app');
+          // Valid session - route to dev selector in debug mode, app in release
+          if (mounted) {
+            Navigator.of(
+              context,
+            ).pushReplacementNamed(kDebugMode ? '/dev-selector' : '/app');
+          }
         } else {
           // Invalid session - clear and go to login
           await supabase.auth.signOut();

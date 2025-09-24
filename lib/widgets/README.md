@@ -15,9 +15,12 @@ This directory contains reusable UI components for the Omada Contacts app.
 
 ### Contact Management
 - `contact_tile.dart` - List tile for displaying contact information
-  - Displays contact avatar and basic info
-  - Handles tap interactions
-  - Supports various display states
+  - **Epic 2 Updates**: Uses `ContactModel` from data layer
+  - Displays contact avatar (generated from `ContactModel.initials`)
+  - Shows display name and primary contact method
+  - Popup menu for edit/delete actions
+  - Tap handler for quick edit access
+  - Color-coded avatars using theme palette
 
 ### UI Components
 - `custom_app_bar.dart` - Custom app bar component
@@ -51,8 +54,11 @@ AppBottomNav(
 ### Contact Tile
 ```dart
 ContactTile(
-  contact: contactModel,
+  contact: contactModel,        // ContactModel from data layer
   colorPalette: selectedTheme,
+  onTap: () => editContact(contact),      // Optional tap handler
+  onEdit: () => editContact(contact),     // Optional edit action
+  onDelete: () => deleteContact(contact), // Optional delete action
 )
 ```
 

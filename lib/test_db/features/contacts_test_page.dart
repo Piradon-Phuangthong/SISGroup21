@@ -53,6 +53,87 @@ class _ContactsTestPageState extends State<ContactsTestPage> {
     }
   }
 
+  Future<void> _seedDummyContacts() async {
+    setState(() => _status = 'Seeding...');
+    try {
+      final samples = <Map<String, String?>>[
+        {
+          'name': 'Anna Martinez',
+          'email': 'anna.martinez@example.com',
+          'phone': '+1 555 0101',
+        },
+        {
+          'name': 'Ben Johnson',
+          'email': 'ben.johnson@example.com',
+          'phone': '+1 555 0102',
+        },
+        {
+          'name': 'Clara Liu',
+          'email': 'clara.liu@example.com',
+          'phone': '+1 555 0103',
+        },
+        {
+          'name': 'David Chen',
+          'email': 'david.chen@example.com',
+          'phone': '+1 555 0104',
+        },
+        {
+          'name': 'Emily Foster',
+          'email': 'emily.foster@example.com',
+          'phone': '+1 555 0105',
+        },
+        {
+          'name': 'Fiona Brown',
+          'email': 'fiona.brown@example.com',
+          'phone': '+1 555 0106',
+        },
+        {
+          'name': 'George Green',
+          'email': 'george.green@example.com',
+          'phone': '+1 555 0107',
+        },
+        {
+          'name': 'Hannah Lee',
+          'email': 'hannah.lee@example.com',
+          'phone': '+1 555 0108',
+        },
+        {
+          'name': 'Isaac Kim',
+          'email': 'isaac.kim@example.com',
+          'phone': '+1 555 0109',
+        },
+        {
+          'name': 'Jasmine Patel',
+          'email': 'jasmine.patel@example.com',
+          'phone': '+1 555 0110',
+        },
+        {
+          'name': 'Kevin Nguyen',
+          'email': 'kevin.nguyen@example.com',
+          'phone': '+1 555 0111',
+        },
+        {
+          'name': "Liam O'Connor",
+          'email': 'liam.oconnor@example.com',
+          'phone': '+1 555 0112',
+        },
+      ];
+
+      for (final s in samples) {
+        await _service.createContact(
+          fullName: s['name'],
+          primaryEmail: s['email'],
+          primaryMobile: s['phone'],
+        );
+      }
+
+      await _load();
+      setState(() => _status = 'Seeded ${samples.length} contacts');
+    } catch (e) {
+      setState(() => _status = 'Error seeding: $e');
+    }
+  }
+
   Future<void> _update(ContactModel c) async {
     try {
       await _service.updateContact(
@@ -136,6 +217,11 @@ class _ContactsTestPageState extends State<ContactsTestPage> {
                         ElevatedButton(
                           onPressed: _create,
                           child: const Text('Create'),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: _seedDummyContacts,
+                          child: const Text('Seed 12 contacts'),
                         ),
                       ],
                     ),
