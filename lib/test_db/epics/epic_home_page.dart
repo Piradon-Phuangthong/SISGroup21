@@ -7,7 +7,7 @@ import '../features/sharing_test_page.dart';
 import '../features/my_contact_card_page.dart';
 import '../features/my_overview_page.dart';
 import '../features/my_channels_page.dart';
-import '../../pages/profile_management_page.dart';
+import 'package:omada/ui/pages/profile_management_page.dart';
 import '../features/tag_assignment_test_page.dart';
 
 class EpicHomePage extends StatelessWidget {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../data/services/auth_service.dart';
+import 'package:omada/core/data/services/auth_service.dart';
 
 class AuthTestPage extends StatefulWidget {
   const AuthTestPage({super.key});

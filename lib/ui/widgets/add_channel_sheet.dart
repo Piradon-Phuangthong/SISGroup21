@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../data/utils/channel_presets.dart';
-import '../data/repositories/contact_channel_repository.dart';
+import 'package:omada/core/data/utils/channel_presets.dart';
+import 'package:omada/core/data/repositories/contact_channel_repository.dart';
 
 class AddChannelSheet extends StatefulWidget {
   final String contactId;

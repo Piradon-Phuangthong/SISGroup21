@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../data/repositories/profile_repository.dart';
-import '../../data/services/contact_service.dart';
-import '../../data/repositories/contact_channel_repository.dart';
-import '../../data/repositories/tag_repository.dart';
-import '../../data/models/models.dart';
+import 'package:omada/core/data/repositories/profile_repository.dart';
+import 'package:omada/core/data/services/contact_service.dart';
+import 'package:omada/core/data/repositories/contact_channel_repository.dart';
+import 'package:omada/core/data/repositories/tag_repository.dart';
+import 'package:omada/core/data/models/models.dart';
 
 class MyOverviewPage extends StatefulWidget {
   const MyOverviewPage({super.key});

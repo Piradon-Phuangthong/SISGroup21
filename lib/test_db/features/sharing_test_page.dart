@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../data/services/sharing_service.dart';
+import 'package:omada/core/data/services/sharing_service.dart';
 
 class SharingTestPage extends StatefulWidget {
   const SharingTestPage({super.key});

@@ -1,14 +1,18 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
-import '../data/models/models.dart';
-import '../data/services/contact_service.dart';
-import '../data/repositories/profile_repository.dart';
-import '../data/repositories/contact_channel_repository.dart';
-import '../data/services/sharing_service.dart';
-import '../widgets/app_bottom_nav.dart';
-import '../data/utils/channel_launcher.dart';
-import '../widgets/add_channel_sheet.dart';
+import 'package:omada/core/data/models/models.dart';
+import 'package:omada/core/data/services/contact_service.dart';
+import 'package:omada/core/data/repositories/profile_repository.dart';
+import 'package:omada/core/data/repositories/contact_channel_repository.dart';
+import 'package:omada/core/data/services/sharing_service.dart';
+import 'package:omada/ui/widgets/app_bottom_nav.dart';
+import 'package:omada/ui/widgets/add_channel_sheet.dart';
+import 'package:omada/core/data/utils/channel_launcher.dart';
+import 'profile/channel_grid.dart';
+import 'profile/cta_panel.dart';
+import 'profile/about_section.dart';
+import 'profile/avatar.dart';
 
 class ProfileManagementPage extends StatefulWidget {
   const ProfileManagementPage({super.key});
@@ -139,71 +143,9 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                           padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: Column(
                             children: [
-                              // Avatar
-                              Container(
-                                width: MediaQuery.of(context).size.width * 0.32,
-                                height:
-                                    MediaQuery.of(context).size.width * 0.32,
-                                decoration: const BoxDecoration(
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Stack(
-                                  children: [
-                                    Container(
-                                      decoration: const BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        gradient: RadialGradient(
-                                          center: Alignment(0.3, -0.3),
-                                          radius: 0.8,
-                                          colors: [
-                                            Color(0xFF93c5fd), // Blue-300
-                                            Color(0xFF4f46e5), // Indigo-600
-                                            Color(0xFF1e40af), // Blue-800
-                                          ],
-                                          stops: [0.0, 0.6, 1.0],
-                                        ),
-                                      ),
-                                    ),
-                                    Positioned.fill(
-                                      child: Padding(
-                                        padding: EdgeInsets.fromLTRB(
-                                          MediaQuery.of(context).size.width *
-                                              0.12,
-                                          MediaQuery.of(context).size.width *
-                                              0.12,
-                                          MediaQuery.of(context).size.width *
-                                              0.18,
-                                          MediaQuery.of(context).size.width *
-                                              0.18,
-                                        ),
-                                        child: Container(
-                                          decoration: const BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            gradient: RadialGradient(
-                                              center: Alignment(0.2, -0.1),
-                                              colors: [
-                                                Color(0xFF7dd3fc), // Sky-300
-                                                Color(0xFF60a5fa), // Blue-400
-                                                Colors.transparent,
-                                              ],
-                                              stops: [0.0, 0.5, 0.85],
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 14),
-                              Text(
-                                displayName,
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: colorText,
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 24,
-                                ),
+                              Avatar(
+                                displayName: displayName,
+                                colorText: colorText,
                               ),
                               const SizedBox(height: 4),
                               if (notes?.isNotEmpty == true)
@@ -215,24 +157,7 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                                   ),
                                 ),
                               const SizedBox(height: 10),
-                              Container(
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withOpacity(0.16),
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 12,
-                                ),
-                                child: Text(
-                                  about,
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: colorText.withOpacity(0.8),
-                                    height: 1.45,
-                                  ),
-                                ),
-                              ),
+                              AboutSection(title: about, textColor: colorText),
                             ],
                           ),
                         ),
@@ -242,7 +167,7 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                         // Channel chips grid
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: _ChannelGrid(
+                          child: ChannelGrid(
                             colorPill: colorPill,
                             colorPillActive: colorPillActive,
                             colorText: colorText,
@@ -264,41 +189,13 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                         // CTA / actions panel
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1e40af).withOpacity(0.28),
-                              borderRadius: BorderRadius.circular(22),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Colors.black38,
-                                  blurRadius: 24,
-                                  offset: Offset(0, 10),
-                                ),
-                              ],
-                            ),
-                            padding: const EdgeInsets.all(14),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                _CtaItem(
-                                  icon: Icons.add,
-                                  title: 'Add',
-                                  value: 'Channel',
-                                  onTap: () => _openAddChannel(context, data),
-                                ),
-                                _CallButton(
-                                  onTap: () => _quickCall(context, data),
-                                ),
-                                _CtaItem(
-                                  icon: Icons.share,
-                                  title: 'Share',
-                                  value: _selectedChannelIds.isEmpty
-                                      ? 'Request'
-                                      : '${_selectedChannelIds.length} selected',
-                                  onTap: () => _openShare(context, data),
-                                ),
-                              ],
-                            ),
+                          child: CtaPanel(
+                            centerValue: _selectedChannelIds.isEmpty
+                                ? 'Request'
+                                : '${_selectedChannelIds.length} selected',
+                            onAdd: () => _openAddChannel(context, data),
+                            onShare: () => _openShare(context, data),
+                            onQuickCall: () => _quickCall(context, data),
                           ),
                         ),
 
@@ -516,216 +413,6 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
   }
 }
 
-class _ChannelGrid extends StatelessWidget {
-  final Color colorPill;
-  final Color colorPillActive;
-  final Color colorText;
-  final List<ContactChannelModel> channels;
-  final Set<String> selectedIds;
-  final void Function(String id) onOpen;
-  final void Function(String id)? onLongPress;
-  const _ChannelGrid({
-    required this.colorPill,
-    required this.colorPillActive,
-    required this.colorText,
-    required this.channels,
-    required this.selectedIds,
-    required this.onOpen,
-    this.onLongPress,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final chipData = channels
-        .map(
-          (c) => _ChannelChipData(
-            id: c.id,
-            label: _labelForChannel(c),
-            icon: _iconForKind(c.kind),
-            primary: c.isPrimary,
-          ),
-        )
-        .toList();
-
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
-        mainAxisSpacing: 10,
-        crossAxisSpacing: 10,
-        childAspectRatio: 1.1,
-      ),
-      itemCount: chipData.length,
-      itemBuilder: (context, index) {
-        final ch = chipData[index];
-        final isPrimary = ch.primary;
-        final isSelected = selectedIds.contains(ch.id);
-        return InkWell(
-          borderRadius: BorderRadius.circular(999),
-          onTap: () => onOpen(ch.id),
-          onLongPress: onLongPress == null ? null : () => onLongPress!(ch.id),
-          child: Container(
-            decoration: BoxDecoration(
-              color: isPrimary ? null : colorPill,
-              gradient: isPrimary
-                  ? LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [colorPillActive, Color(0xFF3b82f6)], // Blue-500
-                    )
-                  : null,
-              borderRadius: BorderRadius.circular(999),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.white.withOpacity(0.06),
-                  blurRadius: 0,
-                  spreadRadius: 1,
-                ),
-              ],
-              border: isSelected
-                  ? Border.all(
-                      color: Theme.of(context).colorScheme.primary,
-                      width: 2,
-                    )
-                  : null,
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  ch.icon,
-                  color: isPrimary ? const Color(0xFF0b1729) : colorText,
-                  size: 22,
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  ch.label.toUpperCase(),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 11,
-                    letterSpacing: 0.8,
-                    color: isPrimary
-                        ? const Color(0xFF0b1729)
-                        : colorText.withOpacity(0.9),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-}
-
-class _ChannelChipData {
-  final String id;
-  final String label;
-  final IconData icon;
-  final bool primary;
-  const _ChannelChipData({
-    required this.id,
-    required this.label,
-    required this.icon,
-    this.primary = false,
-  });
-}
-
-class _CtaItem extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final String value;
-  final VoidCallback? onTap;
-  const _CtaItem({
-    required this.icon,
-    required this.title,
-    required this.value,
-    this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(12),
-        onTap: onTap,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 54,
-              height: 54,
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.08),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: Colors.white, size: 22),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              title.toUpperCase(),
-              style: TextStyle(
-                color: Colors.white.withOpacity(0.85),
-                fontSize: 12,
-                letterSpacing: 0.8,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              value,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _CallButton extends StatelessWidget {
-  final VoidCallback? onTap;
-  const _CallButton({this.onTap});
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      customBorder: const CircleBorder(),
-      onTap: onTap,
-      child: Container(
-        width: 74,
-        height: 74,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: const RadialGradient(
-            center: Alignment(0, -0.4),
-            radius: 0.8,
-            colors: [
-              Color(0xFF93c5fd), // Blue-300
-              Color(0xFF60a5fa), // Blue-400
-              Color(0xFF3b82f6), // Blue-500
-            ],
-            stops: [0.0, 0.7, 1.0],
-          ),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black45,
-              blurRadius: 18,
-              offset: Offset(0, 6),
-            ),
-          ],
-          border: Border.all(color: Colors.black.withOpacity(0.08), width: 6),
-        ),
-        child: const Icon(Icons.bolt, size: 34, color: Colors.black87),
-      ),
-    );
-  }
-}
-
 // Old local nav item removed; using shared AppBottomNav
 
 // Data aggregation
@@ -747,11 +434,44 @@ Future<_ProfileData> _loadProfileData() async {
   final channelsRepo = ContactChannelRepository(client);
 
   final profile = await profiles.getCurrentProfile();
-  final existing = await contacts.getContacts(limit: 1);
-  final contact = existing.isEmpty
-      ? await contacts.createContact(fullName: profile?.username)
-      : existing.first;
-  final channels = await channelsRepo.getChannelsForContact(contact.id);
+
+  // Fetch a batch of contacts and prefer one that already has channels
+  final candidates = await contacts.getContacts(limit: 25);
+
+  ContactModel contact;
+  List<ContactChannelModel> channels = const [];
+
+  if (candidates.isNotEmpty) {
+    // Load channels for each contact in parallel and pick the first with any channels
+    final results = await Future.wait(
+      candidates.map(
+        (c) async =>
+            MapEntry(c, await channelsRepo.getChannelsForContact(c.id)),
+      ),
+    );
+
+    MapEntry<ContactModel, List<ContactChannelModel>>? withChannels;
+    for (final entry in results) {
+      if (entry.value.isNotEmpty) {
+        withChannels = entry;
+        break;
+      }
+    }
+
+    if (withChannels != null) {
+      contact = withChannels.key;
+      channels = withChannels.value;
+    } else {
+      // No channels on any contact yet; use the most recently updated
+      contact = candidates.first;
+      channels = await channelsRepo.getChannelsForContact(contact.id);
+    }
+  } else {
+    // No contact exists; create a starter card named after username
+    contact = await contacts.createContact(fullName: profile?.username);
+    channels = const [];
+  }
+
   return _ProfileData(profile: profile, contact: contact, channels: channels);
 }
 
@@ -781,29 +501,7 @@ String _labelForChannel(ContactChannelModel c) {
   }
 }
 
-IconData _iconForKind(String kind) {
-  switch (kind.toLowerCase()) {
-    case 'mobile':
-    case 'phone':
-      return Icons.phone;
-    case 'email':
-      return Icons.email;
-    case 'instagram':
-      return Icons.camera_alt_outlined;
-    case 'linkedin':
-      return Icons.business_center;
-    case 'whatsapp':
-      return Icons.message;
-    case 'website':
-      return Icons.language;
-    case 'telegram':
-      return Icons.send;
-    case 'address':
-      return Icons.place;
-    default:
-      return Icons.link;
-  }
-}
+// _iconForKind moved into ChannelGrid; removed here
 
 String _aboutText(_ProfileData data) {
   if (data.contact.notes?.isNotEmpty == true) return data.contact.notes!;

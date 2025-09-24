@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:omada/supabase/supabase_instance.dart';
+import 'package:omada/core/supabase/supabase_instance.dart';
 import 'package:flutter/foundation.dart';
 
 class SplashPage extends StatefulWidget {

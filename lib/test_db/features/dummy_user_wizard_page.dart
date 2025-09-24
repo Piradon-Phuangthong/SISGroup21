@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../data/services/auth_service.dart';
-import '../../data/services/contact_service.dart';
-import '../../data/repositories/contact_channel_repository.dart';
+import 'package:omada/core/data/services/auth_service.dart';
+import 'package:omada/core/data/services/contact_service.dart';
+import 'package:omada/core/data/repositories/contact_channel_repository.dart';
 
 class DummyUserWizardPage extends StatefulWidget {
   const DummyUserWizardPage({super.key});

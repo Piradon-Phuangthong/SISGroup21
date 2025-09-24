@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../data/services/contact_service.dart';
-import '../../data/services/tag_service.dart';
-import '../../data/models/models.dart';
+import 'package:omada/core/data/services/contact_service.dart';
+import 'package:omada/core/data/services/tag_service.dart';
+import 'package:omada/core/data/models/models.dart';
 
 class TagAssignmentTestPage extends StatefulWidget {
   const TagAssignmentTestPage({super.key});

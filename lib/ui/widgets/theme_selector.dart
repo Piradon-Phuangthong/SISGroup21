@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../themes/color_palette.dart';
+import 'package:omada/core/theme/color_palette.dart';
 
 class ThemeSelector extends StatelessWidget {
   final List<ColorPalette> themes;

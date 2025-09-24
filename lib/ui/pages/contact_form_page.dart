@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../data/models/contact_model.dart';
-import '../data/services/contact_service.dart';
-import '../data/utils/validation_utils.dart';
-import '../supabase/supabase_instance.dart';
-import '../data/services/tag_service.dart';
-import '../data/models/tag_model.dart';
+import 'package:omada/core/data/models/contact_model.dart';
+import 'package:omada/core/data/services/contact_service.dart';
+import 'package:omada/core/data/utils/validation_utils.dart';
+import 'package:omada/core/supabase/supabase_instance.dart';
+import 'package:omada/core/data/services/tag_service.dart';
+import 'package:omada/core/data/models/tag_model.dart';
 
 class ContactFormPage extends StatefulWidget {
   final ContactModel? contact;

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../themes/color_palette.dart';
-import '../data/models/tag_model.dart';
+import 'package:omada/core/theme/color_palette.dart';
+import 'package:omada/core/data/models/tag_model.dart';
 
 /// Horizontal list of tag filter buttons.
 ///

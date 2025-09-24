@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:omada/supabase/supabase_instance.dart';
-import '../widgets/app_bottom_nav.dart';
+import 'package:omada/core/supabase/supabase_instance.dart';
+import 'package:omada/ui/widgets/app_bottom_nav.dart';
 
 class AccountPage extends StatefulWidget {
   const AccountPage({super.key});

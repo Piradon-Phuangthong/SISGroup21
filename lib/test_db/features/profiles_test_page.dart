@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../../data/repositories/profile_repository.dart';
-import '../../data/models/models.dart';
+import 'package:omada/core/data/repositories/profile_repository.dart';
+import 'package:omada/core/data/models/models.dart';
 
 class ProfilesTestPage extends StatefulWidget {
   const ProfilesTestPage({super.key});

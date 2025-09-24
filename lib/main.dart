@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'supabase/supabase_instance.dart';
+import 'package:omada/core/supabase/supabase_instance.dart';
 import 'test_db/epics/epic_home_entry.dart';
-import 'screens/contacts_screen.dart';
-import 'pages/profile_management_page.dart';
-import 'pages/splash_page.dart';
-import 'pages/login_page.dart';
-import 'pages/account_page.dart';
+import 'package:omada/ui/pages/contacts_screen.dart';
+import 'package:omada/ui/pages/profile_management_page.dart';
+import 'package:omada/ui/pages/splash_page.dart';
+import 'package:omada/ui/pages/login_page.dart';
+import 'package:omada/ui/pages/account_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
