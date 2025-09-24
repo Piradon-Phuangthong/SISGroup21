@@ -17,6 +17,10 @@ This directory contains screen components for the Omada Contacts app.
     - Manage Tags bottom sheet (create/delete tags)
     - Displays color-coded tag chips per contact
     - Tapping a tag chip toggles its filter in the list
+  - **Epic 5 Enhancements**:
+    - Discover users bottom sheet: search by username and send requests
+    - Requests bottom sheet: view incoming requests, accept or decline
+    - Snackbars for success/error feedback
 
 ## Usage
 

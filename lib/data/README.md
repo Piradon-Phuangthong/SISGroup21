@@ -255,6 +255,12 @@ await sharingService.acceptShareRequest(
   ],
 );
 
+// Simple response without creating shares (decline/cancel flows)
+await sharingService.respondToShareRequestSimple(
+  request.id,
+  ShareRequestStatus.declined,
+);
+
 // Get my shares
 final myShares = await sharingService.getMyShares();
 

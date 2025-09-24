@@ -138,6 +138,14 @@ class SharingService {
     );
   }
 
+  /// Responds to a share request without creating shares
+  Future<void> respondToShareRequestSimple(
+    String requestId,
+    ShareRequestStatus response,
+  ) async {
+    await _sharingRepository.respondToShareRequest(requestId, response);
+  }
+
   /// Cancels a share request (by requester)
   Future<void> cancelShareRequest(String requestId) async {
     await _sharingRepository.cancelShareRequest(requestId);

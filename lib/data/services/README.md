@@ -8,6 +8,10 @@ This directory contains service classes that implement business logic for the Om
 - `contact_service.dart` - Manages contact operations and business rules
 - `tag_service.dart` - Manages tag operations and categorization logic
 - `sharing_service.dart` - Handles contact sharing functionality
+  - Send share requests by username
+  - List incoming/outgoing requests, enrich with profile data
+  - Accept/decline requests; create contact shares on accept
+  - Update/revoke shares; simple respond helper for decline/cancel
 - `services.dart` - Barrel file that exports all services
 
 ## Usage

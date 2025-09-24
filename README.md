@@ -27,6 +27,12 @@ A modern contact management application built with Flutter and Supabase.
 - **Search**: Debounced search field with clear button
 - **Tag visibility**: Contacts list shows color-coded tag chips per contact
 
+### Username Discovery & Share Requests (Epic 5 - ✅ Implemented)
+- **Discover users**: Search other users by username (ilike match)
+- **Send request**: Send a share request with an optional message
+- **Manage requests**: View incoming requests and accept or decline
+- Access these from the Contacts screen action row: "Discover users" and "Requests"
+
 ### Additional Features
 - Personal contact card customization
 - Contact sharing and visibility controls
