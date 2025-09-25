@@ -10,9 +10,10 @@ import '../widgets/contact_tile.dart';
 class ContactsScreen extends StatefulWidget {
   const ContactsScreen({super.key});
 
-  @override
+    @override
   State<ContactsScreen> createState() => _ContactsScreenState();
 }
+
 
 class _ContactsScreenState extends State<ContactsScreen> {
   List<Tag> selectedTags = [];
@@ -100,6 +101,8 @@ class _ContactsScreenState extends State<ContactsScreen> {
           ),
         ],
       ),
+    
     );
   }
 }
+
