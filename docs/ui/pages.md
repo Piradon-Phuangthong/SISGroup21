@@ -1,0 +1,72 @@
+# Pages
+
+This directory contains page-level components for the Omada Contacts app.
+
+## Files
+
+### Authentication & Profile Pages
+- `splash_page.dart` - Initial loading screen with auth check and routing
+  - Routes to `/dev-selector` in debug mode, `/app` in release
+  - Validates Supabase session on startup
+- `login_page.dart` - Authentication page with sign-in and sign-up functionality
+- `account_page.dart` - Account settings and auth management
+  - View/edit username
+  - View email
+  - Sign out functionality
+- `profile_management_page.dart` - Contact card management
+  - Edit personal contact information
+  - Manage contact channels (Epic 3)
+    - Tap a channel to launch the corresponding app or web fallback
+    - Long-press a channel for actions (open, set/unset primary, SMS when applicable)
+    - Quick-call action prefers primary mobile/phone
+  - Configure sharing settings
+
+### Contact Management Pages
+- `contact_form_page.dart` - Create and edit contacts
+  - Form validation using `ValidationUtils`
+  - Supports both create and edit modes
+  - Required: name fields + phone, optional: email
+  - Tag assignment: select/unselect tag chips for the contact
+  - Quick add tag: ActionChip opens a dialog, creates the tag, and selects it
+  - Persists selected `tagIds` on create/update via `ContactService`
+
+### Add Channel Flow (Presets)
+- `AddChannelSheet` (bottom sheet) provides preset kinds: mobile, email, instagram, linkedin, whatsapp, messenger
+- URL is auto-generated and read-only based on the value (e.g., instagram username → https://instagram.com/<username>)
+
+## Navigation Flow
+
+1. **Initial Flow**
+   - App starts at `splash_page.dart`
+   - Routes to `login_page.dart` if not authenticated
+   - Routes to main app if authenticated
+
+2. **Authentication**
+   - `login_page.dart` handles both sign-in and sign-up
+   - Supports email/password auth
+   - Optional username during sign-up
+   - Auto-generates unique username if not provided
+
+3. **Main App Navigation**
+   - Bottom navigation between main sections:
+     1. Contacts List (CRUD, tags & filtering)
+     2. My Card (`profile_management_page.dart`)
+     3. Account (`account_page.dart`)
+   - Modal navigation for contact management:
+     - Add contact: FAB → `contact_form_page.dart`
+     - Edit contact: Tap/menu → `contact_form_page.dart` with existing contact
+
+4. **Development Navigation** (debug mode only)
+   - `splash_page.dart` → `/dev-selector` for route choice
+   - `/dev-selector` → `/app` (main app) or `/debug` (test suite)
+   - `/debug` → Epic-based testing including contact seeding
+
+## Implementation Details
+
+These pages:
+- Compose multiple widgets to create complete UI screens
+- Handle page-level state management
+- Interact with Supabase services for data and auth
+- Manage navigation within their scope
+- Implement proper loading states and error handling
+- Follow material design principles

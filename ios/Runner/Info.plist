@@ -45,6 +45,13 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+  <key>LSApplicationQueriesSchemes</key>
+  <array>
+    <string>instagram</string>
+    <string>whatsapp</string>
+    <string>fb-messenger</string>
+    <string>linkedin</string>
+  </array>
   <key>CFBundleURLTypes</key>
   <array>
     <dict>

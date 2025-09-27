@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:omada/pages/account_page.dart';
-import 'package:omada/pages/login_page.dart';
-import 'package:omada/pages/splash_page.dart';
+import 'package:omada/ui/pages/account_page.dart';
+import 'package:omada/ui/pages/login_page.dart';
+import 'package:omada/ui/pages/splash_page.dart';
 
 class UserManagementTest extends StatelessWidget {
   const UserManagementTest({super.key});
