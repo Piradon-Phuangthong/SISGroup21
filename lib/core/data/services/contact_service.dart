@@ -193,6 +193,39 @@ class ContactService {
     );
   }
 
+
+  /// Archives a contact (hidden but not deleted)
+  Future<ContactModel> archiveContact(String contactId) async {
+    return await _contactRepository.updateContact(
+      contactId,
+      customFields: {'archived': true},
+    );
+  }
+
+  /// Unarchives a contact (makes it visible again)
+  Future<ContactModel> unarchiveContact(String contactId) async {
+    return await _contactRepository.updateContact(
+      contactId,
+      customFields: {'archived': false},
+    );
+  }
+
+  /// Gets only archived contacts
+  Future<List<ContactModel>> getArchivedContacts({
+    int? limit,
+    int? offset,
+  }) async {
+    return await _contactRepository.getContacts(
+      includeDeleted: false,
+      limit: limit,
+      offset: offset,
+      orderBy: ContactSortOrder.updatedDesc.field,
+      ascending: ContactSortOrder.updatedDesc.ascending,
+    ).then((contacts) => 
+      contacts.where((c) => c.customFields['archived'] == true).toList());
+}
+
+
   /// Gets contacts by tag
   Future<List<ContactModel>> getContactsByTag(
     String tagId, {
