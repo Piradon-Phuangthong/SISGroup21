@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:omada/screens/dashboard_screen.dart';
+import 'package:omada/screens/dashboard/dashboard_screen.dart';
 
 // UNCOMMENT FOR NEW USER MANAGEMENT APP
 import 'user_management_test.dart';
