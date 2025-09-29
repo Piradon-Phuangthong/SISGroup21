@@ -3,6 +3,7 @@ import 'package:omada/core/supabase/supabase_instance.dart';
 import 'package:flutter/foundation.dart';
 import 'package:omada/core/controllers/auth_controller.dart';
 import 'package:omada/core/theme/design_tokens.dart';
+import 'package:shimmer/shimmer.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -22,8 +23,7 @@ class _SplashPageState extends State<SplashPage> {
   }
 
   Future<void> _redirect() async {
-    // Small delay to show splash screen briefly
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(seconds: 3));
 
     if (!mounted) return;
 
@@ -32,7 +32,6 @@ class _SplashPageState extends State<SplashPage> {
 
       if (session != null) {
         final userResponse = await _auth.getUser();
-
         if (!mounted) return;
 
         if (userResponse.user != null) {
@@ -41,9 +40,7 @@ class _SplashPageState extends State<SplashPage> {
           );
         } else {
           await _auth.signOut();
-          if (mounted) {
-            Navigator.of(context).pushReplacementNamed('/login');
-          }
+          if (mounted) Navigator.of(context).pushReplacementNamed('/login');
         }
       } else {
         if (mounted) Navigator.of(context).pushReplacementNamed('/login');
@@ -58,43 +55,52 @@ class _SplashPageState extends State<SplashPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFFF5F6D), // reddish-pink
-              Color(0xFF0D47A1), // deep blue
-            ],
-          ),
-        ),
+      body: TweenAnimationBuilder(
+        tween: Tween<double>(begin: 0, end: 1),
+        duration: const Duration(seconds: 5),
+        curve: Curves.easeInOut,
+        builder: (context, value, child) {
+          return Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Color.lerp(const Color(0xFFFF5F6D), const Color(0xFF42A5F5), value)!,
+                  Color.lerp(const Color(0xFF0D47A1), const Color(0xFFE91E63), value)!,
+                ],
+              ),
+            ),
+            child: child,
+          );
+        },
+        onEnd: () {
+          setState(() {}); // Loop gradient animation
+        },
         child: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // App name/logo
-              Text(
-                'Omada',
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white, // contrast on gradient
-                    ),
-              ),
-              const SizedBox(height: OmadaTokens.space32),
-              // Loading indicator
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              Shimmer.fromColors(
+                baseColor: Colors.white,
+                highlightColor: Colors.blueAccent,
+                child: Text(
+                  'Omada',
+                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                ),
               ),
               const SizedBox(height: OmadaTokens.space16),
-              Text(
-                'Loading...',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.white70,
-                    ),
-              ),
+              // Text(
+                // 'Loading...',
+               // style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  //    color: Colors.white70,
+                 //   ),
+            //  ),
             ],
           ),
         ),
