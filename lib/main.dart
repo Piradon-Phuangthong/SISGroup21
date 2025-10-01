@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:omada/core/supabase/supabase_instance.dart';
 import 'test_db/epics/epic_home_entry.dart';
 import 'package:omada/core/theme/app_theme.dart';
+import 'package:omada/core/theme/app_theme_controller.dart';
 import 'package:omada/ui/pages/contacts_screen.dart';
 import 'package:omada/ui/pages/profile_management_page.dart';
 import 'package:omada/ui/pages/splash_page.dart';
@@ -11,29 +12,37 @@ import 'package:omada/ui/pages/account_page.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initSupabase();
-  runApp(const OmadaRootApp());
+  final themeController = AppThemeController();
+  await themeController.load();
+  runApp(OmadaRootApp(themeController: themeController));
 }
 
 class OmadaRootApp extends StatelessWidget {
-  const OmadaRootApp({super.key});
+  final AppThemeController themeController;
+  const OmadaRootApp({super.key, required this.themeController});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Omada',
-      theme: OmadaTheme.light(),
-      darkTheme: OmadaTheme.dark(),
-      themeMode: ThemeMode.system,
-      routes: {
-        '/': (_) => const SplashPage(),
-        '/login': (_) => const LoginPage(),
-        '/app': (_) => const ContactsScreen(),
-        '/account': (_) => const AccountPage(),
-        '/profile': (_) => const ProfileManagementPage(),
-        '/debug': (_) => const EpicHomeEntry(),
-        '/dev-selector': (_) => const _RouteSelectorPage(),
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: themeController.themeMode,
+      builder: (context, mode, _) {
+        return MaterialApp(
+          title: 'Omada',
+          theme: OmadaTheme.light(),
+          darkTheme: OmadaTheme.dark(),
+          themeMode: mode,
+          routes: {
+            '/': (_) => const SplashPage(),
+            '/login': (_) => const LoginPage(),
+            '/app': (_) => const ContactsScreen(),
+            '/account': (_) => const AccountPage(),
+            '/profile': (_) => const ProfileManagementPage(),
+            '/debug': (_) => const EpicHomeEntry(),
+            '/dev-selector': (_) => const _RouteSelectorPage(),
+          },
+          initialRoute: '/',
+        );
       },
-      initialRoute: '/',
     );
   }
 }
