@@ -33,10 +33,31 @@ class ContactHeader extends StatelessWidget {
               return Stack(
                 fit: StackFit.expand,
                 children: [
+                  // Image.asset("assets/jpg/banner.jpg", fit: BoxFit.cover),
+                  Container(
+                    decoration: BoxDecoration(
+                      image: DecorationImage(
+                        image: AssetImage("assets/jpg/banner.jpg"),
+                        fit: BoxFit.cover, // cover, contain, fill, etc.
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        "O M A D A",
+                        style: TextStyle(
+                          fontStyle: FontStyle.italic,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 24,
+                        ),
+                      ),
+                    ),
+                  ),
+
                   IgnorePointer(
                     ignoring: t < 0.5,
                     child: Opacity(
-                      opacity: t,
+                      opacity: t == 1 ? 1 : 0,
                       child: Container(
                         color: Colors.blue,
                         child: const Center(child: ExpandedContactHeader()),
@@ -46,7 +67,7 @@ class ContactHeader extends StatelessWidget {
                   IgnorePointer(
                     ignoring: t > 0.5,
                     child: Opacity(
-                      opacity: 1 - t,
+                      opacity: t == 0 ? 1 : 0,
                       child: Container(
                         color: Colors.red,
                         child: const Center(child: CollapsedContactHeader()),
