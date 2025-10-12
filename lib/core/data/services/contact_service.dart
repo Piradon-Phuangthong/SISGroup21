@@ -32,6 +32,29 @@ class ContactService {
     );
   }
 
+
+
+
+  /// Gets only soft-deleted contacts (Trash)
+  Future<List<ContactModel>> getDeletedContacts({
+    String? searchTerm,
+    int? limit,
+    int? offset,
+    ContactSortOrder sortOrder = ContactSortOrder.updatedDesc,
+  }) async {
+    // Reuse repository helper you added earlier
+    return await _contactRepository.getDeletedContacts(
+      searchTerm: searchTerm,
+      limit: limit,
+      offset: offset,
+      orderBy: sortOrder.field,
+      ascending: sortOrder.ascending,
+    );
+  }
+
+
+
+  
   /// Gets a specific contact by ID
   Future<ContactModel?> getContact(String contactId) async {
     return await _contactRepository.getContact(contactId);
@@ -135,6 +158,7 @@ class ContactService {
     await _contactRepository.deleteContact(contactId);
   }
 
+  
   /// Permanently deletes a contact
   Future<void> permanentlyDeleteContact(String contactId) async {
     await _contactRepository.permanentlyDeleteContact(contactId);

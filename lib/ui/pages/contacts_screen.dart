@@ -14,6 +14,8 @@ import 'contacts/user_discovery_sheet.dart';
 import 'contacts/incoming_requests_sheet.dart';
 import 'package:omada/core/data/models/tag_model.dart';
 import 'package:omada/core/controllers/contacts_controller.dart';
+import 'deleted_contacts_page.dart';
+
 // Removed unused imports
 
 class ContactsScreen extends StatefulWidget {
@@ -186,7 +188,20 @@ class _ContactsScreenState extends State<ContactsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const CustomAppBar(),
+      appBar: AppBar(
+        title: const Text('Contacts'),
+        actions: [
+          IconButton(
+            tooltip: 'Deleted contacts',
+            icon: const Icon(Icons.delete_outline),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const DeletedContactsPage()),
+              );
+            },
+          ),
+        ],
+      ),
       body: Column(
         children: [
           // Color theme selector removed in favor of a single app palette
