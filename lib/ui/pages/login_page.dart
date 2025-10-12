@@ -229,6 +229,58 @@ class _LoginState extends State<LoginPage> {
                   enabled: !_isLoading,
                   onFieldSubmitted: (_) => _isSignUp ? _signUp() : _signIn(),
                 ),
+                const SizedBox(height: OmadaTokens.space12),
+
+                // Forgot password
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: _isLoading
+                        ? null
+                        : () async {
+                            final email = _emailController.text.trim();
+                            if (email.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text('Enter your email first'),
+                                ),
+                              );
+                              return;
+                            }
+                            try {
+                              await Supabase.instance.client.auth
+                                  .resetPasswordForEmail(
+                                    email,
+                                    redirectTo: 'myapp://reset',
+                                  );
+                              if (!mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Password reset link sent. Check your email.',
+                                  ),
+                                ),
+                              );
+                            } on AuthException catch (e) {
+                              if (!mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text(e.message)),
+                              );
+                            } catch (_) {
+                              if (!mounted) return;
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    'Something went wrong. Please try again.',
+                                  ),
+                                ),
+                              );
+                            }
+                          },
+                    child: const Text('Forgot password?'),
+                  ),
+                ),
+
                 const SizedBox(height: OmadaTokens.space24),
 
                 // Submit button

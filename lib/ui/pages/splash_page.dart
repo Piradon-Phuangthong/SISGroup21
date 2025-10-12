@@ -3,6 +3,8 @@ import 'package:omada/core/supabase/supabase_instance.dart';
 import 'package:flutter/foundation.dart';
 import 'package:omada/core/controllers/auth_controller.dart';
 import 'package:omada/core/theme/design_tokens.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:async';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -13,10 +15,19 @@ class SplashPage extends StatefulWidget {
 
 class _SplashPageState extends State<SplashPage> {
   late final AuthController _auth;
+  StreamSubscription<AuthState>? _authSub;
+  bool _handledRecovery = false;
   @override
   void initState() {
     super.initState();
     _auth = AuthController(supabase);
+    _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      if (!mounted) return;
+      if (data.event == AuthChangeEvent.passwordRecovery && !_handledRecovery) {
+        _handledRecovery = true;
+        Navigator.of(context).pushReplacementNamed('/reset-password');
+      }
+    });
     _redirect();
   }
 
@@ -25,6 +36,11 @@ class _SplashPageState extends State<SplashPage> {
     await Future.delayed(const Duration(milliseconds: 500));
 
     if (!mounted) return;
+
+    if (_handledRecovery) {
+      // Password recovery flow already handled
+      return;
+    }
 
     try {
       // Check current session and validate with backend
@@ -89,5 +105,10 @@ class _SplashPageState extends State<SplashPage> {
         ),
       ),
     );
+  }
+  @override
+  void dispose() {
+    _authSub?.cancel();
+    super.dispose();
   }
 }
