@@ -9,27 +9,37 @@ class ContactHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double expandedHeight = 300;
+    final double collapsedHeight = 140;
+
     return CustomScrollView(
       slivers: [
         SliverAppBar(
-          expandedHeight: 275,
+          expandedHeight: expandedHeight,
+          collapsedHeight: collapsedHeight,
           pinned: true,
           // floating: true,
           // snap: true,
-          collapsedHeight: 100,
           flexibleSpace: LayoutBuilder(
             builder: (context, constraints) {
               final double currentHeight = constraints.biggest.height;
-              final double maxHeight = 301.31111111111113;
-              final double minHeight = 126.3111111111111;
 
               final double t =
-                  ((currentHeight - minHeight) / (maxHeight - minHeight)).clamp(
-                    0.0,
-                    1.0,
-                  );
-              // print("reported height: $t");
+                  ((currentHeight - collapsedHeight) /
+                          (expandedHeight - collapsedHeight))
+                      .clamp(0.0, 1.0);
+              // print("reported t: $t");
               // print("current height: $currentHeight");
+              // print("min height: $minHeight");
+              // print(
+              //   "collapsed height $collapsedHeight, $minHeight, $systemMinHeight",
+              // );
+
+              if (currentHeight > (expandedHeight + collapsedHeight) / 2) {
+                return const ExpandedContactHeader();
+              } else {
+                return const CollapsedContactHeader();
+              }
               return Stack(
                 fit: StackFit.expand,
                 children: [

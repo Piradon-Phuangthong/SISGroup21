@@ -16,7 +16,7 @@ class _ExpandedContactHeaderState extends State<ExpandedContactHeader> {
       decoration: BoxDecoration(
         image: DecorationImage(
           image: AssetImage("assets/jpg/banner.jpg"),
-          fit: BoxFit.cover, // cover, contain, fill, etc.
+          fit: BoxFit.cover,
         ),
       ),
       child: SafeArea(

@@ -6,15 +6,19 @@ class CollapsedContactHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
+      height: 140,
+      decoration: const BoxDecoration(
         image: DecorationImage(
           image: AssetImage("assets/jpg/banner.jpg"),
           fit: BoxFit.cover,
         ),
       ),
-      child: SafeArea(
+      child: Padding(
+        padding: EdgeInsets.only(
+          top: MediaQuery.of(context).padding.top + 8, // Status bar height + 8
+        ),
         child: Column(
-          spacing: 3,
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               width: 300,
@@ -23,11 +27,7 @@ class CollapsedContactHeader extends StatelessWidget {
                 color: Colors.grey[200],
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: TextField(
-                onChanged: (val) {
-                  print("search collpased: $val");
-                },
-
+              child: const TextField(
                 decoration: InputDecoration(
                   icon: Icon(Icons.search),
                   hintText: "Search contacts...",
@@ -35,36 +35,29 @@ class CollapsedContactHeader extends StatelessWidget {
                 ),
               ),
             ),
-
+            const SizedBox(height: 8),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 ElevatedButton.icon(
-                  onPressed: () {
-                    print("filter button collpased");
-                  },
-
+                  onPressed: () => print("filter button collapsed"),
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Color.fromARGB(50, 255, 255, 255),
+                    backgroundColor: const Color.fromARGB(50, 255, 255, 255),
                     elevation: 0,
                     shadowColor: Colors.transparent,
-                    fixedSize: Size(250, 20),
+                    fixedSize: const Size(250, 20),
                   ),
-
-                  icon: Icon(Icons.filter_list, color: Colors.white),
-                  label: Text(
+                  icon: const Icon(Icons.filter_list, color: Colors.white),
+                  label: const Text(
                     "Filter by tags",
                     style: TextStyle(color: Colors.white),
                   ),
                 ),
-
                 IconButton(
-                  onPressed: () {
-                    print("add button collapsed");
-                  },
-                  icon: Icon(Icons.add, color: Colors.white),
+                  onPressed: () => print("add button collapsed"),
+                  icon: const Icon(Icons.add, color: Colors.white),
                   style: IconButton.styleFrom(
-                    backgroundColor: Color.fromARGB(50, 255, 255, 255),
+                    backgroundColor: const Color.fromARGB(50, 255, 255, 255),
                   ),
                 ),
               ],
