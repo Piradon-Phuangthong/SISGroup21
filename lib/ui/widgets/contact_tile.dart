@@ -43,7 +43,7 @@ class ContactTile extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            contact.primaryMobile ?? contact.primaryEmail ?? '',
+            contact.primaryMobile ?? (contact.primaryEmail?.isNotEmpty == true ? contact.primaryEmail! : ''),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),

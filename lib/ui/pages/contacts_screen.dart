@@ -9,11 +9,13 @@ import 'package:omada/core/supabase/supabase_instance.dart';
 import 'package:omada/core/data/models/contact_model.dart';
 import 'contact_form_page.dart';
 import 'package:omada/ui/widgets/filter_row.dart';
-import 'contacts/manage_tags_sheet.dart';
+import 'manage_tags_page.dart';
 import 'contacts/user_discovery_sheet.dart';
 import 'contacts/incoming_requests_sheet.dart';
 import 'package:omada/core/data/models/tag_model.dart';
+import 'package:omada/core/data/models/contact_channel_model.dart';
 import 'package:omada/core/controllers/contacts_controller.dart';
+import 'package:omada/ui/widgets/social_media_section.dart';
 // Removed unused imports
 
 class ContactsScreen extends StatefulWidget {
@@ -46,6 +48,12 @@ class _ContactsScreenState extends State<ContactsScreen> {
   }
 
   Future<void> _initialize() async {
+    // Clean up any existing contacts with empty string emails
+    try {
+      await _controller.cleanupEmptyEmails();
+    } catch (e) {
+      // Ignore cleanup errors, continue with normal initialization
+    }
     await Future.wait([_refreshContacts(), _refreshTags()]);
   }
 
@@ -133,6 +141,10 @@ class _ContactsScreenState extends State<ContactsScreen> {
     return _controller.getTagsForContacts(_visibleContacts);
   }
 
+  Future<Map<String, List<ContactChannelModel>>> _getChannelsForVisibleContacts() async {
+    return _controller.getChannelsForContacts(_visibleContacts);
+  }
+
   Future<void> _onAddContact() async {
     final created = await Navigator.of(
       context,
@@ -185,6 +197,10 @@ class _ContactsScreenState extends State<ContactsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
     return Scaffold(
       appBar: const CustomAppBar(),
       body: Column(
@@ -238,7 +254,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
               ],
             ),
           ),
-          if (_tags.isNotEmpty)
+          if (_tags.isNotEmpty) 
             FilterRow(
               tags: _tags,
               selectedTagIds: _selectedTagIds,
@@ -253,11 +269,9 @@ class _ContactsScreenState extends State<ContactsScreen> {
                 await _refreshContacts();
               },
             ),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: _refreshContacts,
-              child: _buildBody(),
-            ),
+          Padding(
+            padding: const EdgeInsets.only(top: OmadaTokens.space8),
+            child: _buildBody(),
           ),
         ],
       ),
@@ -294,25 +308,25 @@ class _ContactsScreenState extends State<ContactsScreen> {
       );
     }
     if (_visibleContacts.isEmpty) {
-      return ListView(
-        children: const [
-          SizedBox(height: 120),
-          Icon(Icons.contact_page_outlined, size: 72, color: Colors.grey),
-          SizedBox(height: 12),
-          Center(child: Text('No contacts yet')),
-          SizedBox(height: 4),
-          Center(child: Text('Tap + to add your first contact')),
-        ],
+        return Padding(
+        padding: const EdgeInsets.only(top: 100),
+        child: Column(
+          children: const [
+            Icon(Icons.contact_page_outlined, size: 72, color: Colors.grey),
+            SizedBox(height: 12),
+            Text('No contacts yet'),
+            SizedBox(height: 4),
+            Text('Tap + to add your first contact'),
+          ],
+        ),
       );
     }
     return FutureBuilder<Map<String, List<TagModel>>>(
       future: _getTagsForVisibleContacts(),
       builder: (context, snapshot) {
         final tagsByContact = snapshot.data ?? const {};
-        return ListView.builder(
-          itemCount: _visibleContacts.length,
-          itemBuilder: (context, index) {
-            final contact = _visibleContacts[index];
+          return Column(
+          children: _visibleContacts.map((contact) {
             return ContactTile(
               contact: contact,
               tags: tagsByContact[contact.id] ?? const [],
@@ -330,7 +344,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
               onEdit: () => _onEditContact(contact),
               onDelete: () => _onDeleteContact(contact),
             );
-          },
+          }).toList(),
         );
       },
     );
@@ -338,24 +352,29 @@ class _ContactsScreenState extends State<ContactsScreen> {
 
   Future<void> _openManageTagsSheet() async {
     await _refreshTags();
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (context) => ManageTagsSheet(
-        initialTags: _tags,
-        selectedTagIds: _selectedTagIds,
-        tagService: _controller.tagService,
-        onTagsUpdated: (t) => setState(() => _tags = t),
-        onSelectedIdsChanged: (ids) async {
-          setState(
-            () => _selectedTagIds
-              ..clear()
-              ..addAll(ids),
-          );
-          await _refreshContacts();
-        },
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (context) => ManageTagsPage(
+          initialTags: _tags,
+          selectedTagIds: _selectedTagIds,
+          tagService: _controller.tagService,
+          onTagsUpdated: (t) => setState(() => _tags = t),
+          onSelectedIdsChanged: (ids) async {
+            setState(
+              () => _selectedTagIds
+                ..clear()
+                ..addAll(ids),
+            );
+            await _refreshContacts();
+          },
+        ),
       ),
     );
+    
+    // Refresh tags when returning from manage tags page
+    if (result == true) {
+      await _refreshTags();
+    }
   }
 
   Future<void> _openUserDiscoverySheet() async {
