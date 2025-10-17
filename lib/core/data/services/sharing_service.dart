@@ -25,6 +25,84 @@ class SharingService {
     );
   }
 
+
+
+
+  Future<ContactModel?> _createLocalContactFromSharedContact(String otherUserId) async {
+  final supa = Supabase.instance.client;
+  final myUid = supa.auth.currentUser!.id;
+
+  // 1) Find a share the OTHER user has given to ME
+  final share = await supa
+      .from('contact_shares')
+      .select('contact_id')
+      .eq('owner_id', otherUserId)
+      .eq('to_user_id', myUid)
+      .isFilter('revoked_at', null)
+      .order('created_at', ascending: false)
+      .limit(1)
+      .maybeSingle();
+
+  final String? contactId = share?['contact_id'] as String?;
+  if (contactId == null) return null;
+
+  // 2) Now fetch that contact by id (RLS policy on contacts must allow this)
+  final contactRow = await supa
+      .from('contacts')
+      .select('id, full_name, primary_email, primary_mobile, avatar_url')
+      .eq('id', contactId)
+      .maybeSingle();
+
+  if (contactRow == null) return null;
+
+  final String? email = (contactRow['primary_email'] as String?)?.trim();
+  final String? phone = (contactRow['primary_mobile'] as String?)?.trim();
+
+  // If you still require reachability, enforce it here:
+  if ((email == null || email.isEmpty) && (phone == null || phone.isEmpty)) {
+    return null;
+  }
+
+  // Create MY local contact (owner_id = auth.uid())
+  return await _contactRepository.createContact(
+    fullName: (contactRow['full_name'] as String?) ?? 'Unknown',
+    primaryEmail: email,
+    primaryMobile: phone,
+    avatarUrl: contactRow['avatar_url'] as String?,
+    notes: 'Imported from shared contact',
+  );
+}
+
+Future<ContactModel?> _createLocalContactFromUser(String otherUserId) async {
+  final profiles = await _profileRepository.getProfilesByIds([otherUserId]);
+  if (profiles.isEmpty) return null;
+  final p = profiles.first;
+
+  return await _contactRepository.createContact(
+    fullName: p.username,
+    notes: 'Created from accepted share request with @${p.username}',
+    allowNameOnly: true, // ensure validator uses this (see below)
+  );
+}
+
+
+
+  Future<void> createContactShareNow({
+  required String toUserId,
+  required String contactId,
+  required List<String> fieldMask,
+}) async {
+  // validate fields the same way you already do in the repository
+  await _sharingRepository.createContactShare(
+    toUserId: toUserId,
+    contactId: contactId,
+    fieldMask: validateAndFilterFieldMask(fieldMask),
+  );
+}
+
+
+
+
   /// Gets incoming share requests (requests to me)
   Future<List<ShareRequestWithProfile>> getIncomingShareRequests({
     ShareRequestStatus? status,
@@ -100,43 +178,58 @@ class SharingService {
     );
   }
 
-  /// Accepts a share request and creates contact shares
-  Future<void> acceptShareRequest(
-    String requestId, {
-    required List<ContactShareConfig> shareConfigs,
-  }) async {
-    if (shareConfigs.isEmpty) {
-      throw ValidationException('At least one contact must be shared');
-    }
+  /// Accepts a share request, creates the configured shares,
+  /// and ensures the requester shows up in my local contacts.
 
-    final request = await _sharingRepository.getShareRequest(requestId);
-    if (request == null) {
-      throw ExceptionFactory.shareRequestNotFound(requestId);
-    }
-
-    // Accept the request
-    await _sharingRepository.respondToShareRequest(
-      requestId,
-      ShareRequestStatus.accepted,
-    );
-
-    // Create contact shares
-    for (final config in shareConfigs) {
-      await _sharingRepository.createContactShare(
-        toUserId: request.requesterId,
-        contactId: config.contactId,
-        fieldMask: config.fieldMask,
-      );
-    }
+/// Accepts a request and imports a contact the requester already shared *with me*.
+/// If nothing usable was shared, we fall back to a name-only stub.
+Future<void> acceptShareRequest(
+  String requestId, {
+  required List<ContactShareConfig> shareConfigs, // <- keep signature to avoid refactors; unused now
+}) async {
+  final request = await _sharingRepository.getShareRequest(requestId);
+  if (request == null) {
+    throw ExceptionFactory.shareRequestNotFound(requestId);
   }
 
-  /// Declines a share request
+  // 1) mark accepted
+  await _sharingRepository.respondToShareRequest(
+    requestId,
+    ShareRequestStatus.accepted,
+  );
+
+  // 2) try to import a contact the requester has already shared with me
+  final imported = await _createLocalContactFromSharedContact(request.requesterId);
+
+  // 3) fallback: stub contact from profile if nothing with email/phone
+  if (imported == null) {
+    await _createLocalContactFromUser(request.requesterId);
+  }
+}
+
+
+
+
+
   Future<void> declineShareRequest(String requestId) async {
-    await _sharingRepository.respondToShareRequest(
-      requestId,
-      ShareRequestStatus.declined,
-    );
+  final req = await _sharingRepository.getShareRequest(requestId);
+  if (req != null) {
+    // revoke all active shares from requester -> me
+    final incoming = await _sharingRepository.getSharesWithMe();
+    final fromThisUser = incoming.where((s) => s.ownerId == req.requesterId);
+    for (final s in fromThisUser) {
+      if (s.revokedAt == null) {
+        await _sharingRepository.revokeContactShare(s.id);
+      }
+    }
   }
+
+  await _sharingRepository.respondToShareRequest(
+    requestId,
+    ShareRequestStatus.declined,
+  );
+}
+
 
   /// Responds to a share request without creating shares
   Future<void> respondToShareRequestSimple(
@@ -178,41 +271,61 @@ class SharingService {
       offset: offset,
     );
 
-    return await _enrichSharesWithDetails(shares);
+    return await _enrichSharesWithDetails(shares, allowSharedContacts: true);
   }
 
-  /// Enriches contact shares with contact and profile details
-  Future<List<ContactShareWithDetails>> _enrichSharesWithDetails(
-    List<ContactShareModel> shares,
-  ) async {
-    if (shares.isEmpty) return [];
 
-    // Get all unique contact and user IDs
-    final contactIds = shares.map((s) => s.contactId).toSet().toList();
-    final userIds = <String>{
-      ...shares.map((s) => s.ownerId),
-      ...shares.map((s) => s.toUserId),
-    }.toList();
 
-    // Fetch contacts and profiles in parallel
-    final futures = await Future.wait([
-      _getContactsMap(contactIds),
-      _profileRepository.getProfilesByIds(userIds),
-    ]);
 
-    final contactsMap = futures[0] as Map<String, ContactModel>;
-    final profiles = futures[1] as List<ProfileModel>;
-    final profilesMap = {for (final p in profiles) p.id: p};
 
-    return shares.map((share) {
-      return ContactShareWithDetails(
-        share: share,
-        contact: contactsMap[share.contactId],
-        ownerProfile: profilesMap[share.ownerId],
-        recipientProfile: profilesMap[share.toUserId],
-      );
-    }).toList();
+Future<List<ContactShareWithDetails>> _enrichSharesWithDetails(
+  List<ContactShareModel> shares, {
+  bool allowSharedContacts = false, // NEW
+}) async {
+  if (shares.isEmpty) return [];
+
+  final contactIds = shares.map((s) => s.contactId).toSet().toList();
+  final userIds = <String>{
+    ...shares.map((s) => s.ownerId),
+    ...shares.map((s) => s.toUserId),
+  }.toList();
+
+  // 1) Try owned contacts first (fast path, existing behavior)
+  final ownedMap = <String, ContactModel>{};
+  for (final id in contactIds) {
+    try {
+      final c = await _contactRepository.getContact(id); // validates ownership
+      if (c != null) ownedMap[id] = c;
+    } catch (_) {
+      // not owned by me; skip
+    }
   }
+
+  // 2) For any ids we still don't have, fetch as "shared with me"
+  Map<String, ContactModel> sharedMap = {};
+  if (allowSharedContacts) {
+    final missing = contactIds.where((id) => !ownedMap.containsKey(id)).toList();
+    if (missing.isNotEmpty) {
+      sharedMap = await _contactRepository.getContactsSharedWithMeByIds(missing);
+    }
+  }
+
+  final profiles = await _profileRepository.getProfilesByIds(userIds);
+  final profilesMap = {for (final p in profiles) p.id: p};
+
+  return shares.map((share) {
+    final contact = ownedMap[share.contactId] ?? sharedMap[share.contactId];
+    return ContactShareWithDetails(
+      share: share,
+      contact: contact,
+      ownerProfile: profilesMap[share.ownerId],
+      recipientProfile: profilesMap[share.toUserId],
+    );
+  }).toList();
+}
+
+
+
 
   /// Gets contacts map by IDs
   Future<Map<String, ContactModel>> _getContactsMap(

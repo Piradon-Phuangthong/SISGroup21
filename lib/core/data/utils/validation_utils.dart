@@ -69,9 +69,17 @@ class ValidationUtils {
     String? familyName,
     String? primaryEmail,
     String? primaryMobile,
+    bool allowNameOnly = false, // <-- NEW
   }) {
     final errors = <String, List<String>>{};
 
+    if (!allowNameOnly) {
+      if ((primaryEmail?.trim().isEmpty ?? true) &&
+          (primaryMobile?.trim().isEmpty ?? true)) {
+        errors['contact'] = ['At least email or phone number must be provided'];
+      }
+    }
+    
     // At least one name field should be provided
     if ((fullName?.trim().isEmpty ?? true) &&
         (givenName?.trim().isEmpty ?? true) &&
@@ -101,11 +109,7 @@ class ValidationUtils {
       errors['primaryMobile'] = ['Invalid phone number format'];
     }
 
-    // At least one contact method should be provided
-    if ((primaryEmail?.trim().isEmpty ?? true) &&
-        (primaryMobile?.trim().isEmpty ?? true)) {
-      errors['contact'] = ['At least email or phone number must be provided'];
-    }
+    
 
     return errors;
   }

@@ -182,6 +182,8 @@ Future<List<ContactModel>> getDeletedContacts({
     Map<String, dynamic>? customFields,
     String? defaultCallApp,
     String? defaultMsgApp,
+    bool allowNameOnly = false, // <-- NEW
+
   }) async {
     final userId = authenticatedUserId;
 
@@ -192,6 +194,7 @@ Future<List<ContactModel>> getDeletedContacts({
       familyName: familyName,
       primaryEmail: primaryEmail,
       primaryMobile: primaryMobile,
+      allowNameOnly: allowNameOnly, // <-- NEW
     );
 
     if (validationErrors.isNotEmpty) {
@@ -239,6 +242,8 @@ Future<List<ContactModel>> getDeletedContacts({
     String? defaultCallApp,
     String? defaultMsgApp,
     bool? isDeleted,
+    
+
   }) async {
     // Verify ownership
     final existingContact = await getContact(contactId);
@@ -294,6 +299,60 @@ Future<List<ContactModel>> getDeletedContacts({
 
     return ContactModel.fromJson(data);
   }
+
+
+
+  // contact_repository.dart
+
+/// Returns a single contact if it is shared *with the current user*.
+Future<ContactModel?> getContactSharedWithMe(String contactId) async {
+  final uid = authenticatedUserId;
+
+  return await handleSupabaseExceptionAsync(() async {
+    final row = await client
+        .from('contact_shares')
+        .select('contact:contacts(*)')
+        .eq('to_user_id', uid)
+        .eq('contact_id', contactId)
+        .isFilter('revoked_at', null)
+        .maybeSingle();
+
+    final contactJson = row?['contact'] as Map<String, dynamic>?;
+    return contactJson == null ? null : ContactModel.fromJson(contactJson);
+  });
+}
+
+/// Batch: returns contacts shared *with the current user* whose ids are in [ids].
+Future<Map<String, ContactModel>> getContactsSharedWithMeByIds(
+  List<String> ids,
+) async {
+  if (ids.isEmpty) return {};
+
+  final uid = authenticatedUserId;
+
+  return await handleSupabaseExceptionAsync(() async {
+    final rows = await client
+        .from('contact_shares')
+        .select('contact:contacts(*)')
+        .eq('to_user_id', uid)
+        .inFilter('contact_id', ids)
+        .isFilter('revoked_at', null);
+
+    final map = <String, ContactModel>{};
+    for (final r in rows) {
+      final c = r['contact'] as Map<String, dynamic>?;
+      if (c == null) continue;
+      final model = ContactModel.fromJson(c);
+      map[model.id] = model;
+    }
+    return map;
+  });
+}
+
+
+
+
+
 
   /// Soft deletes a contact
   Future<void> deleteContact(String contactId) async {
