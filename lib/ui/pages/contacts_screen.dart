@@ -14,6 +14,7 @@ import 'contacts/user_discovery_sheet.dart';
 import 'contacts/incoming_requests_sheet.dart';
 import 'package:omada/core/data/models/tag_model.dart';
 import 'package:omada/core/controllers/contacts_controller.dart';
+import 'package:omada/core/controllers/favourites_controller.dart';
 // Removed unused imports
 
 class ContactsScreen extends StatefulWidget {
@@ -25,12 +26,12 @@ class ContactsScreen extends StatefulWidget {
 
 class _ContactsScreenState extends State<ContactsScreen> {
   late final ContactsController _controller;
+  late final FavouritesController _favouritesController;
   final ColorPalette selectedTheme = appPalette;
   List<ContactModel> _contacts = [];
   List<ContactModel> _visibleContacts = [];
   List<TagModel> _tags = [];
   final Set<String> _selectedTagIds = <String>{};
-  final Set<String> _favouriteContactIds = <String>{}; // Placeholder state
   bool _isLoading = false;
   String? _error;
   final TextEditingController _searchController = TextEditingController();
@@ -42,6 +43,8 @@ class _ContactsScreenState extends State<ContactsScreen> {
   void initState() {
     super.initState();
     _controller = ContactsController(supabase);
+    _favouritesController = FavouritesController();
+    _favouritesController.addListener(_onFavouritesChanged);
     _searchController.addListener(_onSearchChanged);
     _initialize();
   }
@@ -52,9 +55,15 @@ class _ContactsScreenState extends State<ContactsScreen> {
 
   @override
   void dispose() {
+    _favouritesController.removeListener(_onFavouritesChanged);
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _onFavouritesChanged() {
+    // Rebuild when favourites change to update star icons
+    setState(() {});
   }
 
   Future<void> _refreshContacts() async {
@@ -185,13 +194,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
   }
 
   void _toggleFavourite(String contactId) {
-    setState(() {
-      if (_favouriteContactIds.contains(contactId)) {
-        _favouriteContactIds.remove(contactId);
-      } else {
-        _favouriteContactIds.add(contactId);
-      }
-    });
+    _favouritesController.toggleFavourite(contactId);
   }
 
   @override
@@ -327,7 +330,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
             return ContactTile(
               contact: contact,
               tags: tagsByContact[contact.id] ?? const [],
-              isFavourite: _favouriteContactIds.contains(contact.id),
+              isFavourite: _favouritesController.isFavourite(contact.id),
               onFavouriteToggle: () => _toggleFavourite(contact.id),
               onTagTap: (tag) async {
                 setState(() {
