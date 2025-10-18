@@ -30,6 +30,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
   List<ContactModel> _visibleContacts = [];
   List<TagModel> _tags = [];
   final Set<String> _selectedTagIds = <String>{};
+  final Set<String> _favouriteContactIds = <String>{}; // Placeholder state
   bool _isLoading = false;
   String? _error;
   final TextEditingController _searchController = TextEditingController();
@@ -183,6 +184,16 @@ class _ContactsScreenState extends State<ContactsScreen> {
     }
   }
 
+  void _toggleFavourite(String contactId) {
+    setState(() {
+      if (_favouriteContactIds.contains(contactId)) {
+        _favouriteContactIds.remove(contactId);
+      } else {
+        _favouriteContactIds.add(contactId);
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -316,6 +327,8 @@ class _ContactsScreenState extends State<ContactsScreen> {
             return ContactTile(
               contact: contact,
               tags: tagsByContact[contact.id] ?? const [],
+              isFavourite: _favouriteContactIds.contains(contact.id),
+              onFavouriteToggle: () => _toggleFavourite(contact.id),
               onTagTap: (tag) async {
                 setState(() {
                   if (_selectedTagIds.contains(tag.id)) {

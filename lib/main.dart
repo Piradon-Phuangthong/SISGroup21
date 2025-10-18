@@ -3,6 +3,7 @@ import 'package:omada/core/supabase/supabase_instance.dart';
 import 'test_db/epics/epic_home_entry.dart';
 import 'package:omada/core/theme/app_theme.dart';
 import 'package:omada/ui/pages/contacts_screen.dart';
+import 'package:omada/ui/pages/favourites_page.dart';
 import 'package:omada/ui/pages/profile_management_page.dart';
 import 'package:omada/ui/pages/splash_page.dart';
 import 'package:omada/ui/pages/login_page.dart';
@@ -28,6 +29,7 @@ class OmadaRootApp extends StatelessWidget {
         '/': (_) => const SplashPage(),
         '/login': (_) => const LoginPage(),
         '/app': (_) => const ContactsScreen(),
+        '/favourites': (_) => const FavouritesPage(),
         '/account': (_) => const AccountPage(),
         '/profile': (_) => const ProfileManagementPage(),
         '/debug': (_) => const EpicHomeEntry(),

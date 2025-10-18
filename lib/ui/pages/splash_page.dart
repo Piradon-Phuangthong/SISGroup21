@@ -292,7 +292,6 @@ class _SplashPageState extends State<SplashPage> with TickerProviderStateMixin {
     );
   }
 }
-
 // Modern background painter with geometric elements
 class ModernBackgroundPainter extends CustomPainter {
   @override
@@ -340,3 +339,4 @@ class ModernBackgroundPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+
