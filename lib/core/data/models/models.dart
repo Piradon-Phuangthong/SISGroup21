@@ -6,3 +6,4 @@ export 'tag_model.dart';
 export 'contact_tag_model.dart';
 export 'share_request_model.dart';
 export 'contact_share_model.dart';
+export 'omada_model.dart';
