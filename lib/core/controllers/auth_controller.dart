@@ -27,4 +27,8 @@ class AuthController {
   }
 
   Future<void> signOut() => client.auth.signOut();
+
+  Future<void> resetPasswordForEmail(String email) {
+    return client.auth.resetPasswordForEmail(email);
+  }
 }
