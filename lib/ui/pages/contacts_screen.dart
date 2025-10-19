@@ -153,7 +153,8 @@ class _ContactsScreenState extends State<ContactsScreen> {
     return _controller.getTagsForContacts(_visibleContacts);
   }
 
-  Future<Map<String, List<ContactChannelModel>>> _getChannelsForVisibleContacts() async {
+  Future<Map<String, List<ContactChannelModel>>>
+  _getChannelsForVisibleContacts() async {
     return _controller.getChannelsForContacts(_visibleContacts);
   }
 
@@ -283,7 +284,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
               ],
             ),
           ),
-          if (_tags.isNotEmpty) 
+          if (_tags.isNotEmpty)
             FilterRow(
               tags: _tags,
               selectedTagIds: _selectedTagIds,
@@ -337,7 +338,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
       );
     }
     if (_visibleContacts.isEmpty) {
-        return Padding(
+      return Padding(
         padding: const EdgeInsets.only(top: 100),
         child: Column(
           children: const [
@@ -354,7 +355,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
       future: _getTagsForVisibleContacts(),
       builder: (context, snapshot) {
         final tagsByContact = snapshot.data ?? const {};
-          return Column(
+        return Column(
           children: _visibleContacts.map((contact) {
             return ContactTile(
               contact: contact,
@@ -401,7 +402,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
         ),
       ),
     );
-    
+
     // Refresh tags when returning from manage tags page
     if (result == true) {
       await _refreshTags();
