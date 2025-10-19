@@ -27,6 +27,7 @@ class ContactsScreen extends StatefulWidget {
 
 class _ContactsScreenState extends State<ContactsScreen> {
   late final ContactsController _controller;
+  late final FavouritesController _favouritesController;
   final ColorPalette selectedTheme = appPalette;
   List<ContactModel> _contacts = [];
   List<ContactModel> _visibleContacts = [];
@@ -43,6 +44,8 @@ class _ContactsScreenState extends State<ContactsScreen> {
   void initState() {
     super.initState();
     _controller = ContactsController(supabase);
+    _favouritesController = FavouritesController();
+    _favouritesController.addListener(_onFavouritesChanged);
     _searchController.addListener(_onSearchChanged);
     _initialize();
   }
@@ -59,9 +62,15 @@ class _ContactsScreenState extends State<ContactsScreen> {
 
   @override
   void dispose() {
+    _favouritesController.removeListener(_onFavouritesChanged);
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _onFavouritesChanged() {
+    // Rebuild when favourites change to update star icons
+    setState(() {});
   }
 
   Future<void> _refreshContacts() async {
@@ -195,6 +204,10 @@ class _ContactsScreenState extends State<ContactsScreen> {
     }
   }
 
+  void _toggleFavourite(String contactId) {
+    _favouritesController.toggleFavourite(contactId);
+  }
+
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
@@ -202,7 +215,20 @@ class _ContactsScreenState extends State<ContactsScreen> {
     }
 
     return Scaffold(
-      appBar: const CustomAppBar(),
+      appBar: AppBar(
+        title: const Text('Contacts'),
+        actions: [
+          IconButton(
+            tooltip: 'Deleted contacts',
+            icon: const Icon(Icons.delete_outline),
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const DeletedContactsPage()),
+              );
+            },
+          ),
+        ],
+      ),
       body: Column(
         children: [
           // Color theme selector removed in favor of a single app palette
@@ -330,6 +356,8 @@ class _ContactsScreenState extends State<ContactsScreen> {
             return ContactTile(
               contact: contact,
               tags: tagsByContact[contact.id] ?? const [],
+              isFavourite: _favouritesController.isFavourite(contact.id),
+              onFavouriteToggle: () => _toggleFavourite(contact.id),
               onTagTap: (tag) async {
                 setState(() {
                   if (_selectedTagIds.contains(tag.id)) {

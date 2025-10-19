@@ -11,6 +11,8 @@ class ContactTile extends StatelessWidget {
   final VoidCallback? onTap;
   final VoidCallback? onEdit;
   final VoidCallback? onDelete;
+  final bool isFavourite;
+  final VoidCallback? onFavouriteToggle;
 
   const ContactTile({
     super.key,
@@ -20,6 +22,8 @@ class ContactTile extends StatelessWidget {
     this.onTap,
     this.onEdit,
     this.onDelete,
+    this.isFavourite = false,
+    this.onFavouriteToggle,
   });
 
   @override
@@ -69,8 +73,20 @@ class ContactTile extends StatelessWidget {
           ],
         ],
       ),
-      trailing: (onEdit != null || onDelete != null)
-          ? PopupMenuButton<String>(
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (onFavouriteToggle != null)
+            IconButton(
+              icon: Icon(
+                isFavourite ? Icons.star : Icons.star_border,
+                color: isFavourite ? Colors.amber : null,
+              ),
+              onPressed: onFavouriteToggle,
+              tooltip: isFavourite ? 'Remove from favourites' : 'Add to favourites',
+            ),
+          if (onEdit != null || onDelete != null)
+            PopupMenuButton<String>(
               onSelected: (value) {
                 if (value == 'edit' && onEdit != null) onEdit!();
                 if (value == 'delete' && onDelete != null) onDelete!();
@@ -81,8 +97,9 @@ class ContactTile extends StatelessWidget {
                 if (onDelete != null)
                   const PopupMenuItem(value: 'delete', child: Text('Delete')),
               ],
-            )
-          : null,
+            ),
+        ],
+      ),
     );
   }
 }

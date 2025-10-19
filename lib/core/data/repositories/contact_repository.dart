@@ -114,6 +114,59 @@ class ContactRepository extends BaseRepository {
     return contact;
   }
 
+
+
+
+
+  /// Gets only soft-deleted contacts (is_deleted = true)
+Future<List<ContactModel>> getDeletedContacts({
+  String? searchTerm,
+  int? limit,
+  int? offset,
+  String orderBy = 'updated_at',
+  bool ascending = false,
+}) async {
+  final userId = authenticatedUserId;
+
+  return await handleSupabaseExceptionAsync(() async {
+    dynamic query = client
+        .from('contacts')
+        .select()
+        .eq('owner_id', userId)
+        .eq('is_deleted', true); // only deleted
+
+    if (searchTerm?.isNotEmpty == true) {
+      final cleanTerm = searchTerm!.replaceAll("'", "''");
+      query = query.or(
+        'full_name.ilike.%$cleanTerm%,given_name.ilike.%$cleanTerm%,family_name.ilike.%$cleanTerm%,primary_email.ilike.%$cleanTerm%,primary_mobile.ilike.%$cleanTerm%',
+      );
+    }
+
+    query = query.order(orderBy, ascending: ascending);
+
+    if (limit != null) {
+      if (offset != null) {
+        query = query.range(offset, offset + limit - 1);
+      } else {
+        query = query.limit(limit);
+      }
+    }
+
+    final response = await query;
+    return response
+        .map<ContactModel>(
+          (data) => ContactModel.fromJson(data as Map<String, dynamic>),
+        )
+        .toList();
+  });
+}
+
+
+
+
+
+
+
   /// Creates a new contact
   Future<ContactModel> createContact({
     String? fullName,
