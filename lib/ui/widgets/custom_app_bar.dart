@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:omada/main.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
   const CustomAppBar({super.key});
@@ -12,6 +13,21 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           color: Theme.of(context).appBarTheme.foregroundColor,
         ),
       ),
+      actions: [
+        IconButton(
+          tooltip: 'Toggle theme',
+          icon: Icon(
+            Theme.of(context).brightness == Brightness.dark
+                ? Icons.light_mode
+                : Icons.dark_mode,
+          ),
+          onPressed: () async {
+            final root = context.findAncestorWidgetOfExactType<OmadaRootApp>();
+            if (root == null) return;
+            await root.themeController.toggleLightDark();
+          },
+        ),
+      ],
     );
   }
 
