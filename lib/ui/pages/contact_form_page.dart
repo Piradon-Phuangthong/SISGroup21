@@ -45,7 +45,9 @@ class _ContactFormPageState extends State<ContactFormPage> {
       _givenNameController.text = contact.givenName ?? '';
       _familyNameController.text = contact.familyName ?? '';
       _primaryMobileController.text = contact.primaryMobile ?? '';
-      _primaryEmailController.text = contact.primaryEmail?.isNotEmpty == true ? contact.primaryEmail! : '';
+      _primaryEmailController.text = contact.primaryEmail?.isNotEmpty == true
+          ? contact.primaryEmail!
+          : '';
     } else {
       // If creating a new contact, start in editing mode
       _isEditing = true;
@@ -119,10 +121,12 @@ class _ContactFormPageState extends State<ContactFormPage> {
   @override
   Widget build(BuildContext context) {
     final isEditing = widget.contact != null;
-    final displayName = _givenNameController.text.isNotEmpty || _familyNameController.text.isNotEmpty
+    final displayName =
+        _givenNameController.text.isNotEmpty ||
+            _familyNameController.text.isNotEmpty
         ? '${_givenNameController.text} ${_familyNameController.text}'.trim()
         : 'Unnamed Contact';
-    
+
     return Scaffold(
       body: Form(
         key: _formKey,
@@ -154,7 +158,10 @@ class _ContactFormPageState extends State<ContactFormPage> {
                     border: Border.all(color: Colors.white.withOpacity(0.3)),
                   ),
                   child: IconButton(
-                    icon: const Icon(Icons.favorite_border, color: Colors.white),
+                    icon: const Icon(
+                      Icons.favorite_border,
+                      color: Colors.white,
+                    ),
                     onPressed: () {
                       // TODO: Implement favorite functionality
                     },
@@ -200,10 +207,11 @@ class _ContactFormPageState extends State<ContactFormPage> {
                             // Contact Name
                             Text(
                               displayName,
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                               textAlign: TextAlign.center,
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
@@ -215,20 +223,30 @@ class _ContactFormPageState extends State<ContactFormPage> {
                                 spacing: 6,
                                 runSpacing: 4,
                                 children: _allTags
-                                    .where((tag) => _selectedTagIds.contains(tag.id))
-                                    .map((tag) => Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white.withOpacity(0.2),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Text(
-                                        tag.name,
-                                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                          color: Colors.white,
+                                    .where(
+                                      (tag) => _selectedTagIds.contains(tag.id),
+                                    )
+                                    .map(
+                                      (tag) => Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.2),
+                                          borderRadius: BorderRadius.circular(
+                                            10,
+                                          ),
+                                        ),
+                                        child: Text(
+                                          tag.name,
+                                          style: Theme.of(context)
+                                              .textTheme
+                                              .bodySmall
+                                              ?.copyWith(color: Colors.white),
                                         ),
                                       ),
-                                    ))
+                                    )
                                     .toList(),
                               ),
                             const SizedBox(height: 16),
@@ -287,9 +305,8 @@ class _ContactFormPageState extends State<ContactFormPage> {
                               children: [
                                 Text(
                                   'Contact Information',
-                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                                  style: Theme.of(context).textTheme.titleLarge
+                                      ?.copyWith(fontWeight: FontWeight.bold),
                                 ),
                                 if (widget.contact != null)
                                   TextButton.icon(
@@ -315,7 +332,9 @@ class _ContactFormPageState extends State<ContactFormPage> {
                               icon: Icons.person,
                               label: 'Full Name',
                               controller: _fullNameController,
-                              validator: _isEditing ? (_) => _validateNameFields() : null,
+                              validator: _isEditing
+                                  ? (_) => _validateNameFields()
+                                  : null,
                               textCapitalization: TextCapitalization.words,
                               enabled: _isEditing,
                             ),
@@ -328,8 +347,11 @@ class _ContactFormPageState extends State<ContactFormPage> {
                                     icon: Icons.badge,
                                     label: 'Given Name',
                                     controller: _givenNameController,
-                                    validator: _isEditing ? (_) => _validateNameFields() : null,
-                                    textCapitalization: TextCapitalization.words,
+                                    validator: _isEditing
+                                        ? (_) => _validateNameFields()
+                                        : null,
+                                    textCapitalization:
+                                        TextCapitalization.words,
                                     enabled: _isEditing,
                                   ),
                                 ),
@@ -339,8 +361,11 @@ class _ContactFormPageState extends State<ContactFormPage> {
                                     icon: Icons.family_restroom,
                                     label: 'Family Name',
                                     controller: _familyNameController,
-                                    validator: _isEditing ? (_) => _validateNameFields() : null,
-                                    textCapitalization: TextCapitalization.words,
+                                    validator: _isEditing
+                                        ? (_) => _validateNameFields()
+                                        : null,
+                                    textCapitalization:
+                                        TextCapitalization.words,
                                     enabled: _isEditing,
                                   ),
                                 ),
@@ -352,14 +377,19 @@ class _ContactFormPageState extends State<ContactFormPage> {
                               icon: Icons.phone,
                               label: 'Mobile',
                               controller: _primaryMobileController,
-                              validator: _isEditing ? (value) {
-                                final v = value?.trim() ?? '';
-                                if (v.isEmpty) return 'Mobile number is required';
-                                if (!ValidationUtils.isValidPhoneNumber(v)) {
-                                  return 'Enter a valid phone number';
-                                }
-                                return null;
-                              } : null,
+                              validator: _isEditing
+                                  ? (value) {
+                                      final v = value?.trim() ?? '';
+                                      if (v.isEmpty)
+                                        return 'Mobile number is required';
+                                      if (!ValidationUtils.isValidPhoneNumber(
+                                        v,
+                                      )) {
+                                        return 'Enter a valid phone number';
+                                      }
+                                      return null;
+                                    }
+                                  : null,
                               keyboardType: TextInputType.phone,
                               enabled: _isEditing,
                             ),
@@ -369,14 +399,16 @@ class _ContactFormPageState extends State<ContactFormPage> {
                               icon: Icons.email,
                               label: 'Email',
                               controller: _primaryEmailController,
-                              validator: _isEditing ? (value) {
-                                final v = value?.trim() ?? '';
-                                if (v.isEmpty) return null;
-                                if (!ValidationUtils.isValidEmail(v)) {
-                                  return 'Enter a valid email address';
-                                }
-                                return null;
-                              } : null,
+                              validator: _isEditing
+                                  ? (value) {
+                                      final v = value?.trim() ?? '';
+                                      if (v.isEmpty) return null;
+                                      if (!ValidationUtils.isValidEmail(v)) {
+                                        return 'Enter a valid email address';
+                                      }
+                                      return null;
+                                    }
+                                  : null,
                               keyboardType: TextInputType.emailAddress,
                               enabled: _isEditing,
                             ),
@@ -392,9 +424,8 @@ class _ContactFormPageState extends State<ContactFormPage> {
                           children: [
                             Text(
                               'Social Media',
-                              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: OmadaTokens.space16),
                             // Social Media Buttons
@@ -414,7 +445,11 @@ class _ContactFormPageState extends State<ContactFormPage> {
                                   label: 'Instagram',
                                   backgroundColor: const Color(0xFFE1306C),
                                   gradient: const LinearGradient(
-                                    colors: [Color(0xFFFCAF45), Color(0xFFE1306C), Color(0xFF833AB4)],
+                                    colors: [
+                                      Color(0xFFFCAF45),
+                                      Color(0xFFE1306C),
+                                      Color(0xFF833AB4),
+                                    ],
                                   ),
                                   onTap: () {
                                     // TODO: Implement Instagram functionality
@@ -447,10 +482,14 @@ class _ContactFormPageState extends State<ContactFormPage> {
                                 ? const SizedBox(
                                     width: 16,
                                     height: 16,
-                                    child: CircularProgressIndicator(strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                    ),
                                   )
                                 : const Icon(Icons.save),
-                            label: Text(isEditing ? 'Save changes' : 'Create contact'),
+                            label: Text(
+                              isEditing ? 'Save changes' : 'Create contact',
+                            ),
                           ),
                         ),
                       ],
@@ -475,7 +514,9 @@ class _ContactFormPageState extends State<ContactFormPage> {
         _givenNameController.text = contact.givenName ?? '';
         _familyNameController.text = contact.familyName ?? '';
         _primaryMobileController.text = contact.primaryMobile ?? '';
-        _primaryEmailController.text = contact.primaryEmail?.isNotEmpty == true ? contact.primaryEmail! : '';
+        _primaryEmailController.text = contact.primaryEmail?.isNotEmpty == true
+            ? contact.primaryEmail!
+            : '';
       }
     });
   }
@@ -537,11 +578,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
   }) {
     return Row(
       children: [
-        Icon(
-          icon,
-          color: Colors.grey[400],
-          size: 20,
-        ),
+        Icon(icon, color: Colors.grey[400], size: 20),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -597,11 +634,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              color: Colors.white,
-              size: 24,
-            ),
+            Icon(icon, color: Colors.white, size: 24),
             const SizedBox(height: 4),
             Text(
               label,
@@ -648,9 +681,12 @@ class _ContactFormPageState extends State<ContactFormPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Tags', style: Theme.of(context).textTheme.titleLarge?.copyWith(
-          fontWeight: FontWeight.bold,
-        )),
+        Text(
+          'Tags',
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+        ),
         const SizedBox(height: OmadaTokens.space8),
         Wrap(
           spacing: OmadaTokens.space8,
@@ -683,10 +719,14 @@ class _ContactFormPageState extends State<ContactFormPage> {
               // Show only selected tags as read-only chips when not editing
               ..._allTags
                   .where((tag) => _selectedTagIds.contains(tag.id))
-                  .map((tag) => Chip(
-                    label: Text(tag.name),
-                    backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                  )),
+                  .map(
+                    (tag) => Chip(
+                      label: Text(tag.name),
+                      backgroundColor: Theme.of(
+                        context,
+                      ).colorScheme.primary.withOpacity(0.1),
+                    ),
+                  ),
             ],
           ],
         ),
