@@ -16,6 +16,9 @@ import 'package:omada/core/data/models/tag_model.dart';
 import 'package:omada/core/data/models/contact_channel_model.dart';
 import 'package:omada/core/controllers/contacts_controller.dart';
 import 'package:omada/ui/widgets/social_media_section.dart';
+import 'package:omada/core/controllers/favourites_controller.dart';
+import 'package:omada/ui/pages/deleted_contacts_page.dart';
+
 // Removed unused imports
 
 class ContactsScreen extends StatefulWidget {

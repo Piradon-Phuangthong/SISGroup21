@@ -140,7 +140,7 @@ class _OmadasScreenState extends State<OmadasScreen>
                 _buildRequestsTab(),
               ],
             ),
-      bottomNavigationBar: const AppBottomNav(active: AppNav.omadas),
+      bottomNavigationBar: const AppBottomNav(active: AppNav.contacts),
       floatingActionButton: FloatingActionButton(
         onPressed: _showCreateOmadaSheet,
         tooltip: 'Create Omada',

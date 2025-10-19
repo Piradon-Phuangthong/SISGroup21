@@ -8,7 +8,7 @@ class AppBottomNav extends StatelessWidget {
 
   int get _index {
     switch (active) {
-      case AppNav.omadas:
+      case AppNav.contacts:
         return 0;
       case AppNav.favourites:
         return 1;
