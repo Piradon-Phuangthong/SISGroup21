@@ -3,6 +3,7 @@ import 'package:omada/core/data/models/models.dart';
 import 'package:omada/core/data/services/contact_service.dart';
 import 'package:omada/core/data/services/tag_service.dart';
 import 'package:omada/core/data/services/sharing_service.dart';
+import 'package:omada/core/data/repositories/contact_channel_repository.dart';
 
 /// High-level orchestrator for Contacts page logic
 class ContactsController {
@@ -10,11 +11,13 @@ class ContactsController {
   final ContactService _contacts;
   final TagService _tags;
   final SharingService _sharing;
+  final ContactChannelRepository _channelsRepo;
 
   ContactsController(this.client)
     : _contacts = ContactService(client),
       _tags = TagService(client),
-      _sharing = SharingService(client);
+      _sharing = SharingService(client),
+      _channelsRepo = ContactChannelRepository(client);
 
   // Expose services to UI widgets that specifically require them
   TagService get tagService => _tags;
@@ -43,6 +46,9 @@ class ContactsController {
   Future<TagModel?> createTag(String name) => _tags.createTag(name);
   Future<void> deleteTag(String id) => _tags.deleteTag(id);
 
+  /// Cleans up contacts with empty string emails
+  Future<void> cleanupEmptyEmails() => _contacts.cleanupEmptyEmails();
+
   Future<Map<String, List<TagModel>>> getTagsForContacts(
     List<ContactModel> contacts,
   ) async {
@@ -53,6 +59,22 @@ class ContactsController {
           return MapEntry(c.id, t);
         } catch (_) {
           return MapEntry(c.id, <TagModel>[]);
+        }
+      }),
+    );
+    return Map.fromEntries(entries);
+  }
+
+  Future<Map<String, List<ContactChannelModel>>> getChannelsForContacts(
+    List<ContactModel> contacts,
+  ) async {
+    final entries = await Future.wait(
+      contacts.map((c) async {
+        try {
+          final channels = await _channelsRepo.getChannelsForContact(c.id);
+          return MapEntry(c.id, channels);
+        } catch (_) {
+          return MapEntry(c.id, <ContactChannelModel>[]);
         }
       }),
     );
@@ -75,4 +97,12 @@ class ContactsController {
     String id,
     ShareRequestStatus response,
   ) => _sharing.respondToShareRequestSimple(id, response);
+
+
+  Future<List<ContactModel>> getDeletedContacts({ String? searchTerm }) =>
+    _contacts.getDeletedContacts(searchTerm: searchTerm);
+
+  Future<void> permanentlyDeleteContact(String id) =>
+    _contacts.permanentlyDeleteContact(id);
+
 }
