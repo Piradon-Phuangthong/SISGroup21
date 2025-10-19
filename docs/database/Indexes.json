@@ -1,0 +1,1957 @@
+[
+    {
+        "table_name": "audit_log_entries",
+        "index_name": "audit_log_entries_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "audit_log_entries",
+        "index_name": "audit_logs_instance_id_idx",
+        "column_name": "instance_id"
+    },
+    {
+        "table_name": "buckets",
+        "index_name": "bname",
+        "column_name": "name"
+    },
+    {
+        "table_name": "buckets",
+        "index_name": "buckets_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "buckets_analytics",
+        "index_name": "buckets_analytics_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "contact_channels",
+        "index_name": "channels_value_idx",
+        "column_name": "value"
+    },
+    {
+        "table_name": "contact_channels",
+        "index_name": "contact_channels_contact_id_idx",
+        "column_name": "contact_id"
+    },
+    {
+        "table_name": "contact_channels",
+        "index_name": "contact_channels_owner_kind_idx",
+        "column_name": "owner_id"
+    },
+    {
+        "table_name": "contact_channels",
+        "index_name": "contact_channels_owner_kind_idx",
+        "column_name": "kind"
+    },
+    {
+        "table_name": "contact_channels",
+        "index_name": "contact_channels_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "contact_shares",
+        "index_name": "contact_share_uniq",
+        "column_name": "owner_id"
+    },
+    {
+        "table_name": "contact_shares",
+        "index_name": "contact_share_uniq",
+        "column_name": "to_user_id"
+    },
+    {
+        "table_name": "contact_shares",
+        "index_name": "contact_share_uniq",
+        "column_name": "contact_id"
+    },
+    {
+        "table_name": "contact_shares",
+        "index_name": "contact_shares_owner_id_contact_id_to_user_id_key",
+        "column_name": "to_user_id"
+    },
+    {
+        "table_name": "contact_shares",
+        "index_name": "contact_shares_owner_id_contact_id_to_user_id_key",
+        "column_name": "owner_id"
+    },
+    {
+        "table_name": "contact_shares",
+        "index_name": "contact_shares_owner_id_contact_id_to_user_id_key",
+        "column_name": "contact_id"
+    },
+    {
+        "table_name": "contact_shares",
+        "index_name": "contact_shares_owner_to_user_idx",
+        "column_name": "to_user_id"
+    },
+    {
+        "table_name": "contact_shares",
+        "index_name": "contact_shares_owner_to_user_idx",
+        "column_name": "owner_id"
+    },
+    {
+        "table_name": "contact_shares",
+        "index_name": "contact_shares_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "contact_shares",
+        "index_name": "contact_shares_to_user_contact_idx",
+        "column_name": "contact_id"
+    },
+    {
+        "table_name": "contact_shares",
+        "index_name": "contact_shares_to_user_contact_idx",
+        "column_name": "to_user_id"
+    },
+    {
+        "table_name": "contact_tags",
+        "index_name": "contact_tags_pkey",
+        "column_name": "tag_id"
+    },
+    {
+        "table_name": "contact_tags",
+        "index_name": "contact_tags_pkey",
+        "column_name": "contact_id"
+    },
+    {
+        "table_name": "contact_tags",
+        "index_name": "contact_tags_tag_id_idx",
+        "column_name": "tag_id"
+    },
+    {
+        "table_name": "contact_tags",
+        "index_name": "contact_tags_uniq",
+        "column_name": "contact_id"
+    },
+    {
+        "table_name": "contact_tags",
+        "index_name": "contact_tags_uniq",
+        "column_name": "tag_id"
+    },
+    {
+        "table_name": "contacts",
+        "index_name": "contacts_owner_isdel_updated_idx",
+        "column_name": "is_deleted"
+    },
+    {
+        "table_name": "contacts",
+        "index_name": "contacts_owner_isdel_updated_idx",
+        "column_name": "owner_id"
+    },
+    {
+        "table_name": "contacts",
+        "index_name": "contacts_owner_isdel_updated_idx",
+        "column_name": "updated_at"
+    },
+    {
+        "table_name": "contacts",
+        "index_name": "contacts_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "contacts",
+        "index_name": "contacts_primary_mobile_idx",
+        "column_name": "primary_mobile"
+    },
+    {
+        "table_name": "flow_state",
+        "index_name": "flow_state_created_at_idx",
+        "column_name": "created_at"
+    },
+    {
+        "table_name": "flow_state",
+        "index_name": "flow_state_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "flow_state",
+        "index_name": "idx_auth_code",
+        "column_name": "auth_code"
+    },
+    {
+        "table_name": "flow_state",
+        "index_name": "idx_user_id_auth_method",
+        "column_name": "authentication_method"
+    },
+    {
+        "table_name": "flow_state",
+        "index_name": "idx_user_id_auth_method",
+        "column_name": "user_id"
+    },
+    {
+        "table_name": "identities",
+        "index_name": "identities_email_idx",
+        "column_name": "email"
+    },
+    {
+        "table_name": "identities",
+        "index_name": "identities_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "identities",
+        "index_name": "identities_provider_id_provider_unique",
+        "column_name": "provider_id"
+    },
+    {
+        "table_name": "identities",
+        "index_name": "identities_provider_id_provider_unique",
+        "column_name": "provider"
+    },
+    {
+        "table_name": "identities",
+        "index_name": "identities_user_id_idx",
+        "column_name": "user_id"
+    },
+    {
+        "table_name": "instances",
+        "index_name": "instances_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "messages_2025_10_10",
+        "index_name": "messages_2025_10_10_inserted_at_topic_idx",
+        "column_name": "topic"
+    },
+    {
+        "table_name": "messages_2025_10_10",
+        "index_name": "messages_2025_10_10_inserted_at_topic_idx",
+        "column_name": "inserted_at"
+    },
+    {
+        "table_name": "messages_2025_10_10",
+        "index_name": "messages_2025_10_10_pkey",
+        "column_name": "inserted_at"
+    },
+    {
+        "table_name": "messages_2025_10_10",
+        "index_name": "messages_2025_10_10_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "messages_2025_10_11",
+        "index_name": "messages_2025_10_11_inserted_at_topic_idx",
+        "column_name": "inserted_at"
+    },
+    {
+        "table_name": "messages_2025_10_11",
+        "index_name": "messages_2025_10_11_inserted_at_topic_idx",
+        "column_name": "topic"
+    },
+    {
+        "table_name": "messages_2025_10_11",
+        "index_name": "messages_2025_10_11_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "messages_2025_10_11",
+        "index_name": "messages_2025_10_11_pkey",
+        "column_name": "inserted_at"
+    },
+    {
+        "table_name": "messages_2025_10_12",
+        "index_name": "messages_2025_10_12_inserted_at_topic_idx",
+        "column_name": "inserted_at"
+    },
+    {
+        "table_name": "messages_2025_10_12",
+        "index_name": "messages_2025_10_12_inserted_at_topic_idx",
+        "column_name": "topic"
+    },
+    {
+        "table_name": "messages_2025_10_12",
+        "index_name": "messages_2025_10_12_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "messages_2025_10_12",
+        "index_name": "messages_2025_10_12_pkey",
+        "column_name": "inserted_at"
+    },
+    {
+        "table_name": "messages_2025_10_13",
+        "index_name": "messages_2025_10_13_inserted_at_topic_idx",
+        "column_name": "topic"
+    },
+    {
+        "table_name": "messages_2025_10_13",
+        "index_name": "messages_2025_10_13_inserted_at_topic_idx",
+        "column_name": "inserted_at"
+    },
+    {
+        "table_name": "messages_2025_10_13",
+        "index_name": "messages_2025_10_13_pkey",
+        "column_name": "inserted_at"
+    },
+    {
+        "table_name": "messages_2025_10_13",
+        "index_name": "messages_2025_10_13_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "messages_2025_10_14",
+        "index_name": "messages_2025_10_14_inserted_at_topic_idx",
+        "column_name": "inserted_at"
+    },
+    {
+        "table_name": "messages_2025_10_14",
+        "index_name": "messages_2025_10_14_inserted_at_topic_idx",
+        "column_name": "topic"
+    },
+    {
+        "table_name": "messages_2025_10_14",
+        "index_name": "messages_2025_10_14_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "messages_2025_10_14",
+        "index_name": "messages_2025_10_14_pkey",
+        "column_name": "inserted_at"
+    },
+    {
+        "table_name": "mfa_amr_claims",
+        "index_name": "amr_id_pk",
+        "column_name": "id"
+    },
+    {
+        "table_name": "mfa_amr_claims",
+        "index_name": "mfa_amr_claims_session_id_authentication_method_pkey",
+        "column_name": "session_id"
+    },
+    {
+        "table_name": "mfa_amr_claims",
+        "index_name": "mfa_amr_claims_session_id_authentication_method_pkey",
+        "column_name": "authentication_method"
+    },
+    {
+        "table_name": "mfa_challenges",
+        "index_name": "mfa_challenge_created_at_idx",
+        "column_name": "created_at"
+    },
+    {
+        "table_name": "mfa_challenges",
+        "index_name": "mfa_challenges_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "mfa_factors",
+        "index_name": "factor_id_created_at_idx",
+        "column_name": "created_at"
+    },
+    {
+        "table_name": "mfa_factors",
+        "index_name": "factor_id_created_at_idx",
+        "column_name": "user_id"
+    },
+    {
+        "table_name": "mfa_factors",
+        "index_name": "mfa_factors_last_challenged_at_key",
+        "column_name": "last_challenged_at"
+    },
+    {
+        "table_name": "mfa_factors",
+        "index_name": "mfa_factors_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "mfa_factors",
+        "index_name": "mfa_factors_user_friendly_name_unique",
+        "column_name": "friendly_name"
+    },
+    {
+        "table_name": "mfa_factors",
+        "index_name": "mfa_factors_user_friendly_name_unique",
+        "column_name": "user_id"
+    },
+    {
+        "table_name": "mfa_factors",
+        "index_name": "mfa_factors_user_id_idx",
+        "column_name": "user_id"
+    },
+    {
+        "table_name": "mfa_factors",
+        "index_name": "unique_phone_factor_per_user",
+        "column_name": "phone"
+    },
+    {
+        "table_name": "mfa_factors",
+        "index_name": "unique_phone_factor_per_user",
+        "column_name": "user_id"
+    },
+    {
+        "table_name": "migrations",
+        "index_name": "migrations_name_key",
+        "column_name": "name"
+    },
+    {
+        "table_name": "migrations",
+        "index_name": "migrations_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "oauth_clients",
+        "index_name": "oauth_clients_client_id_idx",
+        "column_name": "client_id"
+    },
+    {
+        "table_name": "oauth_clients",
+        "index_name": "oauth_clients_client_id_key",
+        "column_name": "client_id"
+    },
+    {
+        "table_name": "oauth_clients",
+        "index_name": "oauth_clients_deleted_at_idx",
+        "column_name": "deleted_at"
+    },
+    {
+        "table_name": "oauth_clients",
+        "index_name": "oauth_clients_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "objects",
+        "index_name": "bucketid_objname",
+        "column_name": "name"
+    },
+    {
+        "table_name": "objects",
+        "index_name": "bucketid_objname",
+        "column_name": "bucket_id"
+    },
+    {
+        "table_name": "objects",
+        "index_name": "idx_name_bucket_level_unique",
+        "column_name": "level"
+    },
+    {
+        "table_name": "objects",
+        "index_name": "idx_name_bucket_level_unique",
+        "column_name": "name"
+    },
+    {
+        "table_name": "objects",
+        "index_name": "idx_name_bucket_level_unique",
+        "column_name": "bucket_id"
+    },
+    {
+        "table_name": "objects",
+        "index_name": "idx_objects_bucket_id_name",
+        "column_name": "name"
+    },
+    {
+        "table_name": "objects",
+        "index_name": "idx_objects_bucket_id_name",
+        "column_name": "bucket_id"
+    },
+    {
+        "table_name": "objects",
+        "index_name": "idx_objects_lower_name",
+        "column_name": "bucket_id"
+    },
+    {
+        "table_name": "objects",
+        "index_name": "idx_objects_lower_name",
+        "column_name": "level"
+    },
+    {
+        "table_name": "objects",
+        "index_name": "name_prefix_search",
+        "column_name": "name"
+    },
+    {
+        "table_name": "objects",
+        "index_name": "objects_bucket_id_level_idx",
+        "column_name": "level"
+    },
+    {
+        "table_name": "objects",
+        "index_name": "objects_bucket_id_level_idx",
+        "column_name": "bucket_id"
+    },
+    {
+        "table_name": "objects",
+        "index_name": "objects_bucket_id_level_idx",
+        "column_name": "name"
+    },
+    {
+        "table_name": "objects",
+        "index_name": "objects_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "omada_members",
+        "index_name": "omada_members_pkey",
+        "column_name": "omada_id"
+    },
+    {
+        "table_name": "omada_members",
+        "index_name": "omada_members_pkey",
+        "column_name": "user_id"
+    },
+    {
+        "table_name": "omada_members",
+        "index_name": "omada_members_role_id_idx",
+        "column_name": "role_id"
+    },
+    {
+        "table_name": "omada_members",
+        "index_name": "omada_members_user_id_idx",
+        "column_name": "user_id"
+    },
+    {
+        "table_name": "omada_members",
+        "index_name": "uq_active_membership",
+        "column_name": "omada_id"
+    },
+    {
+        "table_name": "omada_members",
+        "index_name": "uq_active_membership",
+        "column_name": "user_id"
+    },
+    {
+        "table_name": "omada_requests",
+        "index_name": "omada_requests_omada_id_status_idx",
+        "column_name": "omada_id"
+    },
+    {
+        "table_name": "omada_requests",
+        "index_name": "omada_requests_omada_id_status_idx",
+        "column_name": "status"
+    },
+    {
+        "table_name": "omada_requests",
+        "index_name": "omada_requests_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "omada_requests",
+        "index_name": "omada_requests_target_user_id_status_idx",
+        "column_name": "status"
+    },
+    {
+        "table_name": "omada_requests",
+        "index_name": "omada_requests_target_user_id_status_idx",
+        "column_name": "target_user_id"
+    },
+    {
+        "table_name": "omada_requests",
+        "index_name": "uq_pending_request_per_user_per_omada",
+        "column_name": "omada_id"
+    },
+    {
+        "table_name": "omada_requests",
+        "index_name": "uq_pending_request_per_user_per_omada",
+        "column_name": "target_user_id"
+    },
+    {
+        "table_name": "omada_roles",
+        "index_name": "omada_roles_key_key",
+        "column_name": "key"
+    },
+    {
+        "table_name": "omada_roles",
+        "index_name": "omada_roles_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "omadas",
+        "index_name": "omadas_handle_idx",
+        "column_name": "handle"
+    },
+    {
+        "table_name": "omadas",
+        "index_name": "omadas_owner_id_idx",
+        "column_name": "owner_id"
+    },
+    {
+        "table_name": "omadas",
+        "index_name": "omadas_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "one_time_tokens",
+        "index_name": "one_time_tokens_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "one_time_tokens",
+        "index_name": "one_time_tokens_relates_to_hash_idx",
+        "column_name": "relates_to"
+    },
+    {
+        "table_name": "one_time_tokens",
+        "index_name": "one_time_tokens_token_hash_hash_idx",
+        "column_name": "token_hash"
+    },
+    {
+        "table_name": "one_time_tokens",
+        "index_name": "one_time_tokens_user_id_token_type_key",
+        "column_name": "token_type"
+    },
+    {
+        "table_name": "one_time_tokens",
+        "index_name": "one_time_tokens_user_id_token_type_key",
+        "column_name": "user_id"
+    },
+    {
+        "table_name": "pg_aggregate",
+        "index_name": "pg_aggregate_fnoid_index",
+        "column_name": "aggfnoid"
+    },
+    {
+        "table_name": "pg_am",
+        "index_name": "pg_am_name_index",
+        "column_name": "amname"
+    },
+    {
+        "table_name": "pg_am",
+        "index_name": "pg_am_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_amop",
+        "index_name": "pg_amop_fam_strat_index",
+        "column_name": "amoprighttype"
+    },
+    {
+        "table_name": "pg_amop",
+        "index_name": "pg_amop_fam_strat_index",
+        "column_name": "amopfamily"
+    },
+    {
+        "table_name": "pg_amop",
+        "index_name": "pg_amop_fam_strat_index",
+        "column_name": "amoplefttype"
+    },
+    {
+        "table_name": "pg_amop",
+        "index_name": "pg_amop_fam_strat_index",
+        "column_name": "amopstrategy"
+    },
+    {
+        "table_name": "pg_amop",
+        "index_name": "pg_amop_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_amop",
+        "index_name": "pg_amop_opr_fam_index",
+        "column_name": "amopopr"
+    },
+    {
+        "table_name": "pg_amop",
+        "index_name": "pg_amop_opr_fam_index",
+        "column_name": "amoppurpose"
+    },
+    {
+        "table_name": "pg_amop",
+        "index_name": "pg_amop_opr_fam_index",
+        "column_name": "amopfamily"
+    },
+    {
+        "table_name": "pg_amproc",
+        "index_name": "pg_amproc_fam_proc_index",
+        "column_name": "amprocnum"
+    },
+    {
+        "table_name": "pg_amproc",
+        "index_name": "pg_amproc_fam_proc_index",
+        "column_name": "amprocrighttype"
+    },
+    {
+        "table_name": "pg_amproc",
+        "index_name": "pg_amproc_fam_proc_index",
+        "column_name": "amprocfamily"
+    },
+    {
+        "table_name": "pg_amproc",
+        "index_name": "pg_amproc_fam_proc_index",
+        "column_name": "amproclefttype"
+    },
+    {
+        "table_name": "pg_amproc",
+        "index_name": "pg_amproc_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_attrdef",
+        "index_name": "pg_attrdef_adrelid_adnum_index",
+        "column_name": "adrelid"
+    },
+    {
+        "table_name": "pg_attrdef",
+        "index_name": "pg_attrdef_adrelid_adnum_index",
+        "column_name": "adnum"
+    },
+    {
+        "table_name": "pg_attrdef",
+        "index_name": "pg_attrdef_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_attribute",
+        "index_name": "pg_attribute_relid_attnam_index",
+        "column_name": "attrelid"
+    },
+    {
+        "table_name": "pg_attribute",
+        "index_name": "pg_attribute_relid_attnam_index",
+        "column_name": "attname"
+    },
+    {
+        "table_name": "pg_attribute",
+        "index_name": "pg_attribute_relid_attnum_index",
+        "column_name": "attrelid"
+    },
+    {
+        "table_name": "pg_attribute",
+        "index_name": "pg_attribute_relid_attnum_index",
+        "column_name": "attnum"
+    },
+    {
+        "table_name": "pg_auth_members",
+        "index_name": "pg_auth_members_grantor_index",
+        "column_name": "grantor"
+    },
+    {
+        "table_name": "pg_auth_members",
+        "index_name": "pg_auth_members_member_role_index",
+        "column_name": "grantor"
+    },
+    {
+        "table_name": "pg_auth_members",
+        "index_name": "pg_auth_members_member_role_index",
+        "column_name": "member"
+    },
+    {
+        "table_name": "pg_auth_members",
+        "index_name": "pg_auth_members_member_role_index",
+        "column_name": "roleid"
+    },
+    {
+        "table_name": "pg_auth_members",
+        "index_name": "pg_auth_members_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_auth_members",
+        "index_name": "pg_auth_members_role_member_index",
+        "column_name": "member"
+    },
+    {
+        "table_name": "pg_auth_members",
+        "index_name": "pg_auth_members_role_member_index",
+        "column_name": "grantor"
+    },
+    {
+        "table_name": "pg_auth_members",
+        "index_name": "pg_auth_members_role_member_index",
+        "column_name": "roleid"
+    },
+    {
+        "table_name": "pg_authid",
+        "index_name": "pg_authid_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_authid",
+        "index_name": "pg_authid_rolname_index",
+        "column_name": "rolname"
+    },
+    {
+        "table_name": "pg_cast",
+        "index_name": "pg_cast_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_cast",
+        "index_name": "pg_cast_source_target_index",
+        "column_name": "casttarget"
+    },
+    {
+        "table_name": "pg_cast",
+        "index_name": "pg_cast_source_target_index",
+        "column_name": "castsource"
+    },
+    {
+        "table_name": "pg_class",
+        "index_name": "pg_class_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_class",
+        "index_name": "pg_class_relname_nsp_index",
+        "column_name": "relname"
+    },
+    {
+        "table_name": "pg_class",
+        "index_name": "pg_class_relname_nsp_index",
+        "column_name": "relnamespace"
+    },
+    {
+        "table_name": "pg_class",
+        "index_name": "pg_class_tblspc_relfilenode_index",
+        "column_name": "reltablespace"
+    },
+    {
+        "table_name": "pg_class",
+        "index_name": "pg_class_tblspc_relfilenode_index",
+        "column_name": "relfilenode"
+    },
+    {
+        "table_name": "pg_collation",
+        "index_name": "pg_collation_name_enc_nsp_index",
+        "column_name": "collnamespace"
+    },
+    {
+        "table_name": "pg_collation",
+        "index_name": "pg_collation_name_enc_nsp_index",
+        "column_name": "collencoding"
+    },
+    {
+        "table_name": "pg_collation",
+        "index_name": "pg_collation_name_enc_nsp_index",
+        "column_name": "collname"
+    },
+    {
+        "table_name": "pg_collation",
+        "index_name": "pg_collation_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_constraint",
+        "index_name": "pg_constraint_conname_nsp_index",
+        "column_name": "connamespace"
+    },
+    {
+        "table_name": "pg_constraint",
+        "index_name": "pg_constraint_conname_nsp_index",
+        "column_name": "conname"
+    },
+    {
+        "table_name": "pg_constraint",
+        "index_name": "pg_constraint_conparentid_index",
+        "column_name": "conparentid"
+    },
+    {
+        "table_name": "pg_constraint",
+        "index_name": "pg_constraint_conrelid_contypid_conname_index",
+        "column_name": "contypid"
+    },
+    {
+        "table_name": "pg_constraint",
+        "index_name": "pg_constraint_conrelid_contypid_conname_index",
+        "column_name": "conrelid"
+    },
+    {
+        "table_name": "pg_constraint",
+        "index_name": "pg_constraint_conrelid_contypid_conname_index",
+        "column_name": "conname"
+    },
+    {
+        "table_name": "pg_constraint",
+        "index_name": "pg_constraint_contypid_index",
+        "column_name": "contypid"
+    },
+    {
+        "table_name": "pg_constraint",
+        "index_name": "pg_constraint_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_conversion",
+        "index_name": "pg_conversion_default_index",
+        "column_name": "contoencoding"
+    },
+    {
+        "table_name": "pg_conversion",
+        "index_name": "pg_conversion_default_index",
+        "column_name": "connamespace"
+    },
+    {
+        "table_name": "pg_conversion",
+        "index_name": "pg_conversion_default_index",
+        "column_name": "conforencoding"
+    },
+    {
+        "table_name": "pg_conversion",
+        "index_name": "pg_conversion_default_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_conversion",
+        "index_name": "pg_conversion_name_nsp_index",
+        "column_name": "connamespace"
+    },
+    {
+        "table_name": "pg_conversion",
+        "index_name": "pg_conversion_name_nsp_index",
+        "column_name": "conname"
+    },
+    {
+        "table_name": "pg_conversion",
+        "index_name": "pg_conversion_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_database",
+        "index_name": "pg_database_datname_index",
+        "column_name": "datname"
+    },
+    {
+        "table_name": "pg_database",
+        "index_name": "pg_database_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_db_role_setting",
+        "index_name": "pg_db_role_setting_databaseid_rol_index",
+        "column_name": "setdatabase"
+    },
+    {
+        "table_name": "pg_db_role_setting",
+        "index_name": "pg_db_role_setting_databaseid_rol_index",
+        "column_name": "setrole"
+    },
+    {
+        "table_name": "pg_default_acl",
+        "index_name": "pg_default_acl_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_default_acl",
+        "index_name": "pg_default_acl_role_nsp_obj_index",
+        "column_name": "defaclobjtype"
+    },
+    {
+        "table_name": "pg_default_acl",
+        "index_name": "pg_default_acl_role_nsp_obj_index",
+        "column_name": "defaclrole"
+    },
+    {
+        "table_name": "pg_default_acl",
+        "index_name": "pg_default_acl_role_nsp_obj_index",
+        "column_name": "defaclnamespace"
+    },
+    {
+        "table_name": "pg_depend",
+        "index_name": "pg_depend_depender_index",
+        "column_name": "objsubid"
+    },
+    {
+        "table_name": "pg_depend",
+        "index_name": "pg_depend_depender_index",
+        "column_name": "classid"
+    },
+    {
+        "table_name": "pg_depend",
+        "index_name": "pg_depend_depender_index",
+        "column_name": "objid"
+    },
+    {
+        "table_name": "pg_depend",
+        "index_name": "pg_depend_reference_index",
+        "column_name": "refobjid"
+    },
+    {
+        "table_name": "pg_depend",
+        "index_name": "pg_depend_reference_index",
+        "column_name": "refobjsubid"
+    },
+    {
+        "table_name": "pg_depend",
+        "index_name": "pg_depend_reference_index",
+        "column_name": "refclassid"
+    },
+    {
+        "table_name": "pg_description",
+        "index_name": "pg_description_o_c_o_index",
+        "column_name": "objsubid"
+    },
+    {
+        "table_name": "pg_description",
+        "index_name": "pg_description_o_c_o_index",
+        "column_name": "classoid"
+    },
+    {
+        "table_name": "pg_description",
+        "index_name": "pg_description_o_c_o_index",
+        "column_name": "objoid"
+    },
+    {
+        "table_name": "pg_enum",
+        "index_name": "pg_enum_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_enum",
+        "index_name": "pg_enum_typid_label_index",
+        "column_name": "enumtypid"
+    },
+    {
+        "table_name": "pg_enum",
+        "index_name": "pg_enum_typid_label_index",
+        "column_name": "enumlabel"
+    },
+    {
+        "table_name": "pg_enum",
+        "index_name": "pg_enum_typid_sortorder_index",
+        "column_name": "enumtypid"
+    },
+    {
+        "table_name": "pg_enum",
+        "index_name": "pg_enum_typid_sortorder_index",
+        "column_name": "enumsortorder"
+    },
+    {
+        "table_name": "pg_event_trigger",
+        "index_name": "pg_event_trigger_evtname_index",
+        "column_name": "evtname"
+    },
+    {
+        "table_name": "pg_event_trigger",
+        "index_name": "pg_event_trigger_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_extension",
+        "index_name": "pg_extension_name_index",
+        "column_name": "extname"
+    },
+    {
+        "table_name": "pg_extension",
+        "index_name": "pg_extension_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_foreign_data_wrapper",
+        "index_name": "pg_foreign_data_wrapper_name_index",
+        "column_name": "fdwname"
+    },
+    {
+        "table_name": "pg_foreign_data_wrapper",
+        "index_name": "pg_foreign_data_wrapper_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_foreign_server",
+        "index_name": "pg_foreign_server_name_index",
+        "column_name": "srvname"
+    },
+    {
+        "table_name": "pg_foreign_server",
+        "index_name": "pg_foreign_server_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_foreign_table",
+        "index_name": "pg_foreign_table_relid_index",
+        "column_name": "ftrelid"
+    },
+    {
+        "table_name": "pg_index",
+        "index_name": "pg_index_indexrelid_index",
+        "column_name": "indexrelid"
+    },
+    {
+        "table_name": "pg_index",
+        "index_name": "pg_index_indrelid_index",
+        "column_name": "indrelid"
+    },
+    {
+        "table_name": "pg_inherits",
+        "index_name": "pg_inherits_parent_index",
+        "column_name": "inhparent"
+    },
+    {
+        "table_name": "pg_inherits",
+        "index_name": "pg_inherits_relid_seqno_index",
+        "column_name": "inhseqno"
+    },
+    {
+        "table_name": "pg_inherits",
+        "index_name": "pg_inherits_relid_seqno_index",
+        "column_name": "inhrelid"
+    },
+    {
+        "table_name": "pg_init_privs",
+        "index_name": "pg_init_privs_o_c_o_index",
+        "column_name": "classoid"
+    },
+    {
+        "table_name": "pg_init_privs",
+        "index_name": "pg_init_privs_o_c_o_index",
+        "column_name": "objoid"
+    },
+    {
+        "table_name": "pg_init_privs",
+        "index_name": "pg_init_privs_o_c_o_index",
+        "column_name": "objsubid"
+    },
+    {
+        "table_name": "pg_language",
+        "index_name": "pg_language_name_index",
+        "column_name": "lanname"
+    },
+    {
+        "table_name": "pg_language",
+        "index_name": "pg_language_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_largeobject",
+        "index_name": "pg_largeobject_loid_pn_index",
+        "column_name": "pageno"
+    },
+    {
+        "table_name": "pg_largeobject",
+        "index_name": "pg_largeobject_loid_pn_index",
+        "column_name": "loid"
+    },
+    {
+        "table_name": "pg_largeobject_metadata",
+        "index_name": "pg_largeobject_metadata_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_namespace",
+        "index_name": "pg_namespace_nspname_index",
+        "column_name": "nspname"
+    },
+    {
+        "table_name": "pg_namespace",
+        "index_name": "pg_namespace_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_opclass",
+        "index_name": "pg_opclass_am_name_nsp_index",
+        "column_name": "opcname"
+    },
+    {
+        "table_name": "pg_opclass",
+        "index_name": "pg_opclass_am_name_nsp_index",
+        "column_name": "opcmethod"
+    },
+    {
+        "table_name": "pg_opclass",
+        "index_name": "pg_opclass_am_name_nsp_index",
+        "column_name": "opcnamespace"
+    },
+    {
+        "table_name": "pg_opclass",
+        "index_name": "pg_opclass_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_operator",
+        "index_name": "pg_operator_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_operator",
+        "index_name": "pg_operator_oprname_l_r_n_index",
+        "column_name": "oprright"
+    },
+    {
+        "table_name": "pg_operator",
+        "index_name": "pg_operator_oprname_l_r_n_index",
+        "column_name": "oprname"
+    },
+    {
+        "table_name": "pg_operator",
+        "index_name": "pg_operator_oprname_l_r_n_index",
+        "column_name": "oprnamespace"
+    },
+    {
+        "table_name": "pg_operator",
+        "index_name": "pg_operator_oprname_l_r_n_index",
+        "column_name": "oprleft"
+    },
+    {
+        "table_name": "pg_opfamily",
+        "index_name": "pg_opfamily_am_name_nsp_index",
+        "column_name": "opfname"
+    },
+    {
+        "table_name": "pg_opfamily",
+        "index_name": "pg_opfamily_am_name_nsp_index",
+        "column_name": "opfnamespace"
+    },
+    {
+        "table_name": "pg_opfamily",
+        "index_name": "pg_opfamily_am_name_nsp_index",
+        "column_name": "opfmethod"
+    },
+    {
+        "table_name": "pg_opfamily",
+        "index_name": "pg_opfamily_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_parameter_acl",
+        "index_name": "pg_parameter_acl_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_parameter_acl",
+        "index_name": "pg_parameter_acl_parname_index",
+        "column_name": "parname"
+    },
+    {
+        "table_name": "pg_partitioned_table",
+        "index_name": "pg_partitioned_table_partrelid_index",
+        "column_name": "partrelid"
+    },
+    {
+        "table_name": "pg_policy",
+        "index_name": "pg_policy_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_policy",
+        "index_name": "pg_policy_polrelid_polname_index",
+        "column_name": "polrelid"
+    },
+    {
+        "table_name": "pg_policy",
+        "index_name": "pg_policy_polrelid_polname_index",
+        "column_name": "polname"
+    },
+    {
+        "table_name": "pg_proc",
+        "index_name": "pg_proc_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_proc",
+        "index_name": "pg_proc_proname_args_nsp_index",
+        "column_name": "proargtypes"
+    },
+    {
+        "table_name": "pg_proc",
+        "index_name": "pg_proc_proname_args_nsp_index",
+        "column_name": "proname"
+    },
+    {
+        "table_name": "pg_proc",
+        "index_name": "pg_proc_proname_args_nsp_index",
+        "column_name": "pronamespace"
+    },
+    {
+        "table_name": "pg_publication",
+        "index_name": "pg_publication_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_publication",
+        "index_name": "pg_publication_pubname_index",
+        "column_name": "pubname"
+    },
+    {
+        "table_name": "pg_publication_namespace",
+        "index_name": "pg_publication_namespace_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_publication_namespace",
+        "index_name": "pg_publication_namespace_pnnspid_pnpubid_index",
+        "column_name": "pnpubid"
+    },
+    {
+        "table_name": "pg_publication_namespace",
+        "index_name": "pg_publication_namespace_pnnspid_pnpubid_index",
+        "column_name": "pnnspid"
+    },
+    {
+        "table_name": "pg_publication_rel",
+        "index_name": "pg_publication_rel_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_publication_rel",
+        "index_name": "pg_publication_rel_prpubid_index",
+        "column_name": "prpubid"
+    },
+    {
+        "table_name": "pg_publication_rel",
+        "index_name": "pg_publication_rel_prrelid_prpubid_index",
+        "column_name": "prrelid"
+    },
+    {
+        "table_name": "pg_publication_rel",
+        "index_name": "pg_publication_rel_prrelid_prpubid_index",
+        "column_name": "prpubid"
+    },
+    {
+        "table_name": "pg_range",
+        "index_name": "pg_range_rngmultitypid_index",
+        "column_name": "rngmultitypid"
+    },
+    {
+        "table_name": "pg_range",
+        "index_name": "pg_range_rngtypid_index",
+        "column_name": "rngtypid"
+    },
+    {
+        "table_name": "pg_replication_origin",
+        "index_name": "pg_replication_origin_roiident_index",
+        "column_name": "roident"
+    },
+    {
+        "table_name": "pg_replication_origin",
+        "index_name": "pg_replication_origin_roname_index",
+        "column_name": "roname"
+    },
+    {
+        "table_name": "pg_rewrite",
+        "index_name": "pg_rewrite_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_rewrite",
+        "index_name": "pg_rewrite_rel_rulename_index",
+        "column_name": "ev_class"
+    },
+    {
+        "table_name": "pg_rewrite",
+        "index_name": "pg_rewrite_rel_rulename_index",
+        "column_name": "rulename"
+    },
+    {
+        "table_name": "pg_seclabel",
+        "index_name": "pg_seclabel_object_index",
+        "column_name": "objsubid"
+    },
+    {
+        "table_name": "pg_seclabel",
+        "index_name": "pg_seclabel_object_index",
+        "column_name": "classoid"
+    },
+    {
+        "table_name": "pg_seclabel",
+        "index_name": "pg_seclabel_object_index",
+        "column_name": "provider"
+    },
+    {
+        "table_name": "pg_seclabel",
+        "index_name": "pg_seclabel_object_index",
+        "column_name": "objoid"
+    },
+    {
+        "table_name": "pg_sequence",
+        "index_name": "pg_sequence_seqrelid_index",
+        "column_name": "seqrelid"
+    },
+    {
+        "table_name": "pg_shdepend",
+        "index_name": "pg_shdepend_depender_index",
+        "column_name": "objsubid"
+    },
+    {
+        "table_name": "pg_shdepend",
+        "index_name": "pg_shdepend_depender_index",
+        "column_name": "objid"
+    },
+    {
+        "table_name": "pg_shdepend",
+        "index_name": "pg_shdepend_depender_index",
+        "column_name": "classid"
+    },
+    {
+        "table_name": "pg_shdepend",
+        "index_name": "pg_shdepend_depender_index",
+        "column_name": "dbid"
+    },
+    {
+        "table_name": "pg_shdepend",
+        "index_name": "pg_shdepend_reference_index",
+        "column_name": "refclassid"
+    },
+    {
+        "table_name": "pg_shdepend",
+        "index_name": "pg_shdepend_reference_index",
+        "column_name": "refobjid"
+    },
+    {
+        "table_name": "pg_shdescription",
+        "index_name": "pg_shdescription_o_c_index",
+        "column_name": "classoid"
+    },
+    {
+        "table_name": "pg_shdescription",
+        "index_name": "pg_shdescription_o_c_index",
+        "column_name": "objoid"
+    },
+    {
+        "table_name": "pg_shseclabel",
+        "index_name": "pg_shseclabel_object_index",
+        "column_name": "classoid"
+    },
+    {
+        "table_name": "pg_shseclabel",
+        "index_name": "pg_shseclabel_object_index",
+        "column_name": "objoid"
+    },
+    {
+        "table_name": "pg_shseclabel",
+        "index_name": "pg_shseclabel_object_index",
+        "column_name": "provider"
+    },
+    {
+        "table_name": "pg_statistic",
+        "index_name": "pg_statistic_relid_att_inh_index",
+        "column_name": "staattnum"
+    },
+    {
+        "table_name": "pg_statistic",
+        "index_name": "pg_statistic_relid_att_inh_index",
+        "column_name": "starelid"
+    },
+    {
+        "table_name": "pg_statistic",
+        "index_name": "pg_statistic_relid_att_inh_index",
+        "column_name": "stainherit"
+    },
+    {
+        "table_name": "pg_statistic_ext",
+        "index_name": "pg_statistic_ext_name_index",
+        "column_name": "stxname"
+    },
+    {
+        "table_name": "pg_statistic_ext",
+        "index_name": "pg_statistic_ext_name_index",
+        "column_name": "stxnamespace"
+    },
+    {
+        "table_name": "pg_statistic_ext",
+        "index_name": "pg_statistic_ext_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_statistic_ext",
+        "index_name": "pg_statistic_ext_relid_index",
+        "column_name": "stxrelid"
+    },
+    {
+        "table_name": "pg_statistic_ext_data",
+        "index_name": "pg_statistic_ext_data_stxoid_inh_index",
+        "column_name": "stxdinherit"
+    },
+    {
+        "table_name": "pg_statistic_ext_data",
+        "index_name": "pg_statistic_ext_data_stxoid_inh_index",
+        "column_name": "stxoid"
+    },
+    {
+        "table_name": "pg_subscription",
+        "index_name": "pg_subscription_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_subscription",
+        "index_name": "pg_subscription_subname_index",
+        "column_name": "subdbid"
+    },
+    {
+        "table_name": "pg_subscription",
+        "index_name": "pg_subscription_subname_index",
+        "column_name": "subname"
+    },
+    {
+        "table_name": "pg_subscription_rel",
+        "index_name": "pg_subscription_rel_srrelid_srsubid_index",
+        "column_name": "srrelid"
+    },
+    {
+        "table_name": "pg_subscription_rel",
+        "index_name": "pg_subscription_rel_srrelid_srsubid_index",
+        "column_name": "srsubid"
+    },
+    {
+        "table_name": "pg_tablespace",
+        "index_name": "pg_tablespace_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_tablespace",
+        "index_name": "pg_tablespace_spcname_index",
+        "column_name": "spcname"
+    },
+    {
+        "table_name": "pg_transform",
+        "index_name": "pg_transform_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_transform",
+        "index_name": "pg_transform_type_lang_index",
+        "column_name": "trftype"
+    },
+    {
+        "table_name": "pg_transform",
+        "index_name": "pg_transform_type_lang_index",
+        "column_name": "trflang"
+    },
+    {
+        "table_name": "pg_trigger",
+        "index_name": "pg_trigger_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_trigger",
+        "index_name": "pg_trigger_tgconstraint_index",
+        "column_name": "tgconstraint"
+    },
+    {
+        "table_name": "pg_trigger",
+        "index_name": "pg_trigger_tgrelid_tgname_index",
+        "column_name": "tgname"
+    },
+    {
+        "table_name": "pg_trigger",
+        "index_name": "pg_trigger_tgrelid_tgname_index",
+        "column_name": "tgrelid"
+    },
+    {
+        "table_name": "pg_ts_config",
+        "index_name": "pg_ts_config_cfgname_index",
+        "column_name": "cfgname"
+    },
+    {
+        "table_name": "pg_ts_config",
+        "index_name": "pg_ts_config_cfgname_index",
+        "column_name": "cfgnamespace"
+    },
+    {
+        "table_name": "pg_ts_config",
+        "index_name": "pg_ts_config_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_ts_config_map",
+        "index_name": "pg_ts_config_map_index",
+        "column_name": "maptokentype"
+    },
+    {
+        "table_name": "pg_ts_config_map",
+        "index_name": "pg_ts_config_map_index",
+        "column_name": "mapseqno"
+    },
+    {
+        "table_name": "pg_ts_config_map",
+        "index_name": "pg_ts_config_map_index",
+        "column_name": "mapcfg"
+    },
+    {
+        "table_name": "pg_ts_dict",
+        "index_name": "pg_ts_dict_dictname_index",
+        "column_name": "dictnamespace"
+    },
+    {
+        "table_name": "pg_ts_dict",
+        "index_name": "pg_ts_dict_dictname_index",
+        "column_name": "dictname"
+    },
+    {
+        "table_name": "pg_ts_dict",
+        "index_name": "pg_ts_dict_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_ts_parser",
+        "index_name": "pg_ts_parser_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_ts_parser",
+        "index_name": "pg_ts_parser_prsname_index",
+        "column_name": "prsnamespace"
+    },
+    {
+        "table_name": "pg_ts_parser",
+        "index_name": "pg_ts_parser_prsname_index",
+        "column_name": "prsname"
+    },
+    {
+        "table_name": "pg_ts_template",
+        "index_name": "pg_ts_template_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_ts_template",
+        "index_name": "pg_ts_template_tmplname_index",
+        "column_name": "tmplnamespace"
+    },
+    {
+        "table_name": "pg_ts_template",
+        "index_name": "pg_ts_template_tmplname_index",
+        "column_name": "tmplname"
+    },
+    {
+        "table_name": "pg_type",
+        "index_name": "pg_type_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_type",
+        "index_name": "pg_type_typname_nsp_index",
+        "column_name": "typname"
+    },
+    {
+        "table_name": "pg_type",
+        "index_name": "pg_type_typname_nsp_index",
+        "column_name": "typnamespace"
+    },
+    {
+        "table_name": "pg_user_mapping",
+        "index_name": "pg_user_mapping_oid_index",
+        "column_name": "oid"
+    },
+    {
+        "table_name": "pg_user_mapping",
+        "index_name": "pg_user_mapping_user_server_index",
+        "column_name": "umserver"
+    },
+    {
+        "table_name": "pg_user_mapping",
+        "index_name": "pg_user_mapping_user_server_index",
+        "column_name": "umuser"
+    },
+    {
+        "table_name": "prefixes",
+        "index_name": "idx_prefixes_lower_name",
+        "column_name": "level"
+    },
+    {
+        "table_name": "prefixes",
+        "index_name": "idx_prefixes_lower_name",
+        "column_name": "bucket_id"
+    },
+    {
+        "table_name": "prefixes",
+        "index_name": "prefixes_pkey",
+        "column_name": "level"
+    },
+    {
+        "table_name": "prefixes",
+        "index_name": "prefixes_pkey",
+        "column_name": "name"
+    },
+    {
+        "table_name": "prefixes",
+        "index_name": "prefixes_pkey",
+        "column_name": "bucket_id"
+    },
+    {
+        "table_name": "profiles",
+        "index_name": "profiles_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "profiles",
+        "index_name": "profiles_username_key",
+        "column_name": "username"
+    },
+    {
+        "table_name": "refresh_tokens",
+        "index_name": "refresh_tokens_instance_id_idx",
+        "column_name": "instance_id"
+    },
+    {
+        "table_name": "refresh_tokens",
+        "index_name": "refresh_tokens_instance_id_user_id_idx",
+        "column_name": "instance_id"
+    },
+    {
+        "table_name": "refresh_tokens",
+        "index_name": "refresh_tokens_instance_id_user_id_idx",
+        "column_name": "user_id"
+    },
+    {
+        "table_name": "refresh_tokens",
+        "index_name": "refresh_tokens_parent_idx",
+        "column_name": "parent"
+    },
+    {
+        "table_name": "refresh_tokens",
+        "index_name": "refresh_tokens_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "refresh_tokens",
+        "index_name": "refresh_tokens_session_id_revoked_idx",
+        "column_name": "session_id"
+    },
+    {
+        "table_name": "refresh_tokens",
+        "index_name": "refresh_tokens_session_id_revoked_idx",
+        "column_name": "revoked"
+    },
+    {
+        "table_name": "refresh_tokens",
+        "index_name": "refresh_tokens_token_unique",
+        "column_name": "token"
+    },
+    {
+        "table_name": "refresh_tokens",
+        "index_name": "refresh_tokens_updated_at_idx",
+        "column_name": "updated_at"
+    },
+    {
+        "table_name": "s3_multipart_uploads",
+        "index_name": "idx_multipart_uploads_list",
+        "column_name": "key"
+    },
+    {
+        "table_name": "s3_multipart_uploads",
+        "index_name": "idx_multipart_uploads_list",
+        "column_name": "bucket_id"
+    },
+    {
+        "table_name": "s3_multipart_uploads",
+        "index_name": "idx_multipart_uploads_list",
+        "column_name": "created_at"
+    },
+    {
+        "table_name": "s3_multipart_uploads",
+        "index_name": "s3_multipart_uploads_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "s3_multipart_uploads_parts",
+        "index_name": "s3_multipart_uploads_parts_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "saml_providers",
+        "index_name": "saml_providers_entity_id_key",
+        "column_name": "entity_id"
+    },
+    {
+        "table_name": "saml_providers",
+        "index_name": "saml_providers_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "saml_providers",
+        "index_name": "saml_providers_sso_provider_id_idx",
+        "column_name": "sso_provider_id"
+    },
+    {
+        "table_name": "saml_relay_states",
+        "index_name": "saml_relay_states_created_at_idx",
+        "column_name": "created_at"
+    },
+    {
+        "table_name": "saml_relay_states",
+        "index_name": "saml_relay_states_for_email_idx",
+        "column_name": "for_email"
+    },
+    {
+        "table_name": "saml_relay_states",
+        "index_name": "saml_relay_states_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "saml_relay_states",
+        "index_name": "saml_relay_states_sso_provider_id_idx",
+        "column_name": "sso_provider_id"
+    },
+    {
+        "table_name": "schema_migrations",
+        "index_name": "schema_migrations_pkey",
+        "column_name": "version"
+    },
+    {
+        "table_name": "schema_migrations",
+        "index_name": "schema_migrations_pkey",
+        "column_name": "version"
+    },
+    {
+        "table_name": "secrets",
+        "index_name": "secrets_name_idx",
+        "column_name": "name"
+    },
+    {
+        "table_name": "secrets",
+        "index_name": "secrets_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "sessions",
+        "index_name": "sessions_not_after_idx",
+        "column_name": "not_after"
+    },
+    {
+        "table_name": "sessions",
+        "index_name": "sessions_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "sessions",
+        "index_name": "sessions_user_id_idx",
+        "column_name": "user_id"
+    },
+    {
+        "table_name": "sessions",
+        "index_name": "user_id_created_at_idx",
+        "column_name": "user_id"
+    },
+    {
+        "table_name": "sessions",
+        "index_name": "user_id_created_at_idx",
+        "column_name": "created_at"
+    },
+    {
+        "table_name": "share_requests",
+        "index_name": "share_requests_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "share_requests",
+        "index_name": "share_requests_recipient_status_idx",
+        "column_name": "status"
+    },
+    {
+        "table_name": "share_requests",
+        "index_name": "share_requests_recipient_status_idx",
+        "column_name": "recipient_id"
+    },
+    {
+        "table_name": "share_requests",
+        "index_name": "share_requests_requester_status_idx",
+        "column_name": "requester_id"
+    },
+    {
+        "table_name": "share_requests",
+        "index_name": "share_requests_requester_status_idx",
+        "column_name": "status"
+    },
+    {
+        "table_name": "sso_domains",
+        "index_name": "sso_domains_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "sso_domains",
+        "index_name": "sso_domains_sso_provider_id_idx",
+        "column_name": "sso_provider_id"
+    },
+    {
+        "table_name": "sso_providers",
+        "index_name": "sso_providers_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "sso_providers",
+        "index_name": "sso_providers_resource_id_pattern_idx",
+        "column_name": "resource_id"
+    },
+    {
+        "table_name": "subscription",
+        "index_name": "ix_realtime_subscription_entity",
+        "column_name": "entity"
+    },
+    {
+        "table_name": "subscription",
+        "index_name": "pk_subscription",
+        "column_name": "id"
+    },
+    {
+        "table_name": "subscription",
+        "index_name": "subscription_subscription_id_entity_filters_key",
+        "column_name": "subscription_id"
+    },
+    {
+        "table_name": "subscription",
+        "index_name": "subscription_subscription_id_entity_filters_key",
+        "column_name": "filters"
+    },
+    {
+        "table_name": "subscription",
+        "index_name": "subscription_subscription_id_entity_filters_key",
+        "column_name": "entity"
+    },
+    {
+        "table_name": "tags",
+        "index_name": "tags_owner_id_name_key",
+        "column_name": "name"
+    },
+    {
+        "table_name": "tags",
+        "index_name": "tags_owner_id_name_key",
+        "column_name": "owner_id"
+    },
+    {
+        "table_name": "tags",
+        "index_name": "tags_owner_name_uniq",
+        "column_name": "name"
+    },
+    {
+        "table_name": "tags",
+        "index_name": "tags_owner_name_uniq",
+        "column_name": "owner_id"
+    },
+    {
+        "table_name": "tags",
+        "index_name": "tags_pkey",
+        "column_name": "id"
+    },
+    {
+        "table_name": "users",
+        "index_name": "confirmation_token_idx",
+        "column_name": "confirmation_token"
+    },
+    {
+        "table_name": "users",
+        "index_name": "email_change_token_current_idx",
+        "column_name": "email_change_token_current"
+    },
+    {
+        "table_name": "users",
+        "index_name": "email_change_token_new_idx",
+        "column_name": "email_change_token_new"
+    },
+    {
+        "table_name": "users",
+        "index_name": "reauthentication_token_idx",
+        "column_name": "reauthentication_token"
+    },
+    {
+        "table_name": "users",
+        "index_name": "recovery_token_idx",
+        "column_name": "recovery_token"
+    },
+    {
+        "table_name": "users",
+        "index_name": "users_email_partial_key",
+        "column_name": "email"
+    },
+    {
+        "table_name": "users",
+        "index_name": "users_instance_id_email_idx",
+        "column_name": "instance_id"
+    },
+    {
+        "table_name": "users",
+        "index_name": "users_instance_id_idx",
+        "column_name": "instance_id"
+    },
+    {
+        "table_name": "users",
+        "index_name": "users_is_anonymous_idx",
+        "column_name": "is_anonymous"
+    },
+    {
+        "table_name": "users",
+        "index_name": "users_phone_key",
+        "column_name": "phone"
+    },
+    {
+        "table_name": "users",
+        "index_name": "users_pkey",
+        "column_name": "id"
+    }
+]

@@ -8,7 +8,7 @@ class AppBottomNav extends StatelessWidget {
 
   int get _index {
     switch (active) {
-      case AppNav.contacts:
+      case AppNav.omadas:
         return 0;
       case AppNav.favourites:
         return 1;
@@ -23,7 +23,7 @@ class AppBottomNav extends StatelessWidget {
     if (index == _index) return;
     switch (index) {
       case 0:
-        Navigator.of(context).pushReplacementNamed('/app');
+        Navigator.of(context).pushReplacementNamed('/omadas');
         break;
       case 1:
         Navigator.of(context).pushReplacementNamed('/favourites');
@@ -42,8 +42,9 @@ class AppBottomNav extends StatelessWidget {
     return BottomNavigationBar(
       currentIndex: _index,
       onTap: (i) => _onTap(context, i),
-      type: BottomNavigationBarType.fixed, // Needed for 3+ tabs
+      type: BottomNavigationBarType.fixed, // Needed for 4+ tabs
       items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.groups), label: 'Omadas'),
         BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Contacts'),
         BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Favourites'),
         BottomNavigationBarItem(
