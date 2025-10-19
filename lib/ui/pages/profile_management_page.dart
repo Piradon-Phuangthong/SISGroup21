@@ -96,16 +96,15 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                     ),
                     Positioned(
                       right: 0,
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.08),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(Icons.more_vert, color: Colors.white),
+                      child: IconButton(
+                        tooltip: 'Account',
+                        icon: const Icon(Icons.account_circle, color: Colors.white),
+                        onPressed: () {
+                          Navigator.of(context).pushNamed('/account'); // or pushReplacementNamed
+                        },
                       ),
-                    ),
+              ),
+
                   ],
                 ),
               ),

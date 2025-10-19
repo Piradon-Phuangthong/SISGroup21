@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum AppNav { contacts, omadas, favourites, profile, account }
+enum AppNav { contacts, omadas, favourites, profile }
 
 class AppBottomNav extends StatelessWidget {
   final AppNav active;
@@ -16,8 +16,6 @@ class AppBottomNav extends StatelessWidget {
         return 2;
       case AppNav.profile:
         return 3;
-      case AppNav.account:
-        return 4;
     }
   }
 
@@ -35,9 +33,6 @@ class AppBottomNav extends StatelessWidget {
         break;
       case 3:
         Navigator.of(context).pushReplacementNamed('/profile');
-        break;
-      case 4:
-        Navigator.of(context).pushReplacementNamed('/account');
         break;
     }
   }
@@ -57,10 +52,7 @@ class AppBottomNav extends StatelessWidget {
           icon: Icon(Icons.card_membership),
           label: 'My Card',
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.account_circle),
-          label: 'Account',
-        ),
+        
       ],
     );
   }
