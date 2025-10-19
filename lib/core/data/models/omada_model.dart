@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'omada_role.dart';
 
 /// Represents an Omada (Group) of contacts
 @immutable
@@ -9,10 +10,14 @@ class OmadaModel {
   final String? description;
   final String? color;
   final String? icon;
+  final String? avatarUrl;
+  final JoinPolicy joinPolicy;
+  final bool isPublic;
   final bool isDeleted;
   final DateTime createdAt;
   final DateTime updatedAt;
   final int? memberCount; // Optional, populated from view
+  final int? pendingRequestsCount; // Optional, populated from view
 
   const OmadaModel({
     required this.id,
@@ -21,10 +26,14 @@ class OmadaModel {
     this.description,
     this.color,
     this.icon,
+    this.avatarUrl,
+    this.joinPolicy = JoinPolicy.approval,
+    this.isPublic = true,
     this.isDeleted = false,
     required this.createdAt,
     required this.updatedAt,
     this.memberCount,
+    this.pendingRequestsCount,
   });
 
   factory OmadaModel.fromJson(Map<String, dynamic> json) {
@@ -35,10 +44,16 @@ class OmadaModel {
       description: json['description'] as String?,
       color: json['color'] as String?,
       icon: json['icon'] as String?,
+      avatarUrl: json['avatar_url'] as String?,
+      joinPolicy: json['join_policy'] != null
+          ? JoinPolicy.fromString(json['join_policy'] as String)
+          : JoinPolicy.approval,
+      isPublic: json['is_public'] as bool? ?? true,
       isDeleted: json['is_deleted'] as bool? ?? false,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
       memberCount: json['member_count'] as int?,
+      pendingRequestsCount: json['pending_requests_count'] as int?,
     );
   }
 
@@ -50,10 +65,15 @@ class OmadaModel {
       'description': description,
       'color': color,
       'icon': icon,
+      'avatar_url': avatarUrl,
+      'join_policy': joinPolicy.dbValue,
+      'is_public': isPublic,
       'is_deleted': isDeleted,
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       if (memberCount != null) 'member_count': memberCount,
+      if (pendingRequestsCount != null)
+        'pending_requests_count': pendingRequestsCount,
     };
   }
 
@@ -64,10 +84,14 @@ class OmadaModel {
     String? description,
     String? color,
     String? icon,
+    String? avatarUrl,
+    JoinPolicy? joinPolicy,
+    bool? isPublic,
     bool? isDeleted,
     DateTime? createdAt,
     DateTime? updatedAt,
     int? memberCount,
+    int? pendingRequestsCount,
   }) {
     return OmadaModel(
       id: id ?? this.id,
@@ -76,10 +100,14 @@ class OmadaModel {
       description: description ?? this.description,
       color: color ?? this.color,
       icon: icon ?? this.icon,
+      avatarUrl: avatarUrl ?? this.avatarUrl,
+      joinPolicy: joinPolicy ?? this.joinPolicy,
+      isPublic: isPublic ?? this.isPublic,
       isDeleted: isDeleted ?? this.isDeleted,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       memberCount: memberCount ?? this.memberCount,
+      pendingRequestsCount: pendingRequestsCount ?? this.pendingRequestsCount,
     );
   }
 
