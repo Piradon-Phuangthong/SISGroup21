@@ -8,6 +8,7 @@ import 'package:omada/ui/pages/profile_management_page.dart';
 import 'package:omada/ui/pages/splash_page.dart';
 import 'package:omada/ui/pages/login_page.dart';
 import 'package:omada/ui/pages/account_page.dart';
+import 'package:omada/ui/pages/omadas_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,6 +38,7 @@ class OmadaRootApp extends StatelessWidget {
             '/app': (_) => const ContactsScreen(),
             '/account': (_) => const AccountPage(),
             '/profile': (_) => const ProfileManagementPage(),
+            '/omadas': (_) => const OmadasScreen(),
             '/debug': (_) => const EpicHomeEntry(),
             '/dev-selector': (_) => const _RouteSelectorPage(),
           },
