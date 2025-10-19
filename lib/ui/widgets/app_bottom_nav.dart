@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum AppNav { contacts, profile, account }
+enum AppNav { contacts, favourites, profile, account }
 
 class AppBottomNav extends StatelessWidget {
   final AppNav active;
@@ -10,10 +10,12 @@ class AppBottomNav extends StatelessWidget {
     switch (active) {
       case AppNav.contacts:
         return 0;
-      case AppNav.profile:
+      case AppNav.favourites:
         return 1;
-      case AppNav.account:
+      case AppNav.profile:
         return 2;
+      case AppNav.account:
+        return 3;
     }
   }
 
@@ -24,9 +26,12 @@ class AppBottomNav extends StatelessWidget {
         Navigator.of(context).pushReplacementNamed('/app');
         break;
       case 1:
-        Navigator.of(context).pushReplacementNamed('/profile');
+        Navigator.of(context).pushReplacementNamed('/favourites');
         break;
       case 2:
+        Navigator.of(context).pushReplacementNamed('/profile');
+        break;
+      case 3:
         Navigator.of(context).pushReplacementNamed('/account');
         break;
     }
@@ -40,6 +45,7 @@ class AppBottomNav extends StatelessWidget {
       type: BottomNavigationBarType.fixed, // Needed for 3+ tabs
       items: const [
         BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Contacts'),
+        BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Favourites'),
         BottomNavigationBarItem(
           icon: Icon(Icons.card_membership),
           label: 'My Card',

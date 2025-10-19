@@ -14,8 +14,7 @@ import 'contacts/user_discovery_sheet.dart';
 import 'contacts/incoming_requests_sheet.dart';
 import 'package:omada/core/data/models/tag_model.dart';
 import 'package:omada/core/controllers/contacts_controller.dart';
-import 'deleted_contacts_page.dart';
-
+import 'package:omada/core/controllers/favourites_controller.dart';
 // Removed unused imports
 
 class ContactsScreen extends StatefulWidget {
@@ -27,6 +26,7 @@ class ContactsScreen extends StatefulWidget {
 
 class _ContactsScreenState extends State<ContactsScreen> {
   late final ContactsController _controller;
+  late final FavouritesController _favouritesController;
   final ColorPalette selectedTheme = appPalette;
   List<ContactModel> _contacts = [];
   List<ContactModel> _visibleContacts = [];
@@ -43,6 +43,8 @@ class _ContactsScreenState extends State<ContactsScreen> {
   void initState() {
     super.initState();
     _controller = ContactsController(supabase);
+    _favouritesController = FavouritesController();
+    _favouritesController.addListener(_onFavouritesChanged);
     _searchController.addListener(_onSearchChanged);
     _initialize();
   }
@@ -53,9 +55,15 @@ class _ContactsScreenState extends State<ContactsScreen> {
 
   @override
   void dispose() {
+    _favouritesController.removeListener(_onFavouritesChanged);
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _onFavouritesChanged() {
+    // Rebuild when favourites change to update star icons
+    setState(() {});
   }
 
   Future<void> _refreshContacts() async {
@@ -183,6 +191,10 @@ class _ContactsScreenState extends State<ContactsScreen> {
         context,
       ).showSnackBar(SnackBar(content: Text('Failed to delete: $e')));
     }
+  }
+
+  void _toggleFavourite(String contactId) {
+    _favouritesController.toggleFavourite(contactId);
   }
 
   @override
@@ -331,6 +343,8 @@ class _ContactsScreenState extends State<ContactsScreen> {
             return ContactTile(
               contact: contact,
               tags: tagsByContact[contact.id] ?? const [],
+              isFavourite: _favouritesController.isFavourite(contact.id),
+              onFavouriteToggle: () => _toggleFavourite(contact.id),
               onTagTap: (tag) async {
                 setState(() {
                   if (_selectedTagIds.contains(tag.id)) {
