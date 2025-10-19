@@ -1,7 +1,27 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 class ExpandedContactHeader extends StatefulWidget {
-  const ExpandedContactHeader({super.key});
+  final Future<void> Function() onManageTags;
+  final Future<void> Function() onDiscoverUsers;
+  final Future<void> Function() onGetRequests;
+  final void Function(BuildContext context) onGetDeleted;
+  final void Function(BuildContext context) onGetAccountPage;
+  final Future<void> Function() onAddContact;
+  final TextEditingController searchController;
+  final VoidCallback onSearchChanged;
+
+  const ExpandedContactHeader({
+    super.key,
+    required this.onManageTags,
+    required this.onDiscoverUsers,
+    required this.onGetRequests,
+    required this.onGetDeleted,
+    required this.onGetAccountPage,
+    required this.onAddContact, //use this
+    required this.onSearchChanged,
+    required this.searchController,
+  });
 
   @override
   State<ExpandedContactHeader> createState() => _ExpandedContactHeaderState();
@@ -28,7 +48,19 @@ class _ExpandedContactHeaderState extends State<ExpandedContactHeader> {
                 children: [
                   Expanded(child: SizedBox()),
                   IconButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      widget.onGetDeleted(context);
+                    },
+                    icon: Icon(Icons.delete),
+                    color: Colors.white,
+                    style: IconButton.styleFrom(
+                      backgroundColor: Color.fromARGB(50, 255, 255, 255),
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      widget.onGetAccountPage(context);
+                    },
                     icon: Icon(Icons.person),
                     color: Colors.white,
                     style: IconButton.styleFrom(
@@ -53,12 +85,15 @@ class _ExpandedContactHeaderState extends State<ExpandedContactHeader> {
                   color: Colors.grey[200],
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const TextField(
+                child: TextField(
+                  controller: widget.searchController,
                   decoration: InputDecoration(
                     icon: Icon(Icons.search),
                     hintText: "Search contacts...",
                     border: InputBorder.none,
                   ),
+                  style: TextStyle(color: Colors.black),
+                  onChanged: (value) => widget.onSearchChanged(),
                 ),
               ),
 
@@ -66,26 +101,66 @@ class _ExpandedContactHeaderState extends State<ExpandedContactHeader> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 spacing: 30,
                 children: [
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      print("filter button expanded");
+                  IconButton(
+                    onPressed: () async {
+                      widget.onManageTags();
                     },
-                    style: ElevatedButton.styleFrom(
+                    style: IconButton.styleFrom(
                       backgroundColor: Color.fromARGB(50, 255, 255, 255),
                       elevation: 0,
                       shadowColor: Colors.transparent,
                     ),
 
                     icon: Icon(Icons.filter_list, color: Colors.white),
-                    label: Text(
-                      "Filter by tags",
-                      style: TextStyle(color: Colors.white),
+                    // label: Text(
+                    //   "Manage Tags",
+                    //   style: TextStyle(color: Colors.white),
+                    // ),
+                  ),
+
+                  //discover users
+                  IconButton(
+                    onPressed: () async {
+                      widget.onDiscoverUsers();
+                    },
+                    icon: Icon(Icons.search, color: Colors.white),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Color.fromARGB(50, 255, 255, 255),
+                      elevation: 0,
+                      shadowColor: Colors.transparent,
                     ),
                   ),
 
+                  //request users
                   IconButton(
-                    onPressed: () {
-                      print("add button expanded");
+                    onPressed: () async {
+                      widget.onGetRequests();
+                    },
+                    icon: Icon(Icons.email, color: Colors.white),
+                    style: IconButton.styleFrom(
+                      backgroundColor: Color.fromARGB(50, 255, 255, 255),
+                      elevation: 0,
+                      shadowColor: Colors.transparent,
+                    ),
+                  ),
+
+                  // ElevatedButton(
+                  //   onPressed: () async {
+                  //     widget.onGetRequests();
+                  //   },
+                  //   child: Text(
+                  //     "Requests",
+                  //     style: TextStyle(color: Colors.white),
+                  //   ),
+                  //   style: ElevatedButton.styleFrom(
+                  //     backgroundColor: Color.fromARGB(50, 255, 255, 255),
+                  //     elevation: 0,
+                  //     shadowColor: Colors.transparent,
+                  //   ),
+                  // ),
+                  IconButton(
+                    onPressed: () async {
+                      await widget.onAddContact();
                     },
                     icon: Icon(Icons.add, color: Colors.white),
                     style: IconButton.styleFrom(

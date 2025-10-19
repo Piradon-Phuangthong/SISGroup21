@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:omada/core/data/models/contact_model.dart';
+import 'package:omada/core/data/models/tag_model.dart';
 import 'package:omada/core/domain/models/tag.dart';
 import 'package:intl/intl.dart';
 import 'package:omada/core/theme/app_theme.dart';
@@ -6,17 +8,25 @@ import 'package:omada/core/theme/color_palette.dart';
 import 'package:omada/ui/pages/contact_screen/contact_tag.dart';
 
 class ContactCard extends StatefulWidget {
-  final String name;
-  final String phone;
-  final List<Tag> tags;
-  final DateTime lastContact;
+  final ContactModel contact;
+  final List<TagModel> tags;
+  final void Function(TagModel tag)? onTagTap;
+  final VoidCallback? onLongPress;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
+  final bool isFavourite;
+  final VoidCallback? onFavouriteToggle;
 
   const ContactCard({
     super.key,
-    required this.name,
-    required this.phone,
-    required this.tags,
-    required this.lastContact,
+    required this.contact,
+    this.tags = const [],
+    this.onTagTap,
+    this.onLongPress,
+    this.onEdit,
+    this.onDelete,
+    this.isFavourite = false,
+    this.onFavouriteToggle,
   });
 
   @override
@@ -27,13 +37,29 @@ class ContactCardState extends State<ContactCard>
     with TickerProviderStateMixin {
   bool isExpanded = false;
 
+  final List<Color> _colorPalette = [
+    const Color(0xFF3B82F6), // Light Blue
+    const Color(0xFFEF4444), // Red
+    const Color(0xFF22C55E), // Green
+    const Color(0xFF8B5CF6), // Purple
+    const Color(0xFFF59E0B), // Orange
+    const Color(0xFFEC4899), // Pink
+    const Color(0xFF1E40AF), // Dark Blue
+    const Color(0xFFEAB308), // Yellow/Gold
+  ];
+
+  Color getTagColor(TagModel tag) {
+    int colorIndex = tag.hashCode % _colorPalette.length;
+    return _colorPalette[colorIndex];
+  }
+
   @override
   Widget build(BuildContext context) {
     final appPalette = Theme.of(context).extension<AppPaletteTheme>();
 
-    final lastContactFormatted = DateFormat(
-      "MMM d, hh:mm a",
-    ).format(widget.lastContact);
+    // final lastContactFormatted = DateFormat(
+    //   "MMM d, hh:mm a",
+    // ).format(widget.lastContact);
 
     return AnimatedSize(
       duration: const Duration(milliseconds: 300),
@@ -50,14 +76,13 @@ class ContactCardState extends State<ContactCard>
           ),
         ),
         child: InkWell(
-          onLongPress: () {
-            print("goto contact");
-          },
-          onTap: () {
-            setState(() {
-              isExpanded = !isExpanded;
-            });
-          },
+          onLongPress: widget.onLongPress,
+          onTap: widget.onLongPress,
+          //  () {
+          //   setState(() {
+          //     isExpanded = !isExpanded;
+          //   });
+          // },
           child: Column(
             children: [
               Row(
@@ -70,40 +95,66 @@ class ContactCardState extends State<ContactCard>
                   ),
 
                   //contact information
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(widget.name, textAlign: TextAlign.left),
-                      Text(widget.phone, textAlign: TextAlign.left),
-                      SizedBox(
-                        height: 30,
-                        width: 200,
-                        child: ListView(
-                          scrollDirection: Axis.horizontal,
-                          children: widget.tags.map((tag) {
-                            return DashboardTag(
-                              label: tag.name,
-                              color: appPalette!.colorForIndex(tag.colorIndex),
-                            );
-                          }).toList(),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          widget.contact.displayName,
+                          textAlign: TextAlign.left,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                      ),
+                        Text(
+                          widget.contact.primaryMobile ??
+                              (widget.contact.primaryEmail?.isNotEmpty == true
+                                  ? widget.contact.primaryEmail!
+                                  : ''),
+                          textAlign: TextAlign.left,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(
+                          height: 30,
+                          width: 200,
+                          child: ListView(
+                            scrollDirection: Axis.horizontal,
+                            children: widget.tags.map((tag) {
+                              return DashboardTag(
+                                label: tag.name,
+                                color: getTagColor(tag),
+                              );
+                            }).toList(),
+                          ),
+                        ),
 
-                      //last seen information
-                      Text(
-                        "Last contact: $lastContactFormatted",
-                        style: TextStyle(fontSize: 10),
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ],
+                        //last seen information
+                        // Text(
+                        //   "Last contact: $lastContactFormatted",
+                        //   style: TextStyle(fontSize: 10),
+                        //   overflow: TextOverflow.ellipsis,
+                        // ),
+                      ],
+                    ),
                   ),
 
                   // message/phone
                   Row(
                     children: [
-                      IconButton(onPressed: () {}, icon: Icon(Icons.phone)),
-                      IconButton(onPressed: () {}, icon: Icon(Icons.message)),
+                      IconButton(
+                        icon: Icon(
+                          widget.isFavourite ? Icons.star : Icons.star_border,
+                          color: widget.isFavourite ? Colors.amber : null,
+                        ),
+                        onPressed: widget.onFavouriteToggle,
+                        tooltip: widget.isFavourite
+                            ? 'Remove from favourites'
+                            : 'Add to favourites',
+                      ),
+                      if (widget.onDelete != null)
+                        IconButton(
+                          onPressed: widget.onDelete,
+                          icon: Icon(Icons.delete),
+                        ),
                     ],
                   ),
                 ],

@@ -1,12 +1,20 @@
 import 'package:flutter/material.dart';
 
 class CollapsedContactHeader extends StatelessWidget {
-  const CollapsedContactHeader({super.key});
+  final Future<void> Function() onAddContact;
+  final TextEditingController searchController;
+  final VoidCallback onSearchChanged;
+  const CollapsedContactHeader({
+    super.key,
+    required this.onAddContact,
+    required this.onSearchChanged,
+    required this.searchController,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 165,
+      height: 120,
       decoration: const BoxDecoration(
         image: DecorationImage(
           image: AssetImage("assets/jpg/banner.jpg"),
@@ -20,47 +28,44 @@ class CollapsedContactHeader extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 300,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(12),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Row(
+                children: [
+                  SizedBox(width: 40),
+                  // Search field - takes most of the space
+                  Expanded(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[200],
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: TextField(
+                        controller: searchController,
+                        decoration: InputDecoration(
+                          icon: Icon(Icons.search),
+                          hintText: "Search contacts...",
+                          border: InputBorder.none,
+                        ),
+                        style: TextStyle(color: Colors.black),
+                        onChanged: (value) => onSearchChanged(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  // Add button
+                  IconButton(
+                    onPressed: () async {
+                      await onAddContact();
+                    },
+                    icon: const Icon(Icons.add, color: Colors.white),
+                    style: IconButton.styleFrom(
+                      backgroundColor: const Color.fromARGB(50, 255, 255, 255),
+                    ),
+                  ),
+                ],
               ),
-              child: const TextField(
-                decoration: InputDecoration(
-                  icon: Icon(Icons.search),
-                  hintText: "Search contacts...",
-                  border: InputBorder.none,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () => print("filter button collapsed"),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(50, 255, 255, 255),
-                    elevation: 0,
-                    shadowColor: Colors.transparent,
-                    minimumSize: Size(250, 0),
-                  ),
-                  icon: const Icon(Icons.filter_list, color: Colors.white),
-                  label: const Text(
-                    "Filter by tags",
-                    style: TextStyle(color: Colors.white),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => print("add button collapsed"),
-                  icon: const Icon(Icons.add, color: Colors.white),
-                  style: IconButton.styleFrom(
-                    backgroundColor: const Color.fromARGB(50, 255, 255, 255),
-                  ),
-                ),
-              ],
             ),
           ],
         ),
