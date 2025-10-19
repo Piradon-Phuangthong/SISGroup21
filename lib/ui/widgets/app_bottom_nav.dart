@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum AppNav { contacts, favourites, profile, account }
+enum AppNav { contacts, omadas, favourites, profile, account }
 
 class AppBottomNav extends StatelessWidget {
   final AppNav active;
@@ -10,12 +10,14 @@ class AppBottomNav extends StatelessWidget {
     switch (active) {
       case AppNav.contacts:
         return 0;
-      case AppNav.favourites:
+      case AppNav.omadas:
         return 1;
-      case AppNav.profile:
+      case AppNav.favourites:
         return 2;
-      case AppNav.account:
+      case AppNav.profile:
         return 3;
+      case AppNav.account:
+        return 4;
     }
   }
 
@@ -23,15 +25,18 @@ class AppBottomNav extends StatelessWidget {
     if (index == _index) return;
     switch (index) {
       case 0:
-        Navigator.of(context).pushReplacementNamed('/omadas');
+        Navigator.of(context).pushReplacementNamed('/app');
         break;
       case 1:
-        Navigator.of(context).pushReplacementNamed('/favourites');
+        Navigator.of(context).pushReplacementNamed('/omadas');
         break;
       case 2:
-        Navigator.of(context).pushReplacementNamed('/profile');
+        Navigator.of(context).pushReplacementNamed('/favourites');
         break;
       case 3:
+        Navigator.of(context).pushReplacementNamed('/profile');
+        break;
+      case 4:
         Navigator.of(context).pushReplacementNamed('/account');
         break;
     }
@@ -44,9 +49,10 @@ class AppBottomNav extends StatelessWidget {
       onTap: (i) => _onTap(context, i),
       type: BottomNavigationBarType.fixed, // Needed for 4+ tabs
       items: const [
+        BottomNavigationBarItem(icon: Icon(Icons.menu_book_outlined), label: 'Contacts'),
         BottomNavigationBarItem(icon: Icon(Icons.groups), label: 'Omadas'),
-        BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Contacts'),
-        BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Favourites'),
+        BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Favourites'),
+        
         BottomNavigationBarItem(
           icon: Icon(Icons.card_membership),
           label: 'My Card',

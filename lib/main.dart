@@ -39,6 +39,7 @@ class OmadaRootApp extends StatelessWidget {
             '/app': (_) => const ContactsScreen(),
             '/account': (_) => const AccountPage(),
             '/profile': (_) => const ProfileManagementPage(),
+            '/favourites': (_) => const FavouritesPage(),
             '/omadas': (_) => const OmadasScreen(),
             '/debug': (_) => const EpicHomeEntry(),
             '/dev-selector': (_) => const _RouteSelectorPage(),
