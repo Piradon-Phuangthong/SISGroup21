@@ -210,7 +210,7 @@ Future<List<ContactModel>> getDeletedContacts({
       'prefix': prefix?.trim(),
       'suffix': suffix?.trim(),
       'primary_mobile': primaryMobile?.trim(),
-      'primary_email': primaryEmail?.trim(),
+      'primary_email': primaryEmail?.trim().isNotEmpty == true ? primaryEmail?.trim() : null,
       'avatar_url': avatarUrl?.trim(),
       'notes': notes?.trim(),
       'custom_fields': customFields ?? {},
@@ -271,7 +271,9 @@ Future<List<ContactModel>> getDeletedContacts({
     if (suffix != null) updateData['suffix'] = suffix.trim();
     if (primaryMobile != null)
       updateData['primary_mobile'] = primaryMobile.trim();
-    if (primaryEmail != null) updateData['primary_email'] = primaryEmail.trim();
+    if (primaryEmail != null) {
+      updateData['primary_email'] = primaryEmail.trim().isNotEmpty ? primaryEmail.trim() : null;
+    }
     if (avatarUrl != null) updateData['avatar_url'] = avatarUrl.trim();
     if (notes != null) updateData['notes'] = notes.trim();
     if (customFields != null) updateData['custom_fields'] = customFields;
@@ -343,6 +345,33 @@ Future<List<ContactModel>> getDeletedContacts({
             (data) => ContactModel.fromJson(data as Map<String, dynamic>),
           )
           .toList();
+    });
+  }
+
+  /// Cleans up contacts with empty string emails (sets them to null)
+  Future<void> cleanupEmptyEmails() async {
+    final userId = authenticatedUserId;
+    
+    await handleSupabaseExceptionAsync(() async {
+      // Clean up empty string emails
+      await client
+          .from('contacts')
+          .update({'primary_email': null})
+          .eq('owner_id', userId)
+          .eq('primary_email', '');
+      
+      // Also clean up any contacts that might have the user's email incorrectly assigned
+      // Get the current user's email from auth
+      final user = client.auth.currentUser;
+      if (user?.email != null) {
+        await client
+            .from('contacts')
+            .update({'primary_email': null})
+            .eq('owner_id', userId)
+            .eq('primary_email', user!.email!)
+            .neq('full_name', user.email!.split('@')[0]) // Don't clean up if contact name matches email prefix
+            .neq('given_name', user.email!.split('@')[0]);
+      }
     });
   }
 

@@ -191,6 +191,11 @@ class ContactService {
     );
   }
 
+  /// Cleans up contacts with empty string emails
+  Future<void> cleanupEmptyEmails() async {
+    await _contactRepository.cleanupEmptyEmails();
+  }
+
   /// Gets contact counts by various filters
   Future<ContactCounts> getContactCounts() async {
     final counts = await _contactRepository.getContactCounts();
