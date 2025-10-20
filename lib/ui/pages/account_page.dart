@@ -265,7 +265,7 @@ class _AccountPageState extends State<AccountPage> {
           ],
         ),
       ),
-      bottomNavigationBar: const AppBottomNav(active: AppNav.account),
+      
     );
   }
 }

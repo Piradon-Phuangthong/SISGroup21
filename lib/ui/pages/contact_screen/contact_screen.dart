@@ -1,34 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:omada/core/theme/color_palette.dart';
-import 'package:omada/ui/widgets/custom_app_bar.dart';
-import 'package:omada/core/theme/design_tokens.dart';
-import 'package:omada/ui/widgets/app_bottom_nav.dart';
-// import 'package:omada/ui/widgets/theme_selector.dart';
-import 'package:omada/ui/widgets/contact_tile.dart';
-import 'package:omada/core/supabase/supabase_instance.dart';
-import 'package:omada/core/data/models/contact_model.dart';
-import 'contact_form_page.dart';
-import 'package:omada/ui/widgets/filter_row.dart';
-import 'manage_tags_page.dart';
-import 'contacts/user_discovery_sheet.dart';
-import 'contacts/incoming_requests_sheet.dart';
-import 'package:omada/core/data/models/tag_model.dart';
-import 'package:omada/core/data/models/contact_channel_model.dart';
 import 'package:omada/core/controllers/contacts_controller.dart';
-import 'package:omada/ui/widgets/social_media_section.dart';
 import 'package:omada/core/controllers/favourites_controller.dart';
+import 'package:omada/core/data/models/contact_channel_model.dart';
+import 'package:omada/core/data/models/contact_model.dart';
+import 'package:omada/core/data/models/tag_model.dart';
+import 'package:omada/core/domain/models/tag.dart';
+import 'package:omada/core/supabase/supabase_instance.dart';
+import 'package:omada/core/theme/color_palette.dart';
+import 'package:omada/ui/pages/account_page.dart';
+import 'package:omada/ui/pages/contact_form_page.dart';
+import 'package:omada/ui/pages/contact_screen/contact_card.dart';
+import 'package:omada/ui/pages/contact_screen/contact_header/collapsed_contact_header.dart';
+import 'package:omada/ui/pages/contact_screen/contact_header/expanded_contact_header.dart';
+import 'package:omada/ui/pages/contacts/incoming_requests_sheet.dart';
+import 'package:omada/ui/pages/contacts/user_discovery_sheet.dart';
 import 'package:omada/ui/pages/deleted_contacts_page.dart';
+import 'package:omada/ui/pages/manage_tags_page.dart';
+import 'package:omada/ui/widgets/app_bottom_nav.dart';
+import 'package:omada/ui/widgets/contact_tile.dart';
+import 'package:omada/ui/widgets/filter_row.dart';
 
-// Removed unused imports
-
-class ContactsScreen extends StatefulWidget {
-  const ContactsScreen({super.key});
+class ContactScreen extends StatefulWidget {
+  const ContactScreen({super.key});
 
   @override
-  State<ContactsScreen> createState() => _ContactsScreenState();
+  State<ContactScreen> createState() => _ContactScreenState();
 }
 
-class _ContactsScreenState extends State<ContactsScreen> {
+class _ContactScreenState extends State<ContactScreen> {
   late final ContactsController _controller;
   late final FavouritesController _favouritesController;
   final ColorPalette selectedTheme = appPalette;
@@ -40,8 +39,6 @@ class _ContactsScreenState extends State<ContactsScreen> {
   String? _error;
   final TextEditingController _searchController = TextEditingController();
   DateTime? _lastSearchChangeAt;
-
-  // Single palette; no runtime theme switching needed
 
   @override
   void initState() {
@@ -214,104 +211,220 @@ class _ContactsScreenState extends State<ContactsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
+    final double expandedHeight = 315;
+    final double collapsedHeight = 120;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Contacts'),
-        actions: [
-          IconButton(
-            tooltip: 'Deleted contacts',
-            icon: const Icon(Icons.delete_outline),
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const DeletedContactsPage()),
-              );
-            },
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Color theme selector removed in favor of a single app palette
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: OmadaTokens.space16,
-              vertical: OmadaTokens.space8,
-            ),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search by name, email, or phone',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchController.text.isEmpty
-                    ? null
-                    : IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          _refreshContacts();
-                        },
-                      ),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: OmadaTokens.space16,
-            ),
-            child: Wrap(
-              spacing: OmadaTokens.space8,
-              runSpacing: OmadaTokens.space8,
-              children: [
-                TextButton.icon(
-                  onPressed: _openUserDiscoverySheet,
-                  icon: const Icon(Icons.person_add_alt_1_outlined),
-                  label: const Text('Discover users'),
-                ),
-                TextButton.icon(
-                  onPressed: _openIncomingRequestsSheet,
-                  icon: const Icon(Icons.inbox_outlined),
-                  label: const Text('Requests'),
-                ),
-                TextButton.icon(
-                  onPressed: _openManageTagsSheet,
-                  icon: const Icon(Icons.label_outline),
-                  label: const Text('Manage tags'),
-                ),
-              ],
-            ),
-          ),
-          if (_tags.isNotEmpty)
-            FilterRow(
-              tags: _tags,
-              selectedTagIds: _selectedTagIds,
-              onTagToggle: (tag) async {
-                setState(() {
-                  if (_selectedTagIds.contains(tag.id)) {
-                    _selectedTagIds.remove(tag.id);
-                  } else {
-                    _selectedTagIds.add(tag.id);
-                  }
-                });
-                await _refreshContacts();
+      resizeToAvoidBottomInset: true,
+      body: CustomScrollView(
+        slivers: [
+          SliverAppBar(
+            expandedHeight: expandedHeight,
+            collapsedHeight: collapsedHeight,
+            pinned: true,
+
+            // floating: true,
+            // snap: true,
+            // automaticallyImplyLeading: false,
+            forceMaterialTransparency: true,
+            flexibleSpace: LayoutBuilder(
+              builder: (context, constraints) {
+                final double currentHeight = constraints.biggest.height;
+
+                final double t =
+                    ((currentHeight - collapsedHeight) /
+                            (expandedHeight - collapsedHeight))
+                        .clamp(0.0, 1.0);
+                // print("reported t: $t");
+                // print("current height: $currentHeight");
+                // print("min height: $minHeight");
+                // print(
+                //   "collapsed height $collapsedHeight, $minHeight, $systemMinHeight",
+                // );
+
+                // if (_searchController.text.isNotEmpty) {
+                //   _searchController.clear();
+                //   WidgetsBinding.instance.addPostFrameCallback((_) {
+                //     _refreshContacts();
+                //   });
+                // }
+
+                if (currentHeight > (expandedHeight + collapsedHeight) / 2) {
+                  return ExpandedContactHeader(
+                    onDiscoverUsers: _openUserDiscoverySheet,
+                    onGetDeleted: _openDeletedContacts,
+                    onGetRequests: _openIncomingRequestsSheet,
+                    onManageTags: _openManageTagsSheet,
+                    onAddContact: _onAddContact,
+                    onGetAccountPage: _openAccountPage,
+                    onSearchChanged: _onSearchChanged,
+                    searchController: _searchController,
+                  );
+                } else {
+                  return CollapsedContactHeader(
+                    onAddContact: _onAddContact,
+                    onSearchChanged: _onSearchChanged,
+                    searchController: _searchController,
+                  );
+                }
               },
             ),
-          Padding(
-            padding: const EdgeInsets.only(top: OmadaTokens.space8),
-            child: _buildBody(),
+          ),
+          // SliverList(
+          //   delegate: SliverChildBuilderDelegate(
+          //     (context, index) => ContactCard(
+          //       name: "name #$index",
+          //       phone: "phone #$index",
+          //       tags: [
+          //         Tag("Family", 0),
+          //         Tag("Work", 1),
+          //         Tag("Friends", 2),
+          //         Tag("Urgent", 3),
+          //         Tag("School", 4),
+          //         Tag("Fitness", 5),
+          //       ],
+          //       lastContact: DateTime.now(),
+          //     ),
+          //     childCount: 50,
+          //   ),
+          // ),
+          if (_tags.isNotEmpty)
+            SliverToBoxAdapter(
+              child: FilterRow(
+                tags: _tags,
+                selectedTagIds: _selectedTagIds,
+                onTagToggle: (tag) async {
+                  setState(() {
+                    if (_selectedTagIds.contains(tag.id)) {
+                      _selectedTagIds.remove(tag.id);
+                    } else {
+                      _selectedTagIds.add(tag.id);
+                    }
+                  });
+                  await _refreshContacts();
+                },
+              ),
+            ),
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+              (context, index) {
+                // Handle different states based on index
+                if (_isLoading && _visibleContacts.isEmpty) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (_error != null && _visibleContacts.isEmpty) {
+                  return _buildErrorWidget();
+                }
+                if (_visibleContacts.isEmpty) {
+                  return _buildEmptyState();
+                }
+
+                // Return contact tile for actual contacts
+                final contact = _visibleContacts[index];
+                return FutureBuilder<Map<String, List<TagModel>>>(
+                  future: _getTagsForVisibleContacts(),
+                  builder: (context, snapshot) {
+                    final tagsByContact = snapshot.data ?? const {};
+                    return ContactCard(
+                      contact: contact,
+                      tags: tagsByContact[contact.id] ?? const [],
+                      isFavourite: _favouritesController.isFavourite(
+                        contact.id,
+                      ),
+                      onFavouriteToggle: () => _toggleFavourite(contact.id),
+                      onTagTap: (tag) async {
+                        setState(() {
+                          if (_selectedTagIds.contains(tag.id)) {
+                            _selectedTagIds.remove(tag.id);
+                          } else {
+                            _selectedTagIds.add(tag.id);
+                          }
+                        });
+                        await _refreshContacts();
+                      },
+                      onLongPress: () => _onEditContact(contact),
+                      onEdit: () => _onEditContact(contact),
+                      onDelete: () => _onDeleteContact(contact),
+                    );
+                    // return ContactTile(
+                    //   contact: contact,
+                    //   tags: tagsByContact[contact.id] ?? const [],
+                    //   isFavourite: _favouritesController.isFavourite(
+                    //     contact.id,
+                    //   ),
+                    //   onFavouriteToggle: () => _toggleFavourite(contact.id),
+                    //   onTagTap: (tag) async {
+                    //     setState(() {
+                    //       if (_selectedTagIds.contains(tag.id)) {
+                    //         _selectedTagIds.remove(tag.id);
+                    //       } else {
+                    //         _selectedTagIds.add(tag.id);
+                    //       }
+                    //     });
+                    //     await _refreshContacts();
+                    //   },
+                    //   onTap: () => _onEditContact(contact),
+                    //   onEdit: () => _onEditContact(contact),
+                    //   onDelete: () => _onDeleteContact(contact),
+                    // );
+                  },
+                );
+              },
+              childCount: _getChildCount(), // Implement this method
+            ),
           ),
         ],
       ),
       bottomNavigationBar: const AppBottomNav(active: AppNav.contacts),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _onAddContact,
-        child: const Icon(Icons.add),
+    );
+  }
+
+  // SLIVERLISTCHILDBUILDER
+
+  int _getChildCount() {
+    if (_isLoading && _visibleContacts.isEmpty) return 1;
+    if (_error != null && _visibleContacts.isEmpty) return 1;
+    if (_visibleContacts.isEmpty) return 1;
+    return _visibleContacts.length;
+  }
+
+  Widget _buildErrorWidget() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 48),
+            const SizedBox(height: 8),
+            Text(_error!, textAlign: TextAlign.center),
+            const SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _refreshContacts,
+              child: const Text('Retry'),
+            ),
+          ],
+        ),
       ),
     );
   }
+
+  Widget _buildEmptyState() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 100),
+      child: Column(
+        children: const [
+          Icon(Icons.contact_page_outlined, size: 72, color: Colors.grey),
+          SizedBox(height: 12),
+          Text('No contacts yet'),
+          SizedBox(height: 4),
+          Text('Tap + to add your first contact'),
+        ],
+      ),
+    );
+  }
+
+  // THE OTHER STUFF
 
   Widget _buildBody() {
     if (_isLoading && _visibleContacts.isEmpty) {
@@ -425,5 +538,17 @@ class _ContactsScreenState extends State<ContactsScreen> {
       builder: (context) =>
           IncomingRequestsSheet(sharingService: _controller.sharingService),
     );
+  }
+
+  void _openDeletedContacts(BuildContext context) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => DeletedContactsPage()));
+  }
+
+  void _openAccountPage(BuildContext context) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (context) => AccountPage()));
   }
 }

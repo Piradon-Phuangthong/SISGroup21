@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-enum AppNav { contacts, favourites, profile, account }
+enum AppNav { contacts, omadas, favourites, profile }
 
 class AppBottomNav extends StatelessWidget {
   final AppNav active;
@@ -10,11 +10,11 @@ class AppBottomNav extends StatelessWidget {
     switch (active) {
       case AppNav.contacts:
         return 0;
-      case AppNav.favourites:
+      case AppNav.omadas:
         return 1;
-      case AppNav.profile:
+      case AppNav.favourites:
         return 2;
-      case AppNav.account:
+      case AppNav.profile:
         return 3;
     }
   }
@@ -26,13 +26,13 @@ class AppBottomNav extends StatelessWidget {
         Navigator.of(context).pushReplacementNamed('/app');
         break;
       case 1:
-        Navigator.of(context).pushReplacementNamed('/favourites');
+        Navigator.of(context).pushReplacementNamed('/omadas');
         break;
       case 2:
-        Navigator.of(context).pushReplacementNamed('/profile');
+        Navigator.of(context).pushReplacementNamed('/favourites');
         break;
       case 3:
-        Navigator.of(context).pushReplacementNamed('/account');
+        Navigator.of(context).pushReplacementNamed('/profile');
         break;
     }
   }
@@ -42,18 +42,17 @@ class AppBottomNav extends StatelessWidget {
     return BottomNavigationBar(
       currentIndex: _index,
       onTap: (i) => _onTap(context, i),
-      type: BottomNavigationBarType.fixed, // Needed for 3+ tabs
+      type: BottomNavigationBarType.fixed, // Needed for 4+ tabs
       items: const [
-        BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Contacts'),
+        BottomNavigationBarItem(icon: Icon(Icons.menu_book_outlined), label: 'Contacts'),
+        BottomNavigationBarItem(icon: Icon(Icons.groups), label: 'Omadas'),
         BottomNavigationBarItem(icon: Icon(Icons.star), label: 'Favourites'),
+        
         BottomNavigationBarItem(
           icon: Icon(Icons.card_membership),
           label: 'My Card',
         ),
-        BottomNavigationBarItem(
-          icon: Icon(Icons.account_circle),
-          label: 'Account',
-        ),
+        
       ],
     );
   }

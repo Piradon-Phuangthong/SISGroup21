@@ -1,0 +1,122 @@
+[
+    {
+        "table_name": "omada_members",
+        "column_name": "omada_id",
+        "foreign_table": "omadas",
+        "foreign_column": "id"
+    },
+    {
+        "table_name": "omada_members",
+        "column_name": "user_id",
+        "foreign_table": "profiles",
+        "foreign_column": "id"
+    },
+    {
+        "table_name": "omada_members",
+        "column_name": "role_id",
+        "foreign_table": "omada_roles",
+        "foreign_column": "id"
+    },
+    {
+        "table_name": "contacts",
+        "column_name": "owner_id",
+        "foreign_table": "profiles",
+        "foreign_column": "id"
+    },
+    {
+        "table_name": "contact_channels",
+        "column_name": "owner_id",
+        "foreign_table": "profiles",
+        "foreign_column": "id"
+    },
+    {
+        "table_name": "contact_channels",
+        "column_name": "contact_id",
+        "foreign_table": "contacts",
+        "foreign_column": "id"
+    },
+    {
+        "table_name": "tags",
+        "column_name": "owner_id",
+        "foreign_table": "profiles",
+        "foreign_column": "id"
+    },
+    {
+        "table_name": "contact_tags",
+        "column_name": "contact_id",
+        "foreign_table": "contacts",
+        "foreign_column": "id"
+    },
+    {
+        "table_name": "contact_tags",
+        "column_name": "tag_id",
+        "foreign_table": "tags",
+        "foreign_column": "id"
+    },
+    {
+        "table_name": "share_requests",
+        "column_name": "requester_id",
+        "foreign_table": "profiles",
+        "foreign_column": "id"
+    },
+    {
+        "table_name": "share_requests",
+        "column_name": "recipient_id",
+        "foreign_table": "profiles",
+        "foreign_column": "id"
+    },
+    {
+        "table_name": "contact_shares",
+        "column_name": "owner_id",
+        "foreign_table": "profiles",
+        "foreign_column": "id"
+    },
+    {
+        "table_name": "contact_shares",
+        "column_name": "to_user_id",
+        "foreign_table": "profiles",
+        "foreign_column": "id"
+    },
+    {
+        "table_name": "contact_shares",
+        "column_name": "contact_id",
+        "foreign_table": "contacts",
+        "foreign_column": "id"
+    },
+    {
+        "table_name": "omadas",
+        "column_name": "owner_id",
+        "foreign_table": "profiles",
+        "foreign_column": "id"
+    },
+    {
+        "table_name": "omada_members",
+        "column_name": "invited_by",
+        "foreign_table": "profiles",
+        "foreign_column": "id"
+    },
+    {
+        "table_name": "omada_requests",
+        "column_name": "omada_id",
+        "foreign_table": "omadas",
+        "foreign_column": "id"
+    },
+    {
+        "table_name": "omada_requests",
+        "column_name": "requester_id",
+        "foreign_table": "profiles",
+        "foreign_column": "id"
+    },
+    {
+        "table_name": "omada_requests",
+        "column_name": "target_user_id",
+        "foreign_table": "profiles",
+        "foreign_column": "id"
+    },
+    {
+        "table_name": "omada_requests",
+        "column_name": "decided_by",
+        "foreign_table": "profiles",
+        "foreign_column": "id"
+    }
+]
