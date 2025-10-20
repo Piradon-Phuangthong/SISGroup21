@@ -78,26 +78,11 @@ class _ReceivedSharesTestPageState extends State<ReceivedSharesTestPage> {
           }
         }
 
-        // Get all channels for this contact
-        final allChannels = await _channelRepo.getChannelsForContact(
-          share.contactId,
+        // Get channels we have access to (automatically filtered by field_mask)
+        final accessibleChannels = await _channelRepo.getSharedChannelsForContact(
+          contactId: share.contactId,
+          share: share,
         );
-
-        // Filter channels based on field_mask (what WE have access to)
-        final List<ContactChannelModel> accessibleChannels = [];
-        
-        if (share.sharesAllChannels) {
-          // We have access to all channels
-          accessibleChannels.addAll(allChannels);
-        } else {
-          // We only have access to specific channels
-          final sharedChannelIds = share.sharedChannelIds;
-          for (final channel in allChannels) {
-            if (sharedChannelIds.contains(channel.id)) {
-              accessibleChannels.add(channel);
-            }
-          }
-        }
 
         sharesList.add(_ReceivedShareInfo(
           share: share,

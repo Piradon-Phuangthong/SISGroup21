@@ -78,26 +78,11 @@ class _AcceptedSharesTestPageState extends State<AcceptedSharesTestPage> {
           }
         }
 
-        // Get all channels for this contact
-        final allChannels = await _channelRepo.getChannelsForContact(
-          share.contactId,
+        // Get channels that are shared (automatically filtered by field_mask)
+        final allowedChannels = await _channelRepo.getSharedChannelsForContact(
+          contactId: share.contactId,
+          share: share,
         );
-
-        // Filter channels based on field_mask
-        final List<ContactChannelModel> allowedChannels = [];
-        
-        if (share.sharesAllChannels) {
-          // All channels are shared
-          allowedChannels.addAll(allChannels);
-        } else {
-          // Only specific channels are shared
-          final sharedChannelIds = share.sharedChannelIds;
-          for (final channel in allChannels) {
-            if (sharedChannelIds.contains(channel.id)) {
-              allowedChannels.add(channel);
-            }
-          }
-        }
 
         recipientsList.add(_ShareRecipientInfo(
           share: share,
