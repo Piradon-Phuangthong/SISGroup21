@@ -119,7 +119,7 @@ class ContactsController {
     required String contactId,
     required ContactShareModel share,
   }) => _channelsRepo.getSharedChannelsForContact(
-        contactId: contactId,
-        share: share,
-      );
+    contactId: contactId,
+    share: share,
+  );
 }

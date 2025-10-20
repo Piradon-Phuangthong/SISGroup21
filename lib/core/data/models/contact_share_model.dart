@@ -74,6 +74,35 @@ class ContactShareModel {
     return fieldMask.contains(fieldName);
   }
 
+  /// Channel-level field mask support
+  ///
+  /// Convention: each shared channel appears in field_mask as
+  ///   "channel:{channel-uuid}"
+  /// Backward compatibility: if field_mask contains plain "channels",
+  /// all channels are considered shared.
+  static const String channelPrefix = 'channel:';
+
+  /// True if the share indicates that all channels are shared
+  bool get sharesAllChannels => fieldMask.contains('channels');
+
+  /// Returns the list of channel IDs present in the field mask using the
+  /// "channel:{uuid}" pattern. If plain "channels" is present, returns an
+  /// empty list to indicate caller should treat as "all channels".
+  List<String> get sharedChannelIds {
+    if (sharesAllChannels) return const [];
+    return fieldMask
+        .where((f) => f.startsWith(channelPrefix))
+        .map((f) => f.substring(channelPrefix.length))
+        .toList();
+  }
+
+  /// Checks whether a specific channel ID is included in this share.
+  /// If plain "channels" is present, returns true for any channel.
+  bool includesChannel(String channelId) {
+    if (sharesAllChannels) return true;
+    return fieldMask.contains('$channelPrefix$channelId');
+  }
+
   /// Creates a copy of this ContactShareModel with optionally updated fields
   ContactShareModel copyWith({
     String? id,

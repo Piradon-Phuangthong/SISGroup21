@@ -494,24 +494,21 @@ class ContactRepository extends BaseRepository {
 
       final response = await query;
 
-      return response
-          .map<SharedContactData>((row) {
-            final shareData = Map<String, dynamic>.from(row);
-            final contactData = shareData['contact'] as Map<String, dynamic>;
-            final profileData =
-                shareData['owner_profile'] as Map<String, dynamic>;
+      return response.map<SharedContactData>((row) {
+        final shareData = Map<String, dynamic>.from(row);
+        final contactData = shareData['contact'] as Map<String, dynamic>;
+        final profileData = shareData['owner_profile'] as Map<String, dynamic>;
 
-            // Remove nested objects before parsing share
-            shareData.remove('contact');
-            shareData.remove('owner_profile');
+        // Remove nested objects before parsing share
+        shareData.remove('contact');
+        shareData.remove('owner_profile');
 
-            return SharedContactData(
-              contact: ContactModel.fromJson(contactData),
-              share: ContactShareModel.fromJson(shareData),
-              ownerProfile: ProfileModel.fromJson(profileData),
-            );
-          })
-          .toList();
+        return SharedContactData(
+          contact: ContactModel.fromJson(contactData),
+          share: ContactShareModel.fromJson(shareData),
+          ownerProfile: ProfileModel.fromJson(profileData),
+        );
+      }).toList();
     });
   }
 }

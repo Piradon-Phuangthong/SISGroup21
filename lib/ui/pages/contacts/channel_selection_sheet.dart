@@ -323,12 +323,18 @@ class _ChannelSelectionSheetState extends State<ChannelSelectionSheet> {
 
     try {
       // Validate request status before acceptance
-      final currentRequest = await widget.sharingService.getShareRequest(widget.request.request.id);
+      final currentRequest = await widget.sharingService.getShareRequest(
+        widget.request.request.id,
+      );
       if (currentRequest == null) {
-        throw Exception('Share request not found. The requester may have deleted their account.');
+        throw Exception(
+          'Share request not found. The requester may have deleted their account.',
+        );
       }
       if (currentRequest.request.status != ShareRequestStatus.pending) {
-        throw Exception('This request has already been ${currentRequest.request.status.value}.');
+        throw Exception(
+          'This request has already been ${currentRequest.request.status.value}.',
+        );
       }
 
       // Get user's own contact ID
@@ -480,7 +486,9 @@ class _ChannelSelectionSheetState extends State<ChannelSelectionSheet> {
                 // TODO: Replace with actual navigation to profile management
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text('Go to Profile > Add Channel to add contact channels.'),
+                    content: Text(
+                      'Go to Profile > Add Channel to add contact channels.',
+                    ),
                     behavior: SnackBarBehavior.floating,
                   ),
                 );

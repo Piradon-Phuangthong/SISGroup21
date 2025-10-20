@@ -94,20 +94,20 @@ class _ContactsScreenState extends State<ContactsScreen> {
         ),
         _controller.getSharedContacts(includeRevoked: false),
       ]);
-      
+
       final fetched = results[0] as List<ContactModel>;
       final sharedFetched = results[1] as List<SharedContactData>;
-      
+
       fetched.sort(
         (a, b) =>
             a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
       );
       sharedFetched.sort(
-        (a, b) =>
-            a.contact.displayName.toLowerCase()
-                .compareTo(b.contact.displayName.toLowerCase()),
+        (a, b) => a.contact.displayName.toLowerCase().compareTo(
+          b.contact.displayName.toLowerCase(),
+        ),
       );
-      
+
       setState(() {
         _contacts = fetched;
         _sharedContacts = sharedFetched;
@@ -151,7 +151,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
 
   void _applyClientFilters() {
     final localQuery = _searchController.text.trim().toLowerCase();
-    
+
     // Filter owned contacts
     List<ContactModel> filtered = List.of(_contacts);
     if (localQuery.isNotEmpty) {
@@ -166,7 +166,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
         return fields.contains(localQuery);
       }).toList();
     }
-    
+
     // Filter shared contacts
     List<SharedContactData> filteredShared = List.of(_sharedContacts);
     if (localQuery.isNotEmpty) {
@@ -182,7 +182,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
         return fields.contains(localQuery);
       }).toList();
     }
-    
+
     setState(() {
       _visibleContacts = filtered;
       _visibleSharedContacts = filteredShared;
@@ -401,9 +401,9 @@ class _ContactsScreenState extends State<ContactsScreen> {
       future: _getTagsForVisibleContacts(),
       builder: (context, snapshot) {
         final tagsByContact = snapshot.data ?? const {};
-        
+
         final widgets = <Widget>[];
-        
+
         // Add owned contacts
         for (final contact in _visibleContacts) {
           widgets.add(
@@ -428,7 +428,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
             ),
           );
         }
-        
+
         // Add section header if there are shared contacts
         if (_visibleSharedContacts.isNotEmpty && _visibleContacts.isNotEmpty) {
           widgets.add(
@@ -440,14 +440,14 @@ class _ContactsScreenState extends State<ContactsScreen> {
               child: Text(
                 'Shared with you',
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           );
         }
-        
+
         // Add shared contacts
         for (final sharedContact in _visibleSharedContacts) {
           widgets.add(
@@ -458,7 +458,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
             ),
           );
         }
-        
+
         return Column(children: widgets);
       },
     );

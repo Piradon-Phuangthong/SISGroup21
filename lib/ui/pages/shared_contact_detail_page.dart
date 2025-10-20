@@ -39,8 +39,7 @@ class _SharedContactDetailPageState extends State<SharedContactDetailPage> {
     });
 
     try {
-      final channels =
-          await widget.controller.getSharedChannelsForContact(
+      final channels = await widget.controller.getSharedChannelsForContact(
         contactId: widget.sharedContact.contact.id,
         share: widget.sharedContact.share,
       );
@@ -81,195 +80,189 @@ class _SharedContactDetailPageState extends State<SharedContactDetailPage> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(
-                  child: Padding(
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(OmadaTokens.space24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      size: 48,
+                      color: Colors.red,
+                    ),
+                    const SizedBox(height: OmadaTokens.space16),
+                    Text(
+                      'Error loading channels',
+                      style: theme.textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: OmadaTokens.space8),
+                    Text(
+                      _error!,
+                      textAlign: TextAlign.center,
+                      style: theme.textTheme.bodySmall,
+                    ),
+                    const SizedBox(height: OmadaTokens.space16),
+                    ElevatedButton(
+                      onPressed: _loadChannels,
+                      child: const Text('Retry'),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header with avatar and name
+                  Container(
+                    width: double.infinity,
+                    color: theme.colorScheme.primaryContainer.withOpacity(0.3),
                     padding: const EdgeInsets.all(OmadaTokens.space24),
                     child: Column(
-                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(
-                          Icons.error_outline,
-                          size: 48,
-                          color: Colors.red,
+                        // Avatar
+                        CircleAvatar(
+                          radius: 48,
+                          backgroundColor: theme.colorScheme.primaryContainer,
+                          backgroundImage: contact.avatarUrl != null
+                              ? NetworkImage(contact.avatarUrl!)
+                              : null,
+                          child: contact.avatarUrl == null
+                              ? Text(
+                                  contact.initials,
+                                  style: TextStyle(
+                                    fontSize: 32,
+                                    color: theme.colorScheme.onPrimaryContainer,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                )
+                              : null,
                         ),
                         const SizedBox(height: OmadaTokens.space16),
+
+                        // Name
                         Text(
-                          'Error loading channels',
-                          style: theme.textTheme.titleMedium,
+                          contact.displayName,
+                          style: theme.textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: OmadaTokens.space8),
-                        Text(
-                          _error!,
-                          textAlign: TextAlign.center,
-                          style: theme.textTheme.bodySmall,
-                        ),
-                        const SizedBox(height: OmadaTokens.space16),
-                        ElevatedButton(
-                          onPressed: _loadChannels,
-                          child: const Text('Retry'),
+
+                        // Shared badge
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: OmadaTokens.space12,
+                            vertical: OmadaTokens.space6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.secondaryContainer,
+                            borderRadius: OmadaTokens.radius12,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.people_outline,
+                                size: 16,
+                                color: theme.colorScheme.onSecondaryContainer,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'Shared by @${widget.sharedContact.sharedBy}',
+                                style: theme.textTheme.labelMedium?.copyWith(
+                                  color: theme.colorScheme.onSecondaryContainer,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ],
                     ),
                   ),
-                )
-              : SingleChildScrollView(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Header with avatar and name
-                      Container(
-                        width: double.infinity,
-                        color: theme.colorScheme.primaryContainer
-                            .withOpacity(0.3),
+
+                  // Basic info section (if shared)
+                  if (_hasBasicInfo()) ...[
+                    const SizedBox(height: OmadaTokens.space24),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: OmadaTokens.space16,
+                      ),
+                      child: Text(
+                        'Basic Information',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: OmadaTokens.space12),
+                    _buildBasicInfoSection(theme),
+                  ],
+
+                  // Channels section
+                  if (_channels != null && _channels!.isNotEmpty) ...[
+                    const SizedBox(height: OmadaTokens.space24),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: OmadaTokens.space16,
+                      ),
+                      child: Text(
+                        'Contact Channels',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: OmadaTokens.space12),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: OmadaTokens.space16,
+                      ),
+                      child: Column(
+                        children: _channels!
+                            .map((channel) => _buildChannelCard(channel))
+                            .toList(),
+                      ),
+                    ),
+                  ] else if (_channels != null && _channels!.isEmpty) ...[
+                    const SizedBox(height: OmadaTokens.space24),
+                    Center(
+                      child: Padding(
                         padding: const EdgeInsets.all(OmadaTokens.space24),
                         child: Column(
                           children: [
-                            // Avatar
-                            CircleAvatar(
-                              radius: 48,
-                              backgroundColor:
-                                  theme.colorScheme.primaryContainer,
-                              backgroundImage: contact.avatarUrl != null
-                                  ? NetworkImage(contact.avatarUrl!)
-                                  : null,
-                              child: contact.avatarUrl == null
-                                  ? Text(
-                                      contact.initials,
-                                      style: TextStyle(
-                                        fontSize: 32,
-                                        color: theme.colorScheme
-                                            .onPrimaryContainer,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    )
-                                  : null,
+                            Icon(
+                              Icons.link_off,
+                              size: 48,
+                              color: theme.colorScheme.onSurfaceVariant,
                             ),
-                            const SizedBox(height: OmadaTokens.space16),
-                            
-                            // Name
+                            const SizedBox(height: OmadaTokens.space12),
                             Text(
-                              contact.displayName,
-                              style: theme.textTheme.headlineSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                              textAlign: TextAlign.center,
+                              'No channels shared',
+                              style: theme.textTheme.titleMedium,
                             ),
                             const SizedBox(height: OmadaTokens.space8),
-                            
-                            // Shared badge
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: OmadaTokens.space12,
-                                vertical: OmadaTokens.space6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: theme.colorScheme.secondaryContainer,
-                                borderRadius: OmadaTokens.radius12,
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.people_outline,
-                                    size: 16,
-                                    color: theme.colorScheme
-                                        .onSecondaryContainer,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    'Shared by @${widget.sharedContact.sharedBy}',
-                                    style: theme.textTheme.labelMedium
-                                        ?.copyWith(
-                                      color: theme.colorScheme
-                                          .onSecondaryContainer,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
+                            Text(
+                              'This contact hasn\'t shared any contact channels with you.',
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
                               ),
                             ),
                           ],
                         ),
                       ),
+                    ),
+                  ],
 
-                      // Basic info section (if shared)
-                      if (_hasBasicInfo()) ...[
-                        const SizedBox(height: OmadaTokens.space24),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: OmadaTokens.space16,
-                          ),
-                          child: Text(
-                            'Basic Information',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: OmadaTokens.space12),
-                        _buildBasicInfoSection(theme),
-                      ],
-
-                      // Channels section
-                      if (_channels != null && _channels!.isNotEmpty) ...[
-                        const SizedBox(height: OmadaTokens.space24),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: OmadaTokens.space16,
-                          ),
-                          child: Text(
-                            'Contact Channels',
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: OmadaTokens.space12),
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: OmadaTokens.space16,
-                          ),
-                          child: Column(
-                            children: _channels!
-                                .map((channel) => _buildChannelCard(channel))
-                                .toList(),
-                          ),
-                        ),
-                      ] else if (_channels != null && _channels!.isEmpty) ...[
-                        const SizedBox(height: OmadaTokens.space24),
-                        Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(OmadaTokens.space24),
-                            child: Column(
-                              children: [
-                                Icon(
-                                  Icons.link_off,
-                                  size: 48,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                                const SizedBox(height: OmadaTokens.space12),
-                                Text(
-                                  'No channels shared',
-                                  style: theme.textTheme.titleMedium,
-                                ),
-                                const SizedBox(height: OmadaTokens.space8),
-                                Text(
-                                  'This contact hasn\'t shared any contact channels with you.',
-                                  textAlign: TextAlign.center,
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ],
-
-                      const SizedBox(height: OmadaTokens.space24),
-                    ],
-                  ),
-                ),
+                  const SizedBox(height: OmadaTokens.space24),
+                ],
+              ),
+            ),
     );
   }
 
@@ -337,11 +330,7 @@ class _SharedContactDetailPageState extends State<SharedContactDetailPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icon,
-          size: 20,
-          color: theme.colorScheme.primary,
-        ),
+        Icon(icon, size: 20, color: theme.colorScheme.primary),
         const SizedBox(width: OmadaTokens.space12),
         Expanded(
           child: Column(
@@ -354,10 +343,7 @@ class _SharedContactDetailPageState extends State<SharedContactDetailPage> {
                 ),
               ),
               const SizedBox(height: 4),
-              Text(
-                value,
-                style: theme.textTheme.bodyMedium,
-              ),
+              Text(value, style: theme.textTheme.bodyMedium),
             ],
           ),
         ),
@@ -382,10 +368,7 @@ class _SharedContactDetailPageState extends State<SharedContactDetailPage> {
             size: 20,
           ),
         ),
-        title: Text(
-          label,
-          style: const TextStyle(fontWeight: FontWeight.w600),
-        ),
+        title: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
         subtitle: Text(value),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => _onChannelTap(channel),
@@ -420,7 +403,9 @@ class _SharedContactDetailPageState extends State<SharedContactDetailPage> {
     // TODO: Implement channel interaction (call, message, open URL, etc.)
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Tapped ${channel.kind}: ${channel.value ?? channel.url}'),
+        content: Text(
+          'Tapped ${channel.kind}: ${channel.value ?? channel.url}',
+        ),
       ),
     );
   }
@@ -441,15 +426,12 @@ class _SharedContactDetailPageState extends State<SharedContactDetailPage> {
             const SizedBox(height: OmadaTokens.space8),
             Text(
               '@${widget.sharedContact.sharedBy}',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: OmadaTokens.space16),
-            Text(
-              'Shared on:',
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
+            Text('Shared on:', style: Theme.of(context).textTheme.bodyMedium),
             const SizedBox(height: OmadaTokens.space4),
             Text(
               _formatDate(widget.sharedContact.share.createdAt),
@@ -459,8 +441,8 @@ class _SharedContactDetailPageState extends State<SharedContactDetailPage> {
             Text(
               'You can view and interact with the shared information, but you cannot edit or delete this contact.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
             ),
           ],
         ),

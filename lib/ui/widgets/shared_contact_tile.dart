@@ -21,7 +21,7 @@ class SharedContactTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final contact = sharedContact.contact;
     final theme = Theme.of(context);
-    
+
     return Card(
       margin: const EdgeInsets.symmetric(
         horizontal: OmadaTokens.space16,
@@ -52,7 +52,7 @@ class SharedContactTile extends StatelessWidget {
                     : null,
               ),
               const SizedBox(width: OmadaTokens.space12),
-              
+
               // Content
               Expanded(
                 child: Column(
@@ -102,7 +102,7 @@ class SharedContactTile extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: OmadaTokens.space4),
-                    
+
                     // Shared by info
                     Text(
                       'Shared by @${sharedContact.sharedBy}',
@@ -111,7 +111,7 @@ class SharedContactTile extends StatelessWidget {
                         fontStyle: FontStyle.italic,
                       ),
                     ),
-                    
+
                     // Contact info if available
                     if (sharedContact.includesField('primary_mobile') &&
                         contact.primaryMobile != null) ...[
@@ -156,7 +156,7 @@ class SharedContactTile extends StatelessWidget {
                         ],
                       ),
                     ],
-                    
+
                     // Tags if any
                     if (tags.isNotEmpty) ...[
                       const SizedBox(height: OmadaTokens.space8),
@@ -184,7 +184,7 @@ class SharedContactTile extends StatelessWidget {
                   ],
                 ),
               ),
-              
+
               // Chevron
               Icon(
                 Icons.chevron_right,

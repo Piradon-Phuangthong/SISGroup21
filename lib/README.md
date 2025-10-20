@@ -45,3 +45,14 @@ The presentation layer consists of:
 - Pages - Full screens
 - Screens - Functional areas
 - Widgets - Reusable components
+
+## Channel-level Sharing (Field Mask Spec)
+
+- Field mask lives in `contact_shares.field_mask` as a JSON array of strings.
+- Standard fields: `full_name`, `given_name`, `family_name`, `primary_email`, `primary_mobile`, etc.
+- Channel-level entries use the form: `channel:{channel-uuid}`.
+- Backward compatibility: If the array contains `"channels"` (without a UUID), treat it as "all channels" are shared.
+- Enforcement:
+  - Builders: `SharingService.acceptShareRequestWithChannels()` writes `channel:{uuid}` entries.
+  - Model: `ContactShareModel` exposes `sharedChannelIds`, `includesChannel()`, and `sharesAllChannels`.
+  - Repo: `ContactChannelRepository.getSharedChannelsForContact()` filters channels based on the mask.
