@@ -487,7 +487,7 @@ class ContactRepository extends BaseRepository {
           .eq('to_user_id', userId);
 
       if (!includeRevoked) {
-        query = query.is_('revoked_at', null);
+        query = query.isFilter('revoked_at', null);
       }
 
       query = query.order('created_at', ascending: false);
