@@ -108,4 +108,18 @@ class ContactsController {
 
   Future<void> permanentlyDeleteContact(String id) =>
       _contacts.permanentlyDeleteContact(id);
+
+  /// Gets contacts that have been shared with the current user
+  Future<List<SharedContactData>> getSharedContacts({
+    bool includeRevoked = false,
+  }) => _contactRepo.getSharedContacts(includeRevoked: includeRevoked);
+
+  /// Gets channels for a shared contact, filtered by share permissions
+  Future<List<ContactChannelModel>> getSharedChannelsForContact({
+    required String contactId,
+    required ContactShareModel share,
+  }) => _channelsRepo.getSharedChannelsForContact(
+        contactId: contactId,
+        share: share,
+      );
 }

@@ -468,4 +468,50 @@ class ContactRepository extends BaseRepository {
       };
     });
   }
+
+  /// Gets contacts that have been shared with the current user
+  /// Returns a list of SharedContactData containing the contact, share permissions, and owner profile
+  Future<List<SharedContactData>> getSharedContacts({
+    bool includeRevoked = false,
+  }) async {
+    final userId = authenticatedUserId;
+
+    return await handleSupabaseExceptionAsync(() async {
+      dynamic query = client
+          .from('contact_shares')
+          .select('''
+            *,
+            contact:contacts(*),
+            owner_profile:profiles!contact_shares_owner_id_fkey(*)
+          ''')
+          .eq('to_user_id', userId);
+
+      if (!includeRevoked) {
+        query = query.is_('revoked_at', null);
+      }
+
+      query = query.order('created_at', ascending: false);
+
+      final response = await query;
+
+      return response
+          .map<SharedContactData>((row) {
+            final shareData = Map<String, dynamic>.from(row);
+            final contactData = shareData['contact'] as Map<String, dynamic>;
+            final profileData =
+                shareData['owner_profile'] as Map<String, dynamic>;
+
+            // Remove nested objects before parsing share
+            shareData.remove('contact');
+            shareData.remove('owner_profile');
+
+            return SharedContactData(
+              contact: ContactModel.fromJson(contactData),
+              share: ContactShareModel.fromJson(shareData),
+              ownerProfile: ProfileModel.fromJson(profileData),
+            );
+          })
+          .toList();
+    });
+  }
 }

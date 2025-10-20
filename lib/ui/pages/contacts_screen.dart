@@ -5,17 +5,18 @@ import 'package:omada/core/theme/design_tokens.dart';
 import 'package:omada/ui/widgets/app_bottom_nav.dart';
 // import 'package:omada/ui/widgets/theme_selector.dart';
 import 'package:omada/ui/widgets/contact_tile.dart';
+import 'package:omada/ui/widgets/shared_contact_tile.dart';
 import 'package:omada/core/supabase/supabase_instance.dart';
 import 'package:omada/core/data/models/contact_model.dart';
+import 'package:omada/core/data/models/shared_contact_data.dart';
 import 'contact_form_page.dart';
+import 'shared_contact_detail_page.dart';
 import 'package:omada/ui/widgets/filter_row.dart';
 import 'manage_tags_page.dart';
 import 'contacts/user_discovery_sheet.dart';
 import 'contacts/incoming_requests_sheet.dart';
 import 'package:omada/core/data/models/tag_model.dart';
-import 'package:omada/core/data/models/contact_channel_model.dart';
 import 'package:omada/core/controllers/contacts_controller.dart';
-import 'package:omada/ui/widgets/social_media_section.dart';
 import 'package:omada/core/controllers/favourites_controller.dart';
 import 'package:omada/ui/pages/deleted_contacts_page.dart';
 
@@ -33,7 +34,9 @@ class _ContactsScreenState extends State<ContactsScreen> {
   late final FavouritesController _favouritesController;
   final ColorPalette selectedTheme = appPalette;
   List<ContactModel> _contacts = [];
+  List<SharedContactData> _sharedContacts = [];
   List<ContactModel> _visibleContacts = [];
+  List<SharedContactData> _visibleSharedContacts = [];
   List<TagModel> _tags = [];
   final Set<String> _selectedTagIds = <String>{};
   bool _isLoading = false;
@@ -82,17 +85,32 @@ class _ContactsScreenState extends State<ContactsScreen> {
       _error = null;
     });
     try {
-      final fetched = await _controller.getContacts(
-        includeDeleted: false,
-        searchTerm: _serverSearchQuery,
-        tagIds: _selectedTagIds.isEmpty ? null : _selectedTagIds.toList(),
-      );
+      // Fetch both owned and shared contacts
+      final results = await Future.wait([
+        _controller.getContacts(
+          includeDeleted: false,
+          searchTerm: _serverSearchQuery,
+          tagIds: _selectedTagIds.isEmpty ? null : _selectedTagIds.toList(),
+        ),
+        _controller.getSharedContacts(includeRevoked: false),
+      ]);
+      
+      final fetched = results[0] as List<ContactModel>;
+      final sharedFetched = results[1] as List<SharedContactData>;
+      
       fetched.sort(
         (a, b) =>
             a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
       );
+      sharedFetched.sort(
+        (a, b) =>
+            a.contact.displayName.toLowerCase()
+                .compareTo(b.contact.displayName.toLowerCase()),
+      );
+      
       setState(() {
         _contacts = fetched;
+        _sharedContacts = sharedFetched;
         _applyClientFilters();
       });
     } catch (e) {
@@ -133,6 +151,8 @@ class _ContactsScreenState extends State<ContactsScreen> {
 
   void _applyClientFilters() {
     final localQuery = _searchController.text.trim().toLowerCase();
+    
+    // Filter owned contacts
     List<ContactModel> filtered = List.of(_contacts);
     if (localQuery.isNotEmpty) {
       filtered = filtered.where((c) {
@@ -146,16 +166,31 @@ class _ContactsScreenState extends State<ContactsScreen> {
         return fields.contains(localQuery);
       }).toList();
     }
-    setState(() => _visibleContacts = filtered);
+    
+    // Filter shared contacts
+    List<SharedContactData> filteredShared = List.of(_sharedContacts);
+    if (localQuery.isNotEmpty) {
+      filteredShared = filteredShared.where((sc) {
+        final c = sc.contact;
+        final fields = [
+          c.displayName,
+          c.givenName ?? '',
+          c.familyName ?? '',
+          c.primaryEmail ?? '',
+          c.primaryMobile ?? '',
+        ].join(' ').toLowerCase();
+        return fields.contains(localQuery);
+      }).toList();
+    }
+    
+    setState(() {
+      _visibleContacts = filtered;
+      _visibleSharedContacts = filteredShared;
+    });
   }
 
   Future<Map<String, List<TagModel>>> _getTagsForVisibleContacts() async {
     return _controller.getTagsForContacts(_visibleContacts);
-  }
-
-  Future<Map<String, List<ContactChannelModel>>>
-  _getChannelsForVisibleContacts() async {
-    return _controller.getChannelsForContacts(_visibleContacts);
   }
 
   Future<void> _onAddContact() async {
@@ -174,6 +209,17 @@ class _ContactsScreenState extends State<ContactsScreen> {
     );
     await _refreshTags();
     if (updated == true) await _refreshContacts();
+  }
+
+  Future<void> _onViewSharedContact(SharedContactData sharedContact) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => SharedContactDetailPage(
+          sharedContact: sharedContact,
+          controller: _controller,
+        ),
+      ),
+    );
   }
 
   Future<void> _onDeleteContact(ContactModel contact) async {
@@ -355,9 +401,13 @@ class _ContactsScreenState extends State<ContactsScreen> {
       future: _getTagsForVisibleContacts(),
       builder: (context, snapshot) {
         final tagsByContact = snapshot.data ?? const {};
-        return Column(
-          children: _visibleContacts.map((contact) {
-            return ContactTile(
+        
+        final widgets = <Widget>[];
+        
+        // Add owned contacts
+        for (final contact in _visibleContacts) {
+          widgets.add(
+            ContactTile(
               contact: contact,
               tags: tagsByContact[contact.id] ?? const [],
               isFavourite: _favouritesController.isFavourite(contact.id),
@@ -375,9 +425,41 @@ class _ContactsScreenState extends State<ContactsScreen> {
               onTap: () => _onEditContact(contact),
               onEdit: () => _onEditContact(contact),
               onDelete: () => _onDeleteContact(contact),
-            );
-          }).toList(),
-        );
+            ),
+          );
+        }
+        
+        // Add section header if there are shared contacts
+        if (_visibleSharedContacts.isNotEmpty && _visibleContacts.isNotEmpty) {
+          widgets.add(
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: OmadaTokens.space16,
+                vertical: OmadaTokens.space12,
+              ),
+              child: Text(
+                'Shared with you',
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                      fontWeight: FontWeight.w600,
+                    ),
+              ),
+            ),
+          );
+        }
+        
+        // Add shared contacts
+        for (final sharedContact in _visibleSharedContacts) {
+          widgets.add(
+            SharedContactTile(
+              sharedContact: sharedContact,
+              tags: tagsByContact[sharedContact.contact.id] ?? const [],
+              onTap: () => _onViewSharedContact(sharedContact),
+            ),
+          );
+        }
+        
+        return Column(children: widgets);
       },
     );
   }
