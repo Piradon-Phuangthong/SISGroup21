@@ -4,6 +4,8 @@ import '../features/profiles_test_page.dart';
 import '../features/contacts_test_page.dart';
 import '../features/tags_test_page.dart';
 import '../features/sharing_test_page.dart';
+import '../features/accepted_shares_test_page.dart';
+import '../features/received_shares_test_page.dart';
 import '../features/my_contact_card_page.dart';
 import '../features/my_overview_page.dart';
 import '../features/my_channels_page.dart';
@@ -69,6 +71,14 @@ class EpicHomePage extends StatelessWidget {
             title: 'E5 — Username Discovery & Requests',
             items: [
               _EpicNav('US-E5-1/2/3: Search & Requests', SharingTestPage()),
+              _EpicNav(
+                'US-E5-4: Accepted Shares (with Channels)',
+                AcceptedSharesTestPage(),
+              ),
+              _EpicNav(
+                'US-E5-5: Received Shares (My Access)',
+                ReceivedSharesTestPage(),
+              ),
             ],
           ),
           _EpicCard(

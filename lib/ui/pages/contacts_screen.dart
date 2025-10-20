@@ -98,6 +98,13 @@ class _ContactsScreenState extends State<ContactsScreen> {
       final fetched = results[0] as List<ContactModel>;
       final sharedFetched = results[1] as List<SharedContactData>;
 
+      // Debug logging to help troubleshoot
+      debugPrint('Owned contacts: ${fetched.length}');
+      debugPrint('Shared contacts: ${sharedFetched.length}');
+      if (sharedFetched.isNotEmpty) {
+        debugPrint('First shared contact: ${sharedFetched.first.contact.displayName} from @${sharedFetched.first.sharedBy}');
+      }
+
       fetched.sort(
         (a, b) =>
             a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
@@ -114,6 +121,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
         _applyClientFilters();
       });
     } catch (e) {
+      debugPrint('Error loading contacts: $e');
       setState(() => _error = e.toString());
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -360,7 +368,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
   }
 
   Widget _buildBody() {
-    if (_isLoading && _visibleContacts.isEmpty) {
+    if (_isLoading && _visibleContacts.isEmpty && _visibleSharedContacts.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
     if (_error != null) {
@@ -383,7 +391,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
         ),
       );
     }
-    if (_visibleContacts.isEmpty) {
+    if (_visibleContacts.isEmpty && _visibleSharedContacts.isEmpty) {
       return Padding(
         padding: const EdgeInsets.only(top: 100),
         child: Column(
@@ -430,7 +438,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
         }
 
         // Add section header if there are shared contacts
-        if (_visibleSharedContacts.isNotEmpty && _visibleContacts.isNotEmpty) {
+        if (_visibleSharedContacts.isNotEmpty) {
           widgets.add(
             Padding(
               padding: const EdgeInsets.symmetric(
