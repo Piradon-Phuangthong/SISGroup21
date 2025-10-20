@@ -9,8 +9,15 @@ import 'package:omada/ui/widgets/app_card.dart';
 
 class ContactFormPage extends StatefulWidget {
   final ContactModel? contact;
+  final bool isReadOnly;
+  final String? sharedBy;
 
-  const ContactFormPage({super.key, this.contact});
+  const ContactFormPage({
+    super.key,
+    this.contact,
+    this.isReadOnly = false,
+    this.sharedBy,
+  });
 
   @override
   State<ContactFormPage> createState() => _ContactFormPageState();
@@ -39,8 +46,8 @@ class _ContactFormPageState extends State<ContactFormPage> {
 
     final contact = widget.contact;
     if (contact != null) {
-      // If editing an existing contact, start in read-only mode
-      _isEditing = false;
+      // If editing an existing contact, check if it's read-only or editable
+      _isEditing = !widget.isReadOnly;
       _fullNameController.text = contact.fullName ?? '';
       _givenNameController.text = contact.givenName ?? '';
       _familyNameController.text = contact.familyName ?? '';
@@ -303,12 +310,40 @@ class _ContactFormPageState extends State<ContactFormPage> {
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
-                                Text(
-                                  'Contact Information',
-                                  style: Theme.of(context).textTheme.titleLarge
-                                      ?.copyWith(fontWeight: FontWeight.bold),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Contact Information',
+                                        style: Theme.of(context).textTheme.titleLarge
+                                            ?.copyWith(fontWeight: FontWeight.bold),
+                                      ),
+                                      if (widget.isReadOnly && widget.sharedBy != null)
+                                        Padding(
+                                          padding: const EdgeInsets.only(top: 4.0),
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.share,
+                                                size: 14,
+                                                color: Colors.blue,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                'Shared by @${widget.sharedBy}',
+                                                style: TextStyle(
+                                                  fontSize: 12,
+                                                  color: Colors.blue,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                    ],
+                                  ),
                                 ),
-                                if (widget.contact != null)
+                                if (widget.contact != null && !widget.isReadOnly)
                                   TextButton.icon(
                                     onPressed: _toggleEditMode,
                                     icon: Icon(

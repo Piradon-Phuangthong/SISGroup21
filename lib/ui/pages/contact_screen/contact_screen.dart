@@ -17,11 +17,9 @@ import 'package:omada/ui/pages/contacts/incoming_requests_sheet.dart';
 import 'package:omada/ui/pages/contacts/user_discovery_sheet.dart';
 import 'package:omada/ui/pages/deleted_contacts_page.dart';
 import 'package:omada/ui/pages/manage_tags_page.dart';
-import 'package:omada/ui/pages/shared_contact_detail_page.dart';
 import 'package:omada/ui/widgets/app_bottom_nav.dart';
 import 'package:omada/ui/widgets/contact_tile.dart';
 import 'package:omada/ui/widgets/filter_row.dart';
-import 'package:omada/ui/widgets/shared_contact_tile.dart';
 
 class ContactScreen extends StatefulWidget {
   const ContactScreen({super.key});
@@ -260,14 +258,18 @@ class _ContactScreenState extends State<ContactScreen> {
   }
 
   Future<void> _onViewSharedContact(SharedContactData sharedContact) async {
+    // Navigate to the same contact form page, but in read-only mode for shared contacts
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => SharedContactDetailPage(
-          sharedContact: sharedContact,
-          controller: _controller,
+        builder: (_) => ContactFormPage(
+          contact: sharedContact.contact,
+          isReadOnly: true,
+          sharedBy: sharedContact.sharedBy,
         ),
       ),
     );
+    // Refresh in case anything changed
+    await _refreshContacts();
   }
 
   @override
@@ -429,7 +431,7 @@ class _ContactScreenState extends State<ContactScreen> {
                   );
                 }
 
-                // Shared contacts
+                // Shared contacts - use same ContactCard as owned contacts
                 final sharedIndex = index - _visibleContacts.length - 1;
                 if (sharedIndex >= 0 && sharedIndex < _visibleSharedContacts.length) {
                   final sharedContact = _visibleSharedContacts[sharedIndex];
@@ -437,10 +439,29 @@ class _ContactScreenState extends State<ContactScreen> {
                     future: _getTagsForVisibleContacts(),
                     builder: (context, snapshot) {
                       final tagsByContact = snapshot.data ?? const {};
-                      return SharedContactTile(
-                        sharedContact: sharedContact,
+                      return ContactCard(
+                        contact: sharedContact.contact,
                         tags: tagsByContact[sharedContact.contact.id] ?? const [],
-                        onTap: () => _onViewSharedContact(sharedContact),
+                        isFavourite: _favouritesController.isFavourite(
+                          sharedContact.contact.id,
+                        ),
+                        onFavouriteToggle: () => _toggleFavourite(sharedContact.contact.id),
+                        onTagTap: (tag) async {
+                          setState(() {
+                            if (_selectedTagIds.contains(tag.id)) {
+                              _selectedTagIds.remove(tag.id);
+                            } else {
+                              _selectedTagIds.add(tag.id);
+                            }
+                          });
+                          await _refreshContacts();
+                        },
+                        onLongPress: () => _onViewSharedContact(sharedContact),
+                        onEdit: () => _onViewSharedContact(sharedContact),
+                        // No delete option for shared contacts
+                        showDeleteOption: false,
+                        isShared: true,
+                        sharedBy: sharedContact.sharedBy,
                       );
                     },
                   );

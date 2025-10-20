@@ -16,6 +16,9 @@ class ContactCard extends StatefulWidget {
   final VoidCallback? onDelete;
   final bool isFavourite;
   final VoidCallback? onFavouriteToggle;
+  final bool showDeleteOption;
+  final bool isShared;
+  final String? sharedBy;
 
   const ContactCard({
     super.key,
@@ -27,6 +30,9 @@ class ContactCard extends StatefulWidget {
     this.onDelete,
     this.isFavourite = false,
     this.onFavouriteToggle,
+    this.showDeleteOption = true,
+    this.isShared = false,
+    this.sharedBy,
   });
 
   @override
@@ -100,10 +106,51 @@ class ContactCardState extends State<ContactCard>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(
-                          widget.contact.displayName,
-                          textAlign: TextAlign.left,
-                          overflow: TextOverflow.ellipsis,
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                widget.contact.displayName,
+                                textAlign: TextAlign.left,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            if (widget.isShared && widget.sharedBy != null)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 8.0),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
+                                      color: Colors.blue.withOpacity(0.3),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.share,
+                                        size: 12,
+                                        color: Colors.blue,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        '@${widget.sharedBy}',
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          color: Colors.blue,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
                         Text(
                           widget.contact.primaryMobile ??
@@ -150,7 +197,7 @@ class ContactCardState extends State<ContactCard>
                             ? 'Remove from favourites'
                             : 'Add to favourites',
                       ),
-                      if (widget.onDelete != null)
+                      if (widget.showDeleteOption && widget.onDelete != null)
                         IconButton(
                           onPressed: widget.onDelete,
                           icon: Icon(Icons.delete),

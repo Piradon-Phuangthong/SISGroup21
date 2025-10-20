@@ -13,6 +13,9 @@ class ContactTile extends StatelessWidget {
   final VoidCallback? onDelete;
   final bool isFavourite;
   final VoidCallback? onFavouriteToggle;
+  final bool showDeleteOption;
+  final bool isShared;
+  final String? sharedBy;
 
   const ContactTile({
     super.key,
@@ -24,6 +27,9 @@ class ContactTile extends StatelessWidget {
     this.onDelete,
     this.isFavourite = false,
     this.onFavouriteToggle,
+    this.showDeleteOption = true,
+    this.isShared = false,
+    this.sharedBy,
   });
 
   @override
@@ -41,7 +47,42 @@ class ContactTile extends StatelessWidget {
           style: const TextStyle(color: Colors.white),
         ),
       ),
-      title: Text(contact.displayName),
+      title: Row(
+        children: [
+          Expanded(
+            child: Text(contact.displayName),
+          ),
+          if (isShared && sharedBy != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.blue.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: Colors.blue.withOpacity(0.3),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.share,
+                    size: 12,
+                    color: Colors.blue,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    '@$sharedBy',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.blue,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -94,7 +135,7 @@ class ContactTile extends StatelessWidget {
               itemBuilder: (context) => [
                 if (onEdit != null)
                   const PopupMenuItem(value: 'edit', child: Text('Edit')),
-                if (onDelete != null)
+                if (showDeleteOption && onDelete != null)
                   const PopupMenuItem(value: 'delete', child: Text('Delete')),
               ],
             ),

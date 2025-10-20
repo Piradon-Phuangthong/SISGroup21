@@ -5,12 +5,10 @@ import 'package:omada/core/theme/design_tokens.dart';
 import 'package:omada/ui/widgets/app_bottom_nav.dart';
 // import 'package:omada/ui/widgets/theme_selector.dart';
 import 'package:omada/ui/widgets/contact_tile.dart';
-import 'package:omada/ui/widgets/shared_contact_tile.dart';
 import 'package:omada/core/supabase/supabase_instance.dart';
 import 'package:omada/core/data/models/contact_model.dart';
 import 'package:omada/core/data/models/shared_contact_data.dart';
 import 'contact_form_page.dart';
-import 'shared_contact_detail_page.dart';
 import 'package:omada/ui/widgets/filter_row.dart';
 import 'manage_tags_page.dart';
 import 'contacts/user_discovery_sheet.dart';
@@ -220,14 +218,18 @@ class _ContactsScreenState extends State<ContactsScreen> {
   }
 
   Future<void> _onViewSharedContact(SharedContactData sharedContact) async {
+    // Navigate to the same contact form page, but in read-only mode for shared contacts
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => SharedContactDetailPage(
-          sharedContact: sharedContact,
-          controller: _controller,
+        builder: (_) => ContactFormPage(
+          contact: sharedContact.contact,
+          isReadOnly: true,
+          sharedBy: sharedContact.sharedBy,
         ),
       ),
     );
+    // Refresh in case anything changed
+    await _refreshContacts();
   }
 
   Future<void> _onDeleteContact(ContactModel contact) async {
@@ -456,13 +458,32 @@ class _ContactsScreenState extends State<ContactsScreen> {
           );
         }
 
-        // Add shared contacts
+        // Add shared contacts using the same ContactTile as owned contacts
         for (final sharedContact in _visibleSharedContacts) {
           widgets.add(
-            SharedContactTile(
-              sharedContact: sharedContact,
+            ContactTile(
+              contact: sharedContact.contact,
               tags: tagsByContact[sharedContact.contact.id] ?? const [],
+              isFavourite: _favouritesController.isFavourite(
+                sharedContact.contact.id,
+              ),
+              onFavouriteToggle: () => _toggleFavourite(sharedContact.contact.id),
+              onTagTap: (tag) async {
+                setState(() {
+                  if (_selectedTagIds.contains(tag.id)) {
+                    _selectedTagIds.remove(tag.id);
+                  } else {
+                    _selectedTagIds.add(tag.id);
+                  }
+                });
+                await _refreshContacts();
+              },
               onTap: () => _onViewSharedContact(sharedContact),
+              onEdit: () => _onViewSharedContact(sharedContact),
+              // No delete for shared contacts
+              showDeleteOption: false,
+              isShared: true,
+              sharedBy: sharedContact.sharedBy,
             ),
           );
         }
