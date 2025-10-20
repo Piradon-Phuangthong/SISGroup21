@@ -5,6 +5,7 @@ import 'package:omada/core/data/repositories/contact_repository.dart';
 import 'package:omada/core/data/services/sharing_service.dart';
 import 'package:omada/core/data/utils/channel_presets.dart';
 import 'package:omada/core/theme/design_tokens.dart';
+import 'package:omada/core/data/models/share_request_model.dart';
 
 /// Sheet for selecting which contact channels to share when accepting a share request
 class ChannelSelectionSheet extends StatefulWidget {
@@ -321,6 +322,15 @@ class _ChannelSelectionSheetState extends State<ChannelSelectionSheet> {
     setState(() => _accepting = true);
 
     try {
+      // Validate request status before acceptance
+      final currentRequest = await widget.sharingService.getShareRequest(widget.request.request.id);
+      if (currentRequest == null) {
+        throw Exception('Share request not found. The requester may have deleted their account.');
+      }
+      if (currentRequest.request.status != ShareRequestStatus.pending) {
+        throw Exception('This request has already been ${currentRequest.request.status.value}.');
+      }
+
       // Get user's own contact ID
       final myContact = await widget.contactRepository.getMyOwnContact();
       if (myContact == null) {
@@ -336,6 +346,8 @@ class _ChannelSelectionSheetState extends State<ChannelSelectionSheet> {
       if (invalidSelections.isNotEmpty) {
         throw Exception('Invalid channel selection');
       }
+
+      // TODO: Ensure database constraint on (owner_id, to_user_id, contact_id) exists
 
       // Accept the request with channel-specific sharing
       await widget.sharingService.acceptShareRequestWithChannels(
@@ -361,8 +373,11 @@ class _ChannelSelectionSheetState extends State<ChannelSelectionSheet> {
 
       // Navigate back with success result
       Navigator.of(context).pop(true);
-    } catch (e) {
+    } catch (e, stack) {
       if (!mounted) return;
+
+      // Log error for debugging
+      debugPrint('Accept & Share error: $e\n$stack');
 
       // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
@@ -372,9 +387,9 @@ class _ChannelSelectionSheetState extends State<ChannelSelectionSheet> {
           behavior: SnackBarBehavior.floating,
           duration: const Duration(seconds: 5),
           action: SnackBarAction(
-            label: 'Dismiss',
+            label: 'Retry',
             textColor: Colors.white,
-            onPressed: () {},
+            onPressed: _acceptAndShare,
           ),
         ),
       );
@@ -460,8 +475,15 @@ class _ChannelSelectionSheetState extends State<ChannelSelectionSheet> {
             const SizedBox(height: OmadaTokens.space24),
             FilledButton.icon(
               onPressed: () {
-                // TODO: Navigate to profile/channel management
+                // Navigate to profile/channel management page
                 Navigator.of(context).pop();
+                // TODO: Replace with actual navigation to profile management
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('Go to Profile > Add Channel to add contact channels.'),
+                    behavior: SnackBarBehavior.floating,
+                  ),
+                );
               },
               icon: const Icon(Icons.add),
               label: const Text('Add Channels'),
