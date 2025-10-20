@@ -133,58 +133,48 @@ class ContactRepository extends BaseRepository {
     });
   }
 
-
-
-
-
   /// Gets only soft-deleted contacts (is_deleted = true)
-Future<List<ContactModel>> getDeletedContacts({
-  String? searchTerm,
-  int? limit,
-  int? offset,
-  String orderBy = 'updated_at',
-  bool ascending = false,
-}) async {
-  final userId = authenticatedUserId;
+  Future<List<ContactModel>> getDeletedContacts({
+    String? searchTerm,
+    int? limit,
+    int? offset,
+    String orderBy = 'updated_at',
+    bool ascending = false,
+  }) async {
+    final userId = authenticatedUserId;
 
-  return await handleSupabaseExceptionAsync(() async {
-    dynamic query = client
-        .from('contacts')
-        .select()
-        .eq('owner_id', userId)
-        .eq('is_deleted', true); // only deleted
+    return await handleSupabaseExceptionAsync(() async {
+      dynamic query = client
+          .from('contacts')
+          .select()
+          .eq('owner_id', userId)
+          .eq('is_deleted', true); // only deleted
 
-    if (searchTerm?.isNotEmpty == true) {
-      final cleanTerm = searchTerm!.replaceAll("'", "''");
-      query = query.or(
-        'full_name.ilike.%$cleanTerm%,given_name.ilike.%$cleanTerm%,family_name.ilike.%$cleanTerm%,primary_email.ilike.%$cleanTerm%,primary_mobile.ilike.%$cleanTerm%',
-      );
-    }
-
-    query = query.order(orderBy, ascending: ascending);
-
-    if (limit != null) {
-      if (offset != null) {
-        query = query.range(offset, offset + limit - 1);
-      } else {
-        query = query.limit(limit);
+      if (searchTerm?.isNotEmpty == true) {
+        final cleanTerm = searchTerm!.replaceAll("'", "''");
+        query = query.or(
+          'full_name.ilike.%$cleanTerm%,given_name.ilike.%$cleanTerm%,family_name.ilike.%$cleanTerm%,primary_email.ilike.%$cleanTerm%,primary_mobile.ilike.%$cleanTerm%',
+        );
       }
-    }
 
-    final response = await query;
-    return response
-        .map<ContactModel>(
-          (data) => ContactModel.fromJson(data as Map<String, dynamic>),
-        )
-        .toList();
-  });
-}
+      query = query.order(orderBy, ascending: ascending);
 
+      if (limit != null) {
+        if (offset != null) {
+          query = query.range(offset, offset + limit - 1);
+        } else {
+          query = query.limit(limit);
+        }
+      }
 
-
-
-
-
+      final response = await query;
+      return response
+          .map<ContactModel>(
+            (data) => ContactModel.fromJson(data as Map<String, dynamic>),
+          )
+          .toList();
+    });
+  }
 
   /// Creates a new contact
   Future<ContactModel> createContact({
@@ -229,7 +219,9 @@ Future<List<ContactModel>> getDeletedContacts({
       'prefix': prefix?.trim(),
       'suffix': suffix?.trim(),
       'primary_mobile': primaryMobile?.trim(),
-      'primary_email': primaryEmail?.trim().isNotEmpty == true ? primaryEmail?.trim() : null,
+      'primary_email': primaryEmail?.trim().isNotEmpty == true
+          ? primaryEmail?.trim()
+          : null,
       'avatar_url': avatarUrl?.trim(),
       'notes': notes?.trim(),
       'custom_fields': customFields ?? {},
@@ -291,7 +283,9 @@ Future<List<ContactModel>> getDeletedContacts({
     if (primaryMobile != null)
       updateData['primary_mobile'] = primaryMobile.trim();
     if (primaryEmail != null) {
-      updateData['primary_email'] = primaryEmail.trim().isNotEmpty ? primaryEmail.trim() : null;
+      updateData['primary_email'] = primaryEmail.trim().isNotEmpty
+          ? primaryEmail.trim()
+          : null;
     }
     if (avatarUrl != null) updateData['avatar_url'] = avatarUrl.trim();
     if (notes != null) updateData['notes'] = notes.trim();
@@ -370,7 +364,7 @@ Future<List<ContactModel>> getDeletedContacts({
   /// Cleans up contacts with empty string emails (sets them to null)
   Future<void> cleanupEmptyEmails() async {
     final userId = authenticatedUserId;
-    
+
     await handleSupabaseExceptionAsync(() async {
       // Clean up empty string emails
       await client
@@ -378,7 +372,7 @@ Future<List<ContactModel>> getDeletedContacts({
           .update({'primary_email': null})
           .eq('owner_id', userId)
           .eq('primary_email', '');
-      
+
       // Also clean up any contacts that might have the user's email incorrectly assigned
       // Get the current user's email from auth
       final user = client.auth.currentUser;
@@ -388,7 +382,10 @@ Future<List<ContactModel>> getDeletedContacts({
             .update({'primary_email': null})
             .eq('owner_id', userId)
             .eq('primary_email', user!.email!)
-            .neq('full_name', user.email!.split('@')[0]) // Don't clean up if contact name matches email prefix
+            .neq(
+              'full_name',
+              user.email!.split('@')[0],
+            ) // Don't clean up if contact name matches email prefix
             .neq('given_name', user.email!.split('@')[0]);
       }
     });

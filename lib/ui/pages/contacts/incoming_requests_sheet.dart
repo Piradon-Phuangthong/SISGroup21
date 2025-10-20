@@ -192,7 +192,7 @@ class IncomingRequestsSheet extends StatefulWidget {
   final SharingService sharingService;
   final ContactRepository contactRepository;
   final ContactChannelRepository contactChannelRepository;
-  
+
   const IncomingRequestsSheet({
     super.key,
     required this.sharingService,
@@ -255,9 +255,7 @@ class _IncomingRequestsSheetState extends State<IncomingRequestsSheet> {
     }
   }
 
-  Future<void> _navigateToChannelSelection(
-    ShareRequestWithProfile item,
-  ) async {
+  Future<void> _navigateToChannelSelection(ShareRequestWithProfile item) async {
     // Navigate to channel selection sheet
     await showModalBottomSheet(
       context: context,

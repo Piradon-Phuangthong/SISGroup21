@@ -130,6 +130,47 @@ class SharingService {
     }
   }
 
+  /// Accepts a share request with channel-specific sharing
+  Future<void> acceptShareRequestWithChannels(
+    String requestId, {
+    required String contactId,
+    required List<String> channelIds,
+  }) async {
+    if (channelIds.isEmpty) {
+      throw ValidationException('At least one channel must be selected');
+    }
+
+    final request = await _sharingRepository.getShareRequest(requestId);
+    if (request == null) {
+      throw ExceptionFactory.shareRequestNotFound(requestId);
+    }
+
+    // Validate request status
+    if (request.status != ShareRequestStatus.pending) {
+      throw ValidationException(
+        'This request has already been ${request.status.value}',
+      );
+    }
+
+    // Build field mask with channel-specific entries
+    // Always include basic name fields
+    final List<String> fieldMask = [
+      ContactFields.fullName,
+      ContactFields.givenName,
+      ContactFields.familyName,
+      // Add channel references using "channel:" prefix
+      ...channelIds.map((id) => 'channel:$id'),
+    ];
+
+    // Accept the request with channel-specific sharing
+    await acceptShareRequest(
+      requestId,
+      shareConfigs: [
+        ContactShareConfig(contactId: contactId, fieldMask: fieldMask),
+      ],
+    );
+  }
+
   /// Declines a share request
   Future<void> declineShareRequest(String requestId) async {
     await _sharingRepository.respondToShareRequest(

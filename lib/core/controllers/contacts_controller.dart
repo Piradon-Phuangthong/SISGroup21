@@ -103,11 +103,9 @@ class ContactsController {
     ShareRequestStatus response,
   ) => _sharing.respondToShareRequestSimple(id, response);
 
-
-  Future<List<ContactModel>> getDeletedContacts({ String? searchTerm }) =>
-    _contacts.getDeletedContacts(searchTerm: searchTerm);
+  Future<List<ContactModel>> getDeletedContacts({String? searchTerm}) =>
+      _contacts.getDeletedContacts(searchTerm: searchTerm);
 
   Future<void> permanentlyDeleteContact(String id) =>
-    _contacts.permanentlyDeleteContact(id);
-
+      _contacts.permanentlyDeleteContact(id);
 }

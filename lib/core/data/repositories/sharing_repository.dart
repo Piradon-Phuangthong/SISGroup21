@@ -276,8 +276,13 @@ class SharingRepository extends BaseRepository {
     }
 
     // Verify valid field names
+    // Support both standard fields and channel-specific fields (channel:uuid)
     final invalidFields = fieldMask
-        .where((field) => !ContactFields.all.contains(field))
+        .where(
+          (field) =>
+              !ContactFields.all.contains(field) &&
+              !field.startsWith('channel:'),
+        )
         .toList();
     if (invalidFields.isNotEmpty) {
       throw ValidationException(
@@ -447,8 +452,13 @@ class SharingRepository extends BaseRepository {
     }
 
     // Verify valid field names
+    // Support both standard fields and channel-specific fields (channel:uuid)
     final invalidFields = newFieldMask
-        .where((field) => !ContactFields.all.contains(field))
+        .where(
+          (field) =>
+              !ContactFields.all.contains(field) &&
+              !field.startsWith('channel:'),
+        )
         .toList();
     if (invalidFields.isNotEmpty) {
       throw ValidationException(

@@ -74,16 +74,16 @@ class _ChannelSelectionSheetState extends State<ChannelSelectionSheet> {
 
       if (myContact == null) {
         setState(() {
-          _errorMessage = 'Your profile contact was not found. Please set up your profile first.';
+          _errorMessage =
+              'Your profile contact was not found. Please set up your profile first.';
           _loading = false;
         });
         return;
       }
 
       // Get all channels for the user's contact
-      final channels = await widget.contactChannelRepository.getChannelsForContact(
-        myContact.id,
-      );
+      final channels = await widget.contactChannelRepository
+          .getChannelsForContact(myContact.id);
 
       setState(() {
         _channels = channels;
@@ -116,11 +116,10 @@ class _ChannelSelectionSheetState extends State<ChannelSelectionSheet> {
     }
   }
 
-
-
   @override
   Widget build(BuildContext context) {
-    final requesterUsername = widget.request.requesterProfile?.username ?? 'Unknown User';
+    final requesterUsername =
+        widget.request.requesterProfile?.username ?? 'Unknown User';
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -166,11 +165,15 @@ class _ChannelSelectionSheetState extends State<ChannelSelectionSheet> {
                     Row(
                       children: [
                         CircleAvatar(
-                          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primaryContainer,
                           child: Text(
                             requesterUsername[0].toUpperCase(),
                             style: TextStyle(
-                              color: Theme.of(context).colorScheme.onPrimaryContainer,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onPrimaryContainer,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -182,15 +185,17 @@ class _ChannelSelectionSheetState extends State<ChannelSelectionSheet> {
                             children: [
                               Text(
                                 'Choose what to share',
-                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: Theme.of(context).textTheme.titleLarge
+                                    ?.copyWith(fontWeight: FontWeight.bold),
                               ),
                               Text(
                                 'with @$requesterUsername',
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Theme.of(context).colorScheme.primary,
-                                ),
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.primary,
+                                    ),
                               ),
                             ],
                           ),
@@ -200,7 +205,9 @@ class _ChannelSelectionSheetState extends State<ChannelSelectionSheet> {
                     const SizedBox(height: OmadaTokens.space16),
 
                     // Selection controls (shown only when channels are loaded)
-                    if (!_loading && _errorMessage == null && _channels.isNotEmpty) ...[
+                    if (!_loading &&
+                        _errorMessage == null &&
+                        _channels.isNotEmpty) ...[
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: OmadaTokens.space12,
@@ -223,18 +230,25 @@ class _ChannelSelectionSheetState extends State<ChannelSelectionSheet> {
                                 _selectedCount == 0
                                     ? 'Select channels to share'
                                     : '$_selectedCount channel${_selectedCount == 1 ? '' : 's'} selected',
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                style: Theme.of(context).textTheme.bodyMedium
+                                    ?.copyWith(fontWeight: FontWeight.w600),
                               ),
                             ),
                             TextButton.icon(
-                              onPressed: _selectedCount == _channels.length ? _clearSelection : _selectAll,
+                              onPressed: _selectedCount == _channels.length
+                                  ? _clearSelection
+                                  : _selectAll,
                               icon: Icon(
-                                _selectedCount == _channels.length ? Icons.clear : Icons.select_all,
+                                _selectedCount == _channels.length
+                                    ? Icons.clear
+                                    : Icons.select_all,
                                 size: 18,
                               ),
-                              label: Text(_selectedCount == _channels.length ? 'Clear' : 'Select All'),
+                              label: Text(
+                                _selectedCount == _channels.length
+                                    ? 'Clear'
+                                    : 'Select All',
+                              ),
                               style: TextButton.styleFrom(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: OmadaTokens.space12,
@@ -253,19 +267,23 @@ class _ChannelSelectionSheetState extends State<ChannelSelectionSheet> {
                       child: _loading
                           ? _buildLoadingState()
                           : _errorMessage != null
-                              ? _buildErrorState()
-                              : _channels.isEmpty
-                                  ? _buildEmptyState()
-                                  : _buildChannelsList(scrollController),
+                          ? _buildErrorState()
+                          : _channels.isEmpty
+                          ? _buildEmptyState()
+                          : _buildChannelsList(scrollController),
                     ),
 
                     // Accept & Share button (shown only when channels are available)
-                    if (!_loading && _errorMessage == null && _channels.isNotEmpty) ...[
+                    if (!_loading &&
+                        _errorMessage == null &&
+                        _channels.isNotEmpty) ...[
                       const SizedBox(height: OmadaTokens.space16),
                       SizedBox(
                         width: double.infinity,
                         child: FilledButton.icon(
-                          onPressed: _selectedCount == 0 || _accepting ? null : _acceptAndShare,
+                          onPressed: _selectedCount == 0 || _accepting
+                              ? null
+                              : _acceptAndShare,
                           icon: _accepting
                               ? const SizedBox(
                                   width: 18,
@@ -277,8 +295,8 @@ class _ChannelSelectionSheetState extends State<ChannelSelectionSheet> {
                                 )
                               : const Icon(Icons.check_circle),
                           label: Text(
-                            _accepting 
-                                ? 'Processing...' 
+                            _accepting
+                                ? 'Processing...'
                                 : 'Accept & Share ($_selectedCount)',
                           ),
                           style: FilledButton.styleFrom(
@@ -300,12 +318,71 @@ class _ChannelSelectionSheetState extends State<ChannelSelectionSheet> {
   }
 
   Future<void> _acceptAndShare() async {
-    // TODO: Implement in User Story 3
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Accept & Share functionality coming in User Story 3'),
-      ),
-    );
+    setState(() => _accepting = true);
+
+    try {
+      // Get user's own contact ID
+      final myContact = await widget.contactRepository.getMyOwnContact();
+      if (myContact == null) {
+        throw Exception('Your contact profile not found');
+      }
+
+      // Validate that selected channels belong to the user's contact
+      final validChannelIds = _channels.map((c) => c.id).toSet();
+      final invalidSelections = _selectedChannelIds
+          .where((id) => !validChannelIds.contains(id))
+          .toList();
+
+      if (invalidSelections.isNotEmpty) {
+        throw Exception('Invalid channel selection');
+      }
+
+      // Accept the request with channel-specific sharing
+      await widget.sharingService.acceptShareRequestWithChannels(
+        widget.request.request.id,
+        contactId: myContact.id,
+        channelIds: _selectedChannelIds.toList(),
+      );
+
+      if (!mounted) return;
+
+      // Show success message
+      final requesterUsername =
+          widget.request.requesterProfile?.username ?? 'the user';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Shared $_selectedCount channel${_selectedCount == 1 ? '' : 's'} with @$requesterUsername',
+          ),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+
+      // Navigate back with success result
+      Navigator.of(context).pop(true);
+    } catch (e) {
+      if (!mounted) return;
+
+      // Show error message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to accept request: ${e.toString()}'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 5),
+          action: SnackBarAction(
+            label: 'Dismiss',
+            textColor: Colors.white,
+            onPressed: () {},
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _accepting = false);
+      }
+    }
   }
 
   Widget _buildLoadingState() {
@@ -334,10 +411,7 @@ class _ChannelSelectionSheetState extends State<ChannelSelectionSheet> {
               color: Theme.of(context).colorScheme.error,
             ),
             const SizedBox(height: OmadaTokens.space16),
-            Text(
-              'Error',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+            Text('Error', style: Theme.of(context).textTheme.titleLarge),
             const SizedBox(height: OmadaTokens.space8),
             Text(
               _errorMessage ?? 'An unknown error occurred',
@@ -416,7 +490,12 @@ class _ChannelSelectionSheetState extends State<ChannelSelectionSheet> {
         phoneChannels.add(channel);
       } else if (kind == 'email') {
         emailChannels.add(channel);
-      } else if (['instagram', 'linkedin', 'whatsapp', 'messenger'].contains(kind)) {
+      } else if ([
+        'instagram',
+        'linkedin',
+        'whatsapp',
+        'messenger',
+      ].contains(kind)) {
         socialChannels.add(channel);
       } else {
         otherChannels.add(channel);
@@ -430,7 +509,9 @@ class _ChannelSelectionSheetState extends State<ChannelSelectionSheet> {
         Container(
           padding: const EdgeInsets.all(OmadaTokens.space16),
           decoration: BoxDecoration(
-            color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+            color: Theme.of(
+              context,
+            ).colorScheme.primaryContainer.withOpacity(0.3),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
@@ -498,9 +579,9 @@ class _ChannelSelectionSheetState extends State<ChannelSelectionSheet> {
       children: [
         Text(
           title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(width: OmadaTokens.space8),
         Container(
@@ -526,14 +607,17 @@ class _ChannelSelectionSheetState extends State<ChannelSelectionSheet> {
 
   Widget _buildChannelCard(ContactChannelModel channel) {
     final icon = _getIconForChannelKind(channel.kind);
-    final label = channel.label ?? ChannelPresets.presets[channel.kind.toLowerCase()]?['label'] ?? channel.kind;
+    final label =
+        channel.label ??
+        ChannelPresets.presets[channel.kind.toLowerCase()]?['label'] ??
+        channel.kind;
     final value = channel.value ?? channel.url ?? '';
     final isSelected = _selectedChannelIds.contains(channel.id);
 
     return Card(
       margin: const EdgeInsets.only(bottom: OmadaTokens.space8),
       elevation: isSelected ? 2 : 1,
-      color: isSelected 
+      color: isSelected
           ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3)
           : null,
       child: CheckboxListTile(
@@ -558,7 +642,7 @@ class _ChannelSelectionSheetState extends State<ChannelSelectionSheet> {
                 label,
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  color: isSelected 
+                  color: isSelected
                       ? Theme.of(context).colorScheme.primary
                       : null,
                 ),
