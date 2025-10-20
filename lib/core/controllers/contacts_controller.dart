@@ -4,6 +4,7 @@ import 'package:omada/core/data/services/contact_service.dart';
 import 'package:omada/core/data/services/tag_service.dart';
 import 'package:omada/core/data/services/sharing_service.dart';
 import 'package:omada/core/data/repositories/contact_channel_repository.dart';
+import 'package:omada/core/data/repositories/contact_repository.dart';
 
 /// High-level orchestrator for Contacts page logic
 class ContactsController {
@@ -12,16 +13,20 @@ class ContactsController {
   final TagService _tags;
   final SharingService _sharing;
   final ContactChannelRepository _channelsRepo;
+  final ContactRepository _contactRepo;
 
   ContactsController(this.client)
     : _contacts = ContactService(client),
       _tags = TagService(client),
       _sharing = SharingService(client),
-      _channelsRepo = ContactChannelRepository(client);
+      _channelsRepo = ContactChannelRepository(client),
+      _contactRepo = ContactRepository(client);
 
-  // Expose services to UI widgets that specifically require them
+  // Expose services and repositories to UI widgets that specifically require them
   TagService get tagService => _tags;
   SharingService get sharingService => _sharing;
+  ContactRepository get contactRepository => _contactRepo;
+  ContactChannelRepository get contactChannelRepository => _channelsRepo;
 
   Future<List<ContactModel>> getContacts({
     bool includeDeleted = false,

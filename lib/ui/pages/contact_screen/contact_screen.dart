@@ -535,8 +535,11 @@ class _ContactScreenState extends State<ContactScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (context) =>
-          IncomingRequestsSheet(sharingService: _controller.sharingService),
+      builder: (context) => IncomingRequestsSheet(
+        sharingService: _controller.sharingService,
+        contactRepository: _controller.contactRepository,
+        contactChannelRepository: _controller.contactChannelRepository,
+      ),
     );
   }
 

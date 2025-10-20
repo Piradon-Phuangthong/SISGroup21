@@ -114,6 +114,25 @@ class ContactRepository extends BaseRepository {
     return contact;
   }
 
+  /// Gets the user's own contact (profile contact)
+  /// This is the contact where owner_id = current user's ID and represents their profile
+  Future<ContactModel?> getMyOwnContact() async {
+    final userId = authenticatedUserId;
+
+    return await handleSupabaseExceptionAsync(() async {
+      final response = await client
+          .from('contacts')
+          .select()
+          .eq('owner_id', userId)
+          .eq('is_deleted', false)
+          .limit(1);
+
+      if (response.isEmpty) return null;
+
+      return ContactModel.fromJson(response.first);
+    });
+  }
+
 
 
 

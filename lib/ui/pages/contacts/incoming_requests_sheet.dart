@@ -182,12 +182,23 @@
 
 import 'package:flutter/material.dart';
 import 'package:omada/core/data/models/share_request_model.dart';
+import 'package:omada/core/data/repositories/contact_channel_repository.dart';
+import 'package:omada/core/data/repositories/contact_repository.dart';
 import 'package:omada/core/data/services/sharing_service.dart';
 import 'package:omada/core/theme/design_tokens.dart';
+import 'package:omada/ui/pages/contacts/channel_selection_sheet.dart';
 
 class IncomingRequestsSheet extends StatefulWidget {
   final SharingService sharingService;
-  const IncomingRequestsSheet({super.key, required this.sharingService});
+  final ContactRepository contactRepository;
+  final ContactChannelRepository contactChannelRepository;
+  
+  const IncomingRequestsSheet({
+    super.key,
+    required this.sharingService,
+    required this.contactRepository,
+    required this.contactChannelRepository,
+  });
 
   @override
   State<IncomingRequestsSheet> createState() => _IncomingRequestsSheetState();
@@ -242,6 +253,26 @@ class _IncomingRequestsSheetState extends State<IncomingRequestsSheet> {
         setState(() => _refreshing = false);
       }
     }
+  }
+
+  Future<void> _navigateToChannelSelection(
+    ShareRequestWithProfile item,
+  ) async {
+    // Navigate to channel selection sheet
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => ChannelSelectionSheet(
+        request: item,
+        sharingService: widget.sharingService,
+        contactRepository: widget.contactRepository,
+        contactChannelRepository: widget.contactChannelRepository,
+      ),
+    );
+
+    // Refresh the requests list after returning
+    await _refreshRequests();
   }
 
   Future<void> _respondToRequest(
@@ -463,9 +494,8 @@ class _IncomingRequestsSheetState extends State<IncomingRequestsSheet> {
                                           children: [
                                             FilledButton.icon(
                                               onPressed: () =>
-                                                  _respondToRequest(
+                                                  _navigateToChannelSelection(
                                                     item,
-                                                    ShareRequestStatus.accepted,
                                                   ),
                                               icon: const Icon(
                                                 Icons.check_circle_outline,
