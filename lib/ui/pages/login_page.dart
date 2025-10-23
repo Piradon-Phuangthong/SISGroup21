@@ -36,6 +36,11 @@ class _LoginState extends State<LoginPage> {
         Navigator.of(context).pushReplacementNamed('/app');
       }
     });
+    
+    // Add listener for password validation
+    _passwordController.addListener(() {
+      if (mounted) setState(() {});
+    });
   }
 
   @override
@@ -102,13 +107,10 @@ class _LoginState extends State<LoginPage> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              'Account created successfully! Please check your email to verify.',
-            ),
-            backgroundColor: Colors.green,
-          ),
+        // Navigate to email verification screen
+        Navigator.of(context).pushReplacementNamed(
+          '/email-verification',
+          arguments: {'email': _emailController.text.trim()},
         );
       }
     } on AuthException catch (e) {
@@ -136,140 +138,368 @@ class _LoginState extends State<LoginPage> {
 
   String? _validateEmail(String? value) => FormValidators.emailRequired(value);
 
-  String? _validatePassword(String? value) =>
-      FormValidators.passwordMinLength(value, min: 6);
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Password is required';
+    }
+    if (value.length < 6) {
+      return 'Password must be at least 6 characters';
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(_isSignUp ? 'Sign Up' : 'Sign In'),
-        elevation: 0,
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(OmadaTokens.space24),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // App branding
-                const SizedBox(height: OmadaTokens.space32),
-                Text(
-                  'Welcome to Omada',
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: OmadaTokens.space8),
-                Text(
-                  _isSignUp ? 'Create your account' : 'Sign in to your account',
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: OmadaTokens.space48),
-
-                // Email field
-                TextFormField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(
-                    labelText: 'Email',
-                    border: OutlineInputBorder(),
-                    prefixIcon: Icon(Icons.email),
-                  ),
-                  keyboardType: TextInputType.emailAddress,
-                  textInputAction: TextInputAction.next,
-                  validator: _validateEmail,
-                  enabled: !_isLoading,
-                ),
-                const SizedBox(height: OmadaTokens.space16),
-
-                // Username field (only for sign up)
-                if (_isSignUp) ...[
-                  TextFormField(
-                    controller: _usernameController,
-                    decoration: const InputDecoration(
-                      labelText: 'Username (optional)',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.person),
-                      helperText:
-                          'If empty, a unique username will be generated',
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFF667eea), // Modern blue-purple
+              Color(0xFF764ba2), // Deep purple
+              Color(0xFF6B73FF), // Bright blue
+            ],
+            stops: [0.0, 0.5, 1.0],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Header section with gradient
+              Container(
+                padding: const EdgeInsets.all(OmadaTokens.space24),
+                child: Column(
+                  children: [
+                    // Back button and app icon
+                    Row(
+                      children: [
+                        Container(
+                          width: 40,
+                          height: 40,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.arrow_back, color: Colors.white),
+                            onPressed: () => Navigator.of(context).pop(),
+                          ),
+                        ),
+                        const Spacer(),
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.contacts_rounded,
+                            color: Colors.white,
+                            size: 28,
+                          ),
+                        ),
+                      ],
                     ),
-                    textInputAction: TextInputAction.next,
-                    enabled: !_isLoading,
-                  ),
-                  const SizedBox(height: OmadaTokens.space16),
-                ],
-
-                // Password field
-                TextFormField(
-                  controller: _passwordController,
-                  decoration: InputDecoration(
-                    labelText: 'Password',
-                    border: const OutlineInputBorder(),
-                    prefixIcon: const Icon(Icons.lock),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        _obscurePassword
-                            ? Icons.visibility
-                            : Icons.visibility_off,
+                    const SizedBox(height: OmadaTokens.space32),
+                    
+                    // Title and subtitle
+                    Text(
+                      _isSignUp ? 'Create Account' : 'Welcome Back',
+                      style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        fontSize: 32,
                       ),
-                      onPressed: () =>
-                          setState(() => _obscurePassword = !_obscurePassword),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: OmadaTokens.space8),
+                    Text(
+                      _isSignUp 
+                          ? 'Join Omada and start connecting'
+                          : 'Sign in to continue connecting',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: Colors.white.withOpacity(0.9),
+                        fontSize: 16,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Form card
+              Expanded(
+                child: Container(
+                  width: double.infinity,
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30),
                     ),
                   ),
-                  obscureText: _obscurePassword,
-                  textInputAction: TextInputAction.done,
-                  validator: _validatePassword,
-                  enabled: !_isLoading,
-                  onFieldSubmitted: (_) => _isSignUp ? _signUp() : _signIn(),
-                ),
-                const SizedBox(height: OmadaTokens.space24),
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(OmadaTokens.space24),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const SizedBox(height: OmadaTokens.space16),
+                          
+                          // Email field
+                          _buildInputField(
+                            label: 'Email Address',
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            prefixIcon: Icons.email_outlined,
+                            validator: _validateEmail,
+                            placeholder: 'you@example.com',
+                          ),
+                          const SizedBox(height: OmadaTokens.space20),
 
-                // Submit button
-                ElevatedButton(
-                  onPressed: _isLoading
-                      ? null
-                      : (_isSignUp ? _signUp : _signIn),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : Text(_isSignUp ? 'Sign Up' : 'Sign In'),
-                ),
-                const SizedBox(height: OmadaTokens.space16),
+                          // Username field (only for sign up)
+                          if (_isSignUp) ...[
+                            _buildInputField(
+                              label: 'Username',
+                              controller: _usernameController,
+                              prefixIcon: Icons.person_outline,
+                              placeholder: 'Choose a unique username',
+                            ),
+                            const SizedBox(height: OmadaTokens.space20),
+                          ],
 
-                // Toggle sign up/sign in
-                TextButton(
-                  onPressed: _isLoading
-                      ? null
-                      : () {
-                          setState(() {
-                            _isSignUp = !_isSignUp;
-                            // Clear form when switching
-                            _emailController.clear();
-                            _passwordController.clear();
-                            _usernameController.clear();
-                          });
-                        },
-                  child: Text(
-                    _isSignUp
-                        ? 'Already have an account? Sign In'
-                        : 'Don\'t have an account? Sign Up',
+                          // Password field
+                          _buildInputField(
+                            label: 'Password',
+                            controller: _passwordController,
+                            prefixIcon: Icons.lock_outline,
+                            placeholder: _isSignUp 
+                                ? 'Create a strong password'
+                                : 'Enter your password',
+                            obscureText: _obscurePassword,
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_outlined
+                                    : Icons.visibility_off_outlined,
+                                color: Colors.grey[600],
+                              ),
+                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                            ),
+                            validator: _validatePassword,
+                          ),
+
+                          // Password validation (only for sign up)
+                          if (_isSignUp) ...[
+                            const SizedBox(height: OmadaTokens.space12),
+                            _buildPasswordValidation(),
+                            const SizedBox(height: OmadaTokens.space20),
+                          ],
+
+                          // Forgot password link (only for sign in)
+                          if (!_isSignUp) ...[
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: TextButton(
+                                onPressed: () {
+                                  // TODO: Implement forgot password
+                                },
+                                child: Text(
+                                  'Forgot password?',
+                                  style: TextStyle(
+                                    color: Theme.of(context).primaryColor,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: OmadaTokens.space24),
+                          ],
+
+                          // Submit button
+                          Container(
+                            height: 56,
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [Color(0xFF667eea), Color(0xFF764ba2)],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: ElevatedButton(
+                              onPressed: _isLoading
+                                  ? null
+                                  : (_isSignUp ? _signUp : _signIn),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                shadowColor: Colors.transparent,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              child: _isLoading
+                                  ? const SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                      ),
+                                    )
+                                  : Text(
+                                      _isSignUp ? 'Create Account' : 'Sign In',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Colors.white,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(height: OmadaTokens.space24),
+
+                          // Toggle sign up/sign in
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                _isSignUp
+                                    ? 'Already have an account? '
+                                    : 'Don\'t have an account? ',
+                                style: TextStyle(
+                                  color: Colors.grey[600],
+                                  fontSize: 14,
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: _isLoading
+                                    ? null
+                                    : () {
+                                        setState(() {
+                                          _isSignUp = !_isSignUp;
+                                          // Clear form when switching
+                                          _emailController.clear();
+                                          _passwordController.clear();
+                                          _usernameController.clear();
+                                        });
+                                      },
+                                child: Text(
+                                  _isSignUp ? 'Sign In' : 'Sign Up',
+                                  style: TextStyle(
+                                    color: Theme.of(context).primaryColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildInputField({
+    required String label,
+    required TextEditingController controller,
+    TextInputType? keyboardType,
+    IconData? prefixIcon,
+    Widget? suffixIcon,
+    String? placeholder,
+    bool obscureText = false,
+    String? Function(String?)? validator,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: Colors.black87,
+          ),
+        ),
+        const SizedBox(height: 8),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          obscureText: obscureText,
+          textInputAction: TextInputAction.next,
+          validator: validator,
+          enabled: !_isLoading,
+          decoration: InputDecoration(
+            hintText: placeholder,
+            hintStyle: TextStyle(color: Colors.grey[400]),
+            prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: Colors.grey[600]) : null,
+            suffixIcon: suffixIcon,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Colors.grey[300]!),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2),
+            ),
+            filled: true,
+            fillColor: Colors.grey[50],
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPasswordValidation() {
+    final password = _passwordController.text;
+    final hasMinLength = password.length >= 6;
+
+    return Column(
+      children: [
+        _buildValidationItem('At least 6 characters', hasMinLength),
+        const SizedBox(height: 4),
+      ],
+    );
+  }
+
+  Widget _buildValidationItem(String text, bool isValid) {
+    return Row(
+      children: [
+        Container(
+          width: 16,
+          height: 16,
+          decoration: BoxDecoration(
+            color: isValid ? Colors.green : Colors.grey[300],
+            shape: BoxShape.circle,
+          ),
+          child: isValid
+              ? const Icon(Icons.check, color: Colors.white, size: 12)
+              : null,
+        ),
+        const SizedBox(width: 8),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 12,
+            color: isValid ? Colors.green[700] : Colors.grey[600],
+          ),
+        ),
+      ],
     );
   }
 }
