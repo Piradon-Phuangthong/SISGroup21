@@ -2,21 +2,49 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:omada/core/data/models/models.dart';
 import 'package:omada/core/data/services/contact_service.dart';
 import 'package:omada/core/data/services/tag_service.dart';
+import 'package:omada/core/data/repositories/contact_channel_repository.dart';
 import 'package:omada/core/data/utils/validation_utils.dart';
 
 class ContactFormController {
   final SupabaseClient client;
   final ContactService _contacts;
   final TagService _tags;
+  final ContactChannelRepository _channelsRepo;
 
   ContactFormController(this.client)
     : _contacts = ContactService(client),
-      _tags = TagService(client);
+      _tags = TagService(client),
+      _channelsRepo = ContactChannelRepository(client);
 
   Future<List<TagModel>> getAllTags() => _tags.getTags();
 
   Future<List<TagModel>> getTagsForContact(String contactId) =>
       _tags.getTagsForContact(contactId);
+
+  Future<List<ContactChannelModel>> getChannelsForContact(String contactId) =>
+      _channelsRepo.getChannelsForContact(contactId);
+
+  Future<ContactChannelModel> addChannel({
+    required String contactId,
+    required String kind,
+    String? label,
+    String? value,
+    String? url,
+    Map<String, dynamic>? extra,
+    bool isPrimary = false,
+  }) =>
+      _channelsRepo.createChannel(
+        contactId: contactId,
+        kind: kind,
+        label: label,
+        value: value,
+        url: url,
+        extra: extra,
+        isPrimary: isPrimary,
+      );
+
+  Future<void> deleteChannel(String channelId) =>
+      _channelsRepo.deleteChannel(channelId);
 
   Future<TagModel?> createTag(String name) => _tags.createTag(name);
   Future<TagModel?> getTagByName(String name) => _tags.getTagByName(name);
