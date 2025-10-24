@@ -1,3 +1,5 @@
+import 'package:flutter/material.dart';
+
 /// Represents a communication channel for a contact
 /// Maps to the 'contact_channels' table in Supabase
 class ContactChannelModel {
@@ -124,11 +126,15 @@ class ContactChannelModel {
   String toString() {
     return 'ContactChannelModel(id: $id, kind: $kind, value: $value, isPrimary: $isPrimary)';
   }
+
+  Icon getIcon() {
+    return ChannelKind.getIcon(kind);
+  }
 }
 
 /// Common channel kinds
 class ChannelKind {
-  static const String phone = 'phone';
+  static const String mobile = 'mobile';
   static const String email = 'email';
   static const String whatsapp = 'whatsapp';
   static const String telegram = 'telegram';
@@ -145,7 +151,7 @@ class ChannelKind {
   static const String other = 'other';
 
   static const List<String> all = [
-    phone,
+    mobile,
     email,
     whatsapp,
     telegram,
@@ -161,4 +167,41 @@ class ChannelKind {
     cashapp,
     other,
   ];
+
+  static Icon getIcon(String kind) {
+    switch (kind) {
+      case mobile:
+        return Icon(Icons.phone);
+      case email:
+        return Icon(Icons.email);
+      case whatsapp:
+        return Icon(Icons.chat);
+      case telegram:
+        return Icon(Icons.send);
+      case instagram:
+        return Icon(Icons.photo_camera);
+      case facebook:
+        return Icon(Icons.thumb_up);
+      case linkedin:
+        return Icon(Icons.work);
+      case twitter:
+        return Icon(Icons.chat_bubble);
+      case github:
+        return Icon(Icons.code);
+      case website:
+        return Icon(Icons.language);
+      case address:
+        return Icon(Icons.location_on);
+      case paypal:
+        return Icon(Icons.payments);
+      case venmo:
+        return Icon(Icons.account_balance_wallet);
+      case cashapp:
+        return Icon(Icons.attach_money);
+      case other:
+        return Icon(Icons.more_horiz);
+      default:
+        return Icon(Icons.help_outline); // Question mark icon
+    }
+  }
 }

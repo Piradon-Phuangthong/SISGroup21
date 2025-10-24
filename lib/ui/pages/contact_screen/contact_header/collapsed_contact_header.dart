@@ -38,14 +38,15 @@ class CollapsedContactHeader extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        color: Colors.grey[200],
+                        color: Colors.grey[200]?.withAlpha(50),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: TextField(
                         controller: searchController,
                         decoration: InputDecoration(
-                          icon: Icon(Icons.search),
+                          icon: Icon(Icons.person_search, color: Colors.white),
                           hintText: "Search contacts...",
+                          hintStyle: TextStyle(color: Colors.white),
                           border: InputBorder.none,
                         ),
                         style: TextStyle(color: Colors.black),
