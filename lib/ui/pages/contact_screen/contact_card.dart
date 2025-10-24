@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:omada/core/data/data.dart';
 import 'package:omada/core/data/models/contact_model.dart';
 import 'package:omada/core/data/models/tag_model.dart';
+import 'package:omada/core/data/utils/channel_launcher.dart';
 import 'package:omada/core/domain/models/tag.dart';
 import 'package:intl/intl.dart';
 import 'package:omada/core/theme/app_theme.dart';
@@ -10,6 +12,7 @@ import 'package:omada/ui/pages/contact_screen/contact_tag.dart';
 class ContactCard extends StatefulWidget {
   final ContactModel contact;
   final List<TagModel> tags;
+  final List<ContactChannelModel> channels;
   final void Function(TagModel tag)? onTagTap;
   final VoidCallback? onLongPress;
   final VoidCallback? onEdit;
@@ -21,6 +24,7 @@ class ContactCard extends StatefulWidget {
     super.key,
     required this.contact,
     this.tags = const [],
+    this.channels = const [],
     this.onTagTap,
     this.onLongPress,
     this.onEdit,
@@ -36,7 +40,6 @@ class ContactCard extends StatefulWidget {
 class ContactCardState extends State<ContactCard>
     with TickerProviderStateMixin {
   bool isExpanded = false;
-
   final List<Color> _colorPalette = [
     const Color(0xFF3B82F6), // Light Blue
     const Color(0xFFEF4444), // Red
@@ -56,7 +59,7 @@ class ContactCardState extends State<ContactCard>
   @override
   Widget build(BuildContext context) {
     final appPalette = Theme.of(context).extension<AppPaletteTheme>();
-
+    final ChannelLauncher _launcher = const ChannelLauncher();
     // final lastContactFormatted = DateFormat(
     //   "MMM d, hh:mm a",
     // ).format(widget.lastContact);
@@ -77,12 +80,11 @@ class ContactCardState extends State<ContactCard>
         ),
         child: InkWell(
           onLongPress: widget.onLongPress,
-          onTap: widget.onLongPress,
-          //  () {
-          //   setState(() {
-          //     isExpanded = !isExpanded;
-          //   });
-          // },
+          onTap: () {
+            setState(() {
+              isExpanded = !isExpanded;
+            });
+          },
           child: Column(
             children: [
               Row(
@@ -162,15 +164,21 @@ class ContactCardState extends State<ContactCard>
               if (isExpanded)
                 Padding(
                   padding: EdgeInsetsGeometry.only(top: 8),
-                  child: Row(
-                    children: [
-                      IconButton(onPressed: () {}, icon: Icon(Icons.abc)),
-                      IconButton(
-                        onPressed: () {},
-                        icon: Icon(Icons.add_business_rounded),
-                      ),
-                      IconButton(onPressed: () {}, icon: Icon(Icons.face)),
-                    ],
+                  child: Wrap(
+                    children: widget.channels
+                        .map(
+                          (channel) => IconButton(
+                            onPressed: () {
+                              // Handle channel action
+                              _launcher.openChannel(context, channel);
+                            },
+                            icon: channel
+                                .getIcon(), // Use the getIconData method we created
+                            tooltip:
+                                channel.kind, // Show channel type as tooltip
+                          ),
+                        )
+                        .toList(),
                   ),
                 ),
             ],

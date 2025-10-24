@@ -82,14 +82,15 @@ class _ExpandedContactHeaderState extends State<ExpandedContactHeader> {
                 width: 300,
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 decoration: BoxDecoration(
-                  color: Colors.grey[200],
+                  color: Colors.grey[200]?.withAlpha(50),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: TextField(
                   controller: widget.searchController,
                   decoration: InputDecoration(
-                    icon: Icon(Icons.search),
+                    icon: Icon(Icons.person_search, color: Colors.white),
                     hintText: "Search contacts...",
+                    hintStyle: TextStyle(color: Colors.white),
                     border: InputBorder.none,
                   ),
                   style: TextStyle(color: Colors.black),
@@ -136,7 +137,7 @@ class _ExpandedContactHeaderState extends State<ExpandedContactHeader> {
                     onPressed: () async {
                       widget.onGetRequests();
                     },
-                    icon: Icon(Icons.email, color: Colors.white),
+                    icon: Icon(Icons.person_add_alt_1, color: Colors.white),
                     style: IconButton.styleFrom(
                       backgroundColor: Color.fromARGB(50, 255, 255, 255),
                       elevation: 0,
