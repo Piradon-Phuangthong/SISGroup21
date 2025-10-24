@@ -8,6 +8,7 @@ import 'package:omada/core/data/services/omada_service_extended.dart';
 import 'omadas/omada_card.dart';
 import 'omadas/create_omada_sheet.dart';
 import 'omadas/omada_details_page.dart';
+import 'package:omada/core/theme/color_palette.dart';
 
 // New Omada headers (same style as Contacts, but customized)
 import 'omadas/omada_header/expanded_omada_header.dart';

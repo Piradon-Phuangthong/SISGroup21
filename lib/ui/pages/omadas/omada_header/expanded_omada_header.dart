@@ -33,7 +33,8 @@ class ExpandedOmadaHeader extends StatelessWidget {
         ),
       ),
       padding: const EdgeInsets.only(
-        top: OmadaTokens.space24 + 24, // breathing room for status bar
+        // Push everything down a bit so "OMADAS" sits lower
+        top: OmadaTokens.space24 + 60,
         left: OmadaTokens.space16,
         right: OmadaTokens.space16,
         bottom: OmadaTokens.space16,
@@ -41,7 +42,7 @@ class ExpandedOmadaHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Title
+          // Title (logo text)
           Text(
             'OMADAS',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -53,19 +54,7 @@ class ExpandedOmadaHeader extends StatelessWidget {
 
           const SizedBox(height: OmadaTokens.space16),
 
-          // Buttons row
-          Wrap(
-            spacing: OmadaTokens.space16,
-            children: [
-              _roundIcon(context, Icons.explore, 'Discover', onDiscover),
-              _roundIcon(context, Icons.inbox_outlined, 'Requests', onRequests),
-              _roundIcon(context, Icons.add, 'Create', onCreate),
-            ],
-          ),
-
-          const SizedBox(height: OmadaTokens.space16),
-
-          // Search bar UNDER the buttons (as requested)
+          // 🔁 switched order: Search bar FIRST…
           Container(
             decoration: BoxDecoration(
               color: const Color.fromARGB(255, 213, 224, 219).withOpacity(0.52),
@@ -76,7 +65,7 @@ class ExpandedOmadaHeader extends StatelessWidget {
               onChanged: (_) => onSearchChanged(),
               decoration: InputDecoration(
                 border: InputBorder.none,
-                hintText: 'Search Omadas...', // 🔤 updated text
+                hintText: 'Search Omadas...',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: searchController.text.isEmpty
                     ? null
@@ -93,6 +82,18 @@ class ExpandedOmadaHeader extends StatelessWidget {
                 ),
               ),
             ),
+          ),
+
+          const SizedBox(height: OmadaTokens.space16),
+
+          // …and Buttons row AFTER the search bar
+          Wrap(
+            spacing: OmadaTokens.space16,
+            children: [
+              _roundIcon(context, Icons.explore, 'Discover', onDiscover),
+              _roundIcon(context, Icons.inbox_outlined, 'Requests', onRequests),
+              _roundIcon(context, Icons.add, 'Create', onCreate),
+            ],
           ),
         ],
       ),
