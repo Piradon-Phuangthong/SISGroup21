@@ -211,7 +211,9 @@ class _ContactScreenState extends State<ContactScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Delete Contact?'),
-        content: Text('Are you sure you want to delete "${contact.displayName}"?'),
+        content: Text(
+          'Are you sure you want to delete "${contact.displayName}"?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -219,9 +221,7 @@ class _ContactScreenState extends State<ContactScreen> {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
             child: const Text('Delete'),
           ),
         ],
@@ -304,6 +304,8 @@ class _ContactScreenState extends State<ContactScreen> {
               forceMaterialTransparency: true,
               flexibleSpace: LayoutBuilder(
                 builder: (context, constraints) {
+                  const double collapseThreshold = 0.99;
+
                   final double currentHeight = constraints.biggest.height;
 
                   final double t =
@@ -311,7 +313,8 @@ class _ContactScreenState extends State<ContactScreen> {
                               (expandedHeight - collapsedHeight))
                           .clamp(0.0, 1.0);
 
-                  if (currentHeight > (expandedHeight + collapsedHeight) / 2) {
+                  // if (currentHeight > (expandedHeight + collapsedHeight) / 2)
+                  if (t > collapseThreshold) {
                     return ExpandedContactHeader(
                       onDiscoverUsers: _openUserDiscoverySheet,
                       onGetDeleted: _openDeletedContacts,

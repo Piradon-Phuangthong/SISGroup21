@@ -81,11 +81,13 @@ class ContactCardState extends State<ContactCard>
   @override
   Widget build(BuildContext context) {
     final ChannelLauncher _launcher = const ChannelLauncher();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color defaultButtonColor = Color.fromARGB(255, 29, 26, 33);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? defaultButtonColor : Colors.white,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -98,6 +100,7 @@ class ContactCardState extends State<ContactCard>
       child: InkWell(
         onLongPress: widget.onLongPress,
         onTap: () {
+          print("on tap ${widget.contact.fullName}");
           setState(() {
             isExpanded = !isExpanded;
           });
@@ -127,7 +130,7 @@ class ContactCardState extends State<ContactCard>
                 ),
               ),
               const SizedBox(width: 12),
-              
+
               // Contact info
               Expanded(
                 child: Column(
@@ -146,12 +149,9 @@ class ContactCardState extends State<ContactCard>
                           (widget.contact.primaryEmail?.isNotEmpty == true
                               ? widget.contact.primaryEmail!
                               : 'No contact details'),
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
-                                         if (widget.tags.isNotEmpty) ...[
+                    if (widget.tags.isNotEmpty) ...[
                       const SizedBox(height: 6),
                       Wrap(
                         spacing: 4,
@@ -164,14 +164,16 @@ class ContactCardState extends State<ContactCard>
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: tagColor.withOpacity(0.15),
+                              color: isDark
+                                  ? tagColor
+                                  : tagColor.withOpacity(0.15),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
                               tag.name,
                               style: TextStyle(
                                 fontSize: 11,
-                                color: tagColor,
+                                color: isDark ? Colors.white : tagColor,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -182,10 +184,14 @@ class ContactCardState extends State<ContactCard>
                   ],
                 ),
               ),
-              
+
               // Action icons
-              Row(
+              Column(
                 children: [
+                  IconButton(
+                    onPressed: widget.onLongPress,
+                    icon: Icon(Icons.edit, color: Colors.grey),
+                  ),
                   IconButton(
                     icon: Icon(
                       widget.isFavourite ? Icons.star : Icons.star_border,

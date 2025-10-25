@@ -35,9 +35,8 @@ class OmadaRootApp extends StatelessWidget {
           darkTheme: OmadaTheme.dark(),
           themeMode: mode,
           routes: {
-            '/': (_) => const SplashPage(),
+            '/': (_) => const SgplashPage(),
             '/login': (_) => const LoginPage(),
-            // '/app': (_) => const ContactsScreen(),
             '/app': (_) => const ContactScreen(),
             '/account': (_) => const AccountPage(),
             '/profile': (_) => const ProfileManagementPage(),
@@ -46,7 +45,9 @@ class OmadaRootApp extends StatelessWidget {
             '/debug': (_) => const EpicHomeEntry(),
             '/dev-selector': (_) => const _RouteSelectorPage(),
             '/email-verification': (context) {
-              final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+              final args =
+                  ModalRoute.of(context)?.settings.arguments
+                      as Map<String, dynamic>?;
               return EmailVerificationPage(email: args?['email'] ?? '');
             },
           },

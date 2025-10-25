@@ -62,7 +62,7 @@ class _ExpandedContactHeaderState extends State<ExpandedContactHeader> {
                 ],
               ),
               const SizedBox(height: 12),
-              
+
               // App Title
               const Text(
                 "Omada",
@@ -74,18 +74,15 @@ class _ExpandedContactHeaderState extends State<ExpandedContactHeader> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 2),
-              
+
               // Contact count
               Text(
                 "${widget.contactCount} contacts",
-                style: const TextStyle(
-                  fontSize: 15,
-                  color: Colors.white70,
-                ),
+                style: const TextStyle(fontSize: 15, color: Colors.white70),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 16),
-              
+
               // Search bar
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 40.0),
@@ -97,9 +94,15 @@ class _ExpandedContactHeaderState extends State<ExpandedContactHeader> {
                   child: TextField(
                     controller: widget.searchController,
                     decoration: InputDecoration(
-                      prefixIcon: const Icon(Icons.search, color: Colors.white70, size: 20),
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        color: Colors.white70,
+                        size: 20,
+                      ),
                       hintText: "Search contacts...",
-                      hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+                      hintStyle: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                      ),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -112,7 +115,7 @@ class _ExpandedContactHeaderState extends State<ExpandedContactHeader> {
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               // Action buttons row
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -120,7 +123,8 @@ class _ExpandedContactHeaderState extends State<ExpandedContactHeader> {
                   _buildActionButton(
                     icon: Icons.label_outline,
                     label: "New Tag",
-                    color: Colors.orange,
+                    color: const Color.fromARGB(255, 43, 122, 226),
+                    // Color(0xFF8A2BE2)
                     onTap: widget.onManageTags,
                   ),
                   const SizedBox(width: 12),
@@ -140,8 +144,8 @@ class _ExpandedContactHeaderState extends State<ExpandedContactHeader> {
                   const SizedBox(width: 12),
                   _buildActionButton(
                     icon: Icons.add,
-                    label: "Add Contact",
-                    color: const Color(0xFF8A2BE2),
+                    label: "Add",
+                    color: Colors.orange,
                     onTap: widget.onAddContact,
                   ),
                 ],
@@ -165,7 +169,7 @@ class _ExpandedContactHeaderState extends State<ExpandedContactHeader> {
         width: 65,
         padding: const EdgeInsets.symmetric(vertical: 8),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color.fromARGB(50, 255, 255, 255),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Column(
@@ -178,7 +182,7 @@ class _ExpandedContactHeaderState extends State<ExpandedContactHeader> {
               style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.w500,
-                color: Colors.grey[800],
+                color: Colors.white,
               ),
               textAlign: TextAlign.center,
               maxLines: 1,
