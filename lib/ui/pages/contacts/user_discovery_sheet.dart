@@ -296,11 +296,14 @@ class _UserDiscoverySheetState extends State<UserDiscoverySheet> {
                         topRight: Radius.circular(16),
                       ),
                     ),
-                    child: SafeArea(
-                      bottom: false,
-                      child: Padding(
-                        padding: const EdgeInsets.all(OmadaTokens.space16),
-                        child: Row(
+                    child: Container(
+                      margin: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 40),
+                      padding: const EdgeInsets.only(
+                        left: OmadaTokens.space16,
+                        right: OmadaTokens.space16,
+                        bottom: OmadaTokens.space16,
+                      ),
+                      child: Row(
                           children: [
                             const Expanded(
                               child: Text(
@@ -320,7 +323,6 @@ class _UserDiscoverySheetState extends State<UserDiscoverySheet> {
                         ),
                       ),
                     ),
-                  ),
                   // Content
                   Expanded(
                     child: Padding(

@@ -44,10 +44,14 @@ class _ExpandedContactHeaderState extends State<ExpandedContactHeader> {
           ],
         ),
       ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
-          child: Column(
+      child: Padding(
+        padding: EdgeInsets.only(
+          left: 20.0,
+          top: MediaQuery.of(context).padding.top + 16.0,
+          right: 20.0,
+          bottom: 16.0,
+        ),
+        child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               // Top row: Settings icon
@@ -149,7 +153,6 @@ class _ExpandedContactHeaderState extends State<ExpandedContactHeader> {
             ],
           ),
         ),
-      ),
     );
   }
 

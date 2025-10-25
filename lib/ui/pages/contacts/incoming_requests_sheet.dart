@@ -300,205 +300,248 @@ class _IncomingRequestsSheetState extends State<IncomingRequestsSheet> {
                   topRight: Radius.circular(16),
                 ),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(OmadaTokens.space16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header
-                    Row(
-                      children: [
-                        Text(
-                          'Incoming Requests',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        const Spacer(),
-                        IconButton(
-                          icon: _refreshing
-                              ? SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.primary,
-                                  ),
-                                )
-                              : const Icon(Icons.refresh),
-                          onPressed: _refreshing ? null : _refreshRequests,
-                          tooltip: 'Refresh',
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: OmadaTokens.space16),
-
-                    // Loading Indicator
-                    if (_loading && _requests.isEmpty)
-                      const LinearProgressIndicator(),
-
-                    const SizedBox(height: OmadaTokens.space8),
-
-                    // Results Header
-                    Text(
-                      'Pending Requests (${_requests.length})',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+              child: Column(
+                children: [
+                  // Gradient Header
+                  Container(
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color(0xFFFF5733), // Red-orange
+                          Color(0xFF4A00B0), // Deep purple
+                        ],
+                      ),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
                       ),
                     ),
-                    const SizedBox(height: OmadaTokens.space8),
-
-                    // Requests List
-                    Expanded(
-                      child: _loading && _requests.isEmpty
-                          ? _buildLoadingState()
-                          : _requests.isEmpty
-                          ? _buildEmptyState()
-                          : ListView.builder(
-                              controller: scrollController,
-                              itemCount: _requests.length,
-                              itemBuilder: (context, index) {
-                                final item = _requests[index];
-                                final from =
-                                    item.requesterProfile?.username ??
-                                    'Unknown User';
-
-                                return Card(
-                                  margin: const EdgeInsets.only(
-                                    bottom: OmadaTokens.space12,
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(
-                                      OmadaTokens.space16,
+                    child: Container(
+                      margin: EdgeInsets.only(top: MediaQuery.of(context).padding.top + 40),
+                      padding: const EdgeInsets.only(
+                        left: OmadaTokens.space16,
+                        right: OmadaTokens.space16,
+                        bottom: OmadaTokens.space16,
+                      ),
+                      child: Row(
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    'Requests',
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
                                     ),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        // Requester Info
-                                        Row(
-                                          children: [
-                                            CircleAvatar(
-                                              backgroundColor: Theme.of(
-                                                context,
-                                              ).colorScheme.primaryContainer,
-                                              child: Text(
-                                                from[0].toUpperCase(),
-                                                style: TextStyle(
-                                                  color: Theme.of(context)
-                                                      .colorScheme
-                                                      .onPrimaryContainer,
-                                                ),
-                                              ),
-                                            ),
-                                            const SizedBox(
-                                              width: OmadaTokens.space12,
-                                            ),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
+                                  ),
+                                  Text(
+                                    '${_requests.length} pending',
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              icon: _refreshing
+                                  ? const SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: Colors.white,
+                                      ),
+                                    )
+                                  : const Icon(Icons.refresh, color: Colors.white),
+                              onPressed: _refreshing ? null : _refreshRequests,
+                              tooltip: 'Refresh',
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close, color: Colors.white),
+                              onPressed: () => Navigator.of(context).pop(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  // Content
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(OmadaTokens.space16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Loading Indicator
+                          if (_loading && _requests.isEmpty)
+                            const LinearProgressIndicator(),
+
+                          const SizedBox(height: OmadaTokens.space8),
+
+                          // Results Header
+                          Text(
+                            'Pending Requests (${_requests.length})',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: OmadaTokens.space8),
+
+                          // Requests List
+                          Expanded(
+                            child: _requests.isEmpty
+                                ? _buildEmptyState()
+                                : ListView.builder(
+                                    controller: scrollController,
+                                    itemCount: _requests.length,
+                                    itemBuilder: (context, index) {
+                                      final item = _requests[index];
+                                      final from =
+                                          item.requesterProfile?.username ??
+                                          'Unknown User';
+
+                                      return Card(
+                                        margin: const EdgeInsets.only(
+                                          bottom: OmadaTokens.space12,
+                                        ),
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(
+                                            OmadaTokens.space16,
+                                          ),
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              // Requester Info
+                                              Row(
                                                 children: [
-                                                  Text(
-                                                    '@$from',
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.w600,
+                                                  CircleAvatar(
+                                                    backgroundColor: Theme.of(
+                                                      context,
+                                                    ).colorScheme.primaryContainer,
+                                                    child: Text(
+                                                      from[0].toUpperCase(),
+                                                      style: TextStyle(
+                                                        color: Theme.of(context)
+                                                            .colorScheme
+                                                            .onPrimaryContainer,
+                                                      ),
                                                     ),
                                                   ),
-                                                  Text(
-                                                    'Sent ${_formatDate(item.request.createdAt)}',
-                                                    style: Theme.of(context)
-                                                        .textTheme
-                                                        .bodySmall
-                                                        ?.copyWith(
-                                                          color: Theme.of(
-                                                            context,
-                                                          ).colorScheme.outline,
+                                                  const SizedBox(
+                                                    width: OmadaTokens.space12,
+                                                  ),
+                                                  Expanded(
+                                                    child: Column(
+                                                      crossAxisAlignment:
+                                                          CrossAxisAlignment.start,
+                                                      children: [
+                                                        Text(
+                                                          '@$from',
+                                                          style: const TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                          ),
                                                         ),
+                                                        Text(
+                                                          'Sent ${_formatDate(item.request.createdAt)}',
+                                                          style: Theme.of(context)
+                                                              .textTheme
+                                                              .bodySmall
+                                                              ?.copyWith(
+                                                                color: Theme.of(
+                                                                  context,
+                                                                ).colorScheme.outline,
+                                                              ),
+                                                        ),
+                                                      ],
+                                                    ),
                                                   ),
                                                 ],
                                               ),
-                                            ),
-                                          ],
-                                        ),
 
-                                        // Message
-                                        if ((item.request.message ?? '')
-                                            .trim()
-                                            .isNotEmpty) ...[
-                                          const SizedBox(
-                                            height: OmadaTokens.space12,
-                                          ),
-                                          Container(
-                                            width: double.infinity,
-                                            padding: const EdgeInsets.all(
-                                              OmadaTokens.space12,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: Theme.of(
-                                                context,
-                                              ).colorScheme.surfaceVariant,
-                                              borderRadius:
-                                                  BorderRadius.circular(8),
-                                            ),
-                                            child: Text(
-                                              item.request.message!,
-                                              style: Theme.of(
-                                                context,
-                                              ).textTheme.bodyMedium,
-                                            ),
-                                          ),
-                                        ],
+                                              // Message
+                                              if ((item.request.message ?? '')
+                                                  .trim()
+                                                  .isNotEmpty) ...[
+                                                const SizedBox(
+                                                  height: OmadaTokens.space12,
+                                                ),
+                                                Container(
+                                                  width: double.infinity,
+                                                  padding: const EdgeInsets.all(
+                                                    OmadaTokens.space12,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: Theme.of(
+                                                      context,
+                                                    ).colorScheme.surfaceVariant,
+                                                    borderRadius:
+                                                        BorderRadius.circular(8),
+                                                  ),
+                                                  child: Text(
+                                                    item.request.message!,
+                                                    style: Theme.of(
+                                                      context,
+                                                    ).textTheme.bodyMedium,
+                                                  ),
+                                                ),
+                                              ],
 
-                                        // Action Buttons
-                                        const SizedBox(
-                                          height: OmadaTokens.space16,
-                                        ),
-                                        Row(
-                                          children: [
-                                            FilledButton.icon(
-                                              onPressed: () =>
-                                                  _respondToRequest(
-                                                    item,
-                                                    ShareRequestStatus.accepted,
-                                                  ),
-                                              icon: const Icon(
-                                                Icons.check_circle_outline,
-                                                size: 18,
+                                              // Action Buttons
+                                              const SizedBox(
+                                                height: OmadaTokens.space16,
                                               ),
-                                              label: const Text('Accept'),
-                                            ),
-                                            const SizedBox(
-                                              width: OmadaTokens.space8,
-                                            ),
-                                            OutlinedButton.icon(
-                                              onPressed: () =>
-                                                  _respondToRequest(
-                                                    item,
-                                                    ShareRequestStatus.declined,
+                                              Row(
+                                                children: [
+                                                  FilledButton.icon(
+                                                    onPressed: () =>
+                                                        _respondToRequest(
+                                                          item,
+                                                          ShareRequestStatus.accepted,
+                                                        ),
+                                                    icon: const Icon(
+                                                      Icons.check_circle_outline,
+                                                      size: 18,
+                                                    ),
+                                                    label: const Text('Accept'),
                                                   ),
-                                              icon: const Icon(
-                                                Icons.close,
-                                                size: 18,
+                                                  const SizedBox(
+                                                    width: OmadaTokens.space8,
+                                                  ),
+                                                  OutlinedButton.icon(
+                                                    onPressed: () =>
+                                                        _respondToRequest(
+                                                          item,
+                                                          ShareRequestStatus.declined,
+                                                        ),
+                                                    icon: const Icon(
+                                                      Icons.close,
+                                                      size: 18,
+                                                    ),
+                                                    label: const Text('Decline'),
+                                                  ),
+                                                ],
                                               ),
-                                              label: const Text('Decline'),
-                                            ),
-                                          ],
+                                            ],
+                                          ),
                                         ),
-                                      ],
-                                    ),
+                                      );
+                                    },
                                   ),
-                                );
-                              },
-                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             );
           },
