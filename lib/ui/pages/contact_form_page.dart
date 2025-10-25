@@ -6,6 +6,7 @@ import 'package:omada/core/data/utils/validation_utils.dart';
 import 'package:omada/core/data/models/tag_model.dart';
 import 'package:omada/core/theme/design_tokens.dart';
 import 'package:omada/ui/widgets/app_card.dart';
+import 'package:omada/ui/widgets/app_bottom_nav.dart';
 
 class ContactFormPage extends StatefulWidget {
   final ContactModel? contact;
@@ -126,6 +127,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
         : 'Unnamed Contact';
 
     return Scaffold(
+      bottomNavigationBar: const AppBottomNav(active: AppNav.contacts),
       body: Form(
         key: _formKey,
         child: CustomScrollView(
@@ -169,9 +171,14 @@ class _ContactFormPageState extends State<ContactFormPage> {
               flexibleSpace: FlexibleSpaceBar(
                 background: Container(
                   decoration: const BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage('assets/jpg/banner.jpg'),
-                      fit: BoxFit.cover,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF3B82F6), // Blue
+                        Color(0xFF9370DB), // Medium Purple
+                      ],
+                      stops: [0.0, 1.0],
                     ),
                   ),
                   child: SafeArea(
@@ -455,8 +462,10 @@ class _ContactFormPageState extends State<ContactFormPage> {
                         ),
                       ),
                       const SizedBox(height: OmadaTokens.space24),
-                      // Tags Section (only show when editing)
-                      if (_isEditing) _buildTagSection(),
+                      // Tags Section
+                      AppCard(
+                        child: _buildTagSection(),
+                      ),
                       // Save Button (only show when editing)
                       if (_isEditing) ...[
                         const SizedBox(height: OmadaTokens.space24),
@@ -677,14 +686,30 @@ class _ContactFormPageState extends State<ContactFormPage> {
   }
 
   Widget _buildTagSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Tags',
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+    return Padding(
+      padding: const EdgeInsets.all(OmadaTokens.space20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Tags',
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            if (!_isEditing)
+              TextButton.icon(
+                onPressed: () => setState(() => _isEditing = true),
+                icon: const Icon(Icons.edit, size: 18),
+                label: const Text('Edit Tags'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).primaryColor,
+                ),
+              ),
+          ],
         ),
         const SizedBox(height: OmadaTokens.space8),
         Wrap(
@@ -729,7 +754,8 @@ class _ContactFormPageState extends State<ContactFormPage> {
             ],
           ],
         ),
-      ],
+        ],
+      ),
     );
   }
 

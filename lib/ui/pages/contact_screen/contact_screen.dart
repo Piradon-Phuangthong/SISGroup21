@@ -296,6 +296,7 @@ class _ContactScreenState extends State<ContactScreen> {
                       onGetAccountPage: _openAccountPage,
                       onSearchChanged: _onSearchChanged,
                       searchController: _searchController,
+                      contactCount: _visibleContacts.length,
                     );
                   } else {
                     return CollapsedContactHeader(
