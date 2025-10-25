@@ -35,7 +35,7 @@ class OmadaRootApp extends StatelessWidget {
           darkTheme: OmadaTheme.dark(),
           themeMode: mode,
           routes: {
-            '/': (_) => const SgplashPage(),
+            '/': (_) => const SplashPage(),
             '/login': (_) => const LoginPage(),
             '/app': (_) => const ContactScreen(),
             '/account': (_) => const AccountPage(),
