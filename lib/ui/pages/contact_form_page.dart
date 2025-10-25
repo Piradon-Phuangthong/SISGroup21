@@ -20,7 +20,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
   final _formKey = GlobalKey<FormState>();
   late final ContactFormController _controller;
 
-  final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _givenNameController = TextEditingController();
   final TextEditingController _familyNameController = TextEditingController();
   final TextEditingController _primaryMobileController =
@@ -41,7 +40,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
     if (contact != null) {
       // If editing an existing contact, start in read-only mode
       _isEditing = false;
-      _fullNameController.text = contact.fullName ?? '';
       _givenNameController.text = contact.givenName ?? '';
       _familyNameController.text = contact.familyName ?? '';
       _primaryMobileController.text = contact.primaryMobile ?? '';
@@ -57,7 +55,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
 
   @override
   void dispose() {
-    _fullNameController.dispose();
     _givenNameController.dispose();
     _familyNameController.dispose();
     _primaryMobileController.dispose();
@@ -70,15 +67,16 @@ class _ContactFormPageState extends State<ContactFormPage> {
 
     setState(() => _submitting = true);
 
-    final fullName = _fullNameController.text.trim().isEmpty
-        ? null
-        : _fullNameController.text.trim();
     final givenName = _givenNameController.text.trim().isEmpty
         ? null
         : _givenNameController.text.trim();
     final familyName = _familyNameController.text.trim().isEmpty
         ? null
         : _familyNameController.text.trim();
+    // Build full name from given name + family name
+    final fullName = givenName != null || familyName != null
+        ? '${givenName ?? ''} ${familyName ?? ''}'.trim()
+        : null;
     final primaryMobile = _primaryMobileController.text.trim();
     final primaryEmail = _primaryEmailController.text.trim().isEmpty
         ? null
@@ -327,18 +325,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
                               ],
                             ),
                             const SizedBox(height: OmadaTokens.space16),
-                            // Full Name Field
-                            _buildFormFieldWithIcon(
-                              icon: Icons.person,
-                              label: 'Full Name',
-                              controller: _fullNameController,
-                              validator: _isEditing
-                                  ? (_) => _validateNameFields()
-                                  : null,
-                              textCapitalization: TextCapitalization.words,
-                              enabled: _isEditing,
-                            ),
-                            const SizedBox(height: OmadaTokens.space16),
                             // Given and Family Name Row
                             Row(
                               children: [
@@ -510,7 +496,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
       if (!_isEditing && widget.contact != null) {
         // If canceling edit, restore original values
         final contact = widget.contact!;
-        _fullNameController.text = contact.fullName ?? '';
         _givenNameController.text = contact.givenName ?? '';
         _familyNameController.text = contact.familyName ?? '';
         _primaryMobileController.text = contact.primaryMobile ?? '';
@@ -650,11 +635,25 @@ class _ContactFormPageState extends State<ContactFormPage> {
   }
 
   String? _validateNameFields() {
-    return _controller.validateNameTriplet(
-      full: _fullNameController.text.trim(),
-      given: _givenNameController.text.trim(),
-      family: _familyNameController.text.trim(),
-    );
+    final given = _givenNameController.text.trim();
+    final family = _familyNameController.text.trim();
+    
+    // At least one name field must be provided
+    if (given.isEmpty && family.isEmpty) {
+      return 'Please provide at least a given name or family name';
+    }
+    
+    // Validate given name if provided
+    if (given.isNotEmpty && !ValidationUtils.isValidContactName(given)) {
+      return 'Invalid given name';
+    }
+    
+    // Validate family name if provided
+    if (family.isNotEmpty && !ValidationUtils.isValidContactName(family)) {
+      return 'Invalid family name';
+    }
+    
+    return null;
   }
 
   Future<void> _loadTags({String? contactId}) async {
