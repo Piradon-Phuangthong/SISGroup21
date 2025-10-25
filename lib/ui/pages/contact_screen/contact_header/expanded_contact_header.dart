@@ -39,10 +39,9 @@ class _ExpandedContactHeaderState extends State<ExpandedContactHeader> {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            Color(0xFF3B82F6), // Blue
-            Color(0xFF9370DB), // Medium Purple
+            Color(0xFFFF5733), // Red-orange
+            Color(0xFF4A00B0), // Deep purple
           ],
-          stops: [0.0, 1.0],
         ),
       ),
       child: SafeArea(
