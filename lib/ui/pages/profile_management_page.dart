@@ -156,9 +156,14 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                           ),
                           child: Column(
                             children: [
-                              Avatar(
-                                displayName: displayName,
-                                colorText: Colors.white,
+                              _Breathing(
+                                minScale: 0.98,
+                                maxScale: 1.04,
+                                duration: const Duration(milliseconds: 2800),
+                                child: Avatar(
+                                  displayName: displayName,
+                                  colorText: Colors.white,
+                                ),
                               ),
                               const SizedBox(height: OmadaTokens.space4),
                               if (notes?.isNotEmpty == true)
@@ -682,6 +687,73 @@ class _ChannelList extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+}
+
+// Subtle breathing animation wrapper for the avatar
+class _Breathing extends StatefulWidget {
+  final Widget child;
+  final double minScale;
+  final double maxScale;
+  final Duration duration;
+
+  const _Breathing({
+    required this.child,
+    this.minScale = 0.98,
+    this.maxScale = 1.04,
+    this.duration = const Duration(milliseconds: 2800),
+  });
+
+  @override
+  State<_Breathing> createState() => _BreathingState();
+}
+
+class _BreathingState extends State<_Breathing>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: widget.duration,
+    );
+    final curved = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+      reverseCurve: Curves.easeInOut,
+    );
+    _scale = Tween<double>(begin: widget.minScale, end: widget.maxScale)
+        .animate(curved);
+
+    // Respect reduced motion if available
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final mq = context.mounted ? MediaQuery.maybeOf(context) : null;
+      final disable = mq?.disableAnimations ?? false;
+      if (!disable && mounted) {
+        _controller.repeat(reverse: true);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final mq = MediaQuery.maybeOf(context);
+    final disable = mq?.disableAnimations ?? false;
+    if (disable) return widget.child;
+
+    return ScaleTransition(
+      scale: _scale,
+      child: widget.child,
     );
   }
 }
