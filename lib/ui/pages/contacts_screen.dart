@@ -413,6 +413,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) =>
           UserDiscoverySheet(sharingService: _controller.sharingService),
     );
@@ -422,6 +423,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       builder: (context) =>
           IncomingRequestsSheet(sharingService: _controller.sharingService),
     );
