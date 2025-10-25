@@ -178,14 +178,14 @@ class _MyContactCardPageState extends State<MyContactCardPage> {
                 Expanded(
                   child: TextField(
                     controller: _givenNameCtrl,
-                    decoration: const InputDecoration(labelText: 'Given name'),
+                    decoration: const InputDecoration(labelText: 'First name'),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
                     controller: _familyNameCtrl,
-                    decoration: const InputDecoration(labelText: 'Family name'),
+                    decoration: const InputDecoration(labelText: 'Last name'),
                   ),
                 ),
               ],

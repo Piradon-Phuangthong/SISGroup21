@@ -16,9 +16,13 @@ class CollapsedContactHeader extends StatelessWidget {
     return Container(
       height: 120,
       decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage("assets/jpg/banner.jpg"),
-          fit: BoxFit.cover,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFFF5733), // Red-orange
+            Color(0xFF4A00B0), // Deep purple
+          ],
         ),
       ),
       child: Padding(
