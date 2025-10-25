@@ -249,9 +249,9 @@ class _ManageTagsPageState extends State<ManageTagsPage> {
                           physics: const NeverScrollableScrollPhysics(),
                           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                             crossAxisCount: 4,
-                            crossAxisSpacing: 6,
-                            mainAxisSpacing: 6,
-                            childAspectRatio: 1.5,
+                            crossAxisSpacing: 8,
+                            mainAxisSpacing: 8,
+                            childAspectRatio: 1.2,
                           ),
                           itemCount: _colorPalette.length,
                           itemBuilder: (context, index) {

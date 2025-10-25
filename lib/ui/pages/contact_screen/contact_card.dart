@@ -56,131 +56,161 @@ class ContactCardState extends State<ContactCard>
     return _colorPalette[colorIndex];
   }
 
+  String _getInitials() {
+    final name = widget.contact.displayName;
+    if (name.isEmpty) return '?';
+    final parts = name.split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return name[0].toUpperCase();
+  }
+
+  Color _getAvatarColor() {
+    final hash = widget.contact.id.hashCode;
+    final colors = [
+      const Color(0xFF8A2BE2), // Purple
+      const Color(0xFF00CED1), // Dark Turquoise
+      const Color(0xFFFF8C00), // Dark Orange
+      const Color(0xFF20B2AA), // Light Sea Green
+      const Color(0xFFFF1493), // Deep Pink
+    ];
+    return colors[hash.abs() % colors.length];
+  }
+
   @override
   Widget build(BuildContext context) {
-    final appPalette = Theme.of(context).extension<AppPaletteTheme>();
     final ChannelLauncher _launcher = const ChannelLauncher();
-    // final lastContactFormatted = DateFormat(
-    //   "MMM d, hh:mm a",
-    // ).format(widget.lastContact);
 
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 300),
-
-      child: Container(
-        // height: 150,
-        padding: EdgeInsets.only(top: 10, bottom: 10),
-        margin: EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: BoxBorder.all(
-            color: Color.fromARGB(50, 109, 88, 186),
-            style: BorderStyle.solid,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
           ),
-        ),
-        child: InkWell(
-          onLongPress: widget.onLongPress,
-          onTap: () {
-            setState(() {
-              isExpanded = !isExpanded;
-            });
-          },
-          child: Column(
+        ],
+      ),
+      child: InkWell(
+        onLongPress: widget.onLongPress,
+        onTap: () {
+          setState(() {
+            isExpanded = !isExpanded;
+          });
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
+          child: Row(
             children: [
-              Row(
-                spacing: 10,
-                children: [
-                  //avatar photo
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Icon(Icons.person, size: 30),
-                  ),
-
-                  //contact information
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          widget.contact.displayName,
-                          textAlign: TextAlign.left,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          widget.contact.primaryMobile ??
-                              (widget.contact.primaryEmail?.isNotEmpty == true
-                                  ? widget.contact.primaryEmail!
-                                  : ''),
-                          textAlign: TextAlign.left,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        SizedBox(
-                          height: 30,
-                          width: 200,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
-                            children: widget.tags.map((tag) {
-                              return DashboardTag(
-                                label: tag.name,
-                                color: getTagColor(tag),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-
-                        //last seen information
-                        // Text(
-                        //   "Last contact: $lastContactFormatted",
-                        //   style: TextStyle(fontSize: 10),
-                        //   overflow: TextOverflow.ellipsis,
-                        // ),
-                      ],
+              // Avatar
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: _getAvatarColor(),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Center(
+                  child: Text(
+                    _getInitials(),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
                     ),
                   ),
-
-                  // message/phone
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: Icon(
-                          widget.isFavourite ? Icons.star : Icons.star_border,
-                          color: widget.isFavourite ? Colors.amber : null,
-                        ),
-                        onPressed: widget.onFavouriteToggle,
-                        tooltip: widget.isFavourite
-                            ? 'Remove from favourites'
-                            : 'Add to favourites',
+                ),
+              ),
+              const SizedBox(width: 12),
+              
+              // Contact info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      widget.contact.displayName,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
                       ),
-                      if (widget.onDelete != null)
-                        IconButton(
-                          onPressed: widget.onDelete,
-                          icon: Icon(Icons.delete),
-                        ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      widget.contact.primaryMobile ??
+                          (widget.contact.primaryEmail?.isNotEmpty == true
+                              ? widget.contact.primaryEmail!
+                              : 'No contact details'),
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[600],
+                      ),
+                    ),
+                                         if (widget.tags.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        children: widget.tags.map((tag) {
+                          final tagColor = getTagColor(tag);
+                          return Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: tagColor.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              tag.name,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: tagColor,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
                     ],
+                  ],
+                ),
+              ),
+              
+              // Action icons
+              Row(
+                children: [
+                  IconButton(
+                    icon: Icon(
+                      widget.isFavourite ? Icons.star : Icons.star_border,
+                      color: widget.isFavourite ? Colors.amber : Colors.grey,
+                    ),
+                    onPressed: widget.onFavouriteToggle,
+                    tooltip: widget.isFavourite
+                        ? 'Remove from favourites'
+                        : 'Add to favourites',
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                   ),
+                  if (widget.onDelete != null)
+                    IconButton(
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        color: Colors.grey,
+                      ),
+                      onPressed: widget.onDelete,
+                      tooltip: 'Delete contact',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
                 ],
               ),
-              if (isExpanded)
-                Padding(
-                  padding: EdgeInsetsGeometry.only(top: 8),
-                  child: Wrap(
-                    children: widget.channels
-                        .map(
-                          (channel) => IconButton(
-                            onPressed: () {
-                              // Handle channel action
-                              _launcher.openChannel(context, channel);
-                            },
-                            icon: channel
-                                .getIcon(), // Use the getIconData method we created
-                            tooltip:
-                                channel.kind, // Show channel type as tooltip
-                          ),
-                        )
-                        .toList(),
-                  ),
-                ),
             ],
           ),
         ),
