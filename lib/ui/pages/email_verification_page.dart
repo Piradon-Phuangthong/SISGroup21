@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:omada/core/theme/design_tokens.dart';
-import 'package:omada/core/controllers/auth_controller.dart';
-import 'package:omada/core/supabase/supabase_instance.dart';
 
 class EmailVerificationPage extends StatefulWidget {
   final String email;
@@ -16,45 +14,9 @@ class EmailVerificationPage extends StatefulWidget {
 }
 
 class _EmailVerificationPageState extends State<EmailVerificationPage> {
-  late final AuthController _auth;
-  bool _isResending = false;
-  bool _hasResent = false;
-
   @override
   void initState() {
     super.initState();
-    _auth = AuthController(supabase);
-  }
-
-  Future<void> _resendVerificationEmail() async {
-    setState(() => _isResending = true);
-    
-    try {
-      await _auth.resendEmailVerification();
-      
-      if (mounted) {
-        setState(() => _hasResent = true);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Verification email sent successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to resend email: $e'),
-            backgroundColor: Theme.of(context).colorScheme.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isResending = false);
-      }
-    }
   }
 
   @override
@@ -93,7 +55,7 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
                           ),
                           child: IconButton(
                             icon: const Icon(Icons.arrow_back, color: Colors.white),
-                            onPressed: () => Navigator.of(context).pop(),
+                            onPressed: () => Navigator.of(context).pushReplacementNamed('/login'),
                           ),
                         ),
                         const Spacer(),
@@ -283,33 +245,11 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
                         
                         const SizedBox(height: OmadaTokens.space24),
                         
-                        // Resend email button (smaller text button)
-                        TextButton(
-                          onPressed: _isResending ? null : _resendVerificationEmail,
-                          child: _isResending
-                              ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-                                  ),
-                                )
-                              : Text(
-                                  _hasResent ? 'Email Sent Again!' : 'Resend Email',
-                                  style: TextStyle(
-                                    color: Theme.of(context).primaryColor,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                        ),
-                        
                         const SizedBox(height: OmadaTokens.space16),
                         
                         // Help text
                         Text(
-                          'Didn\'t receive the email? Check your spam folder or try resending.',
+                          'Didn\'t receive the email? Check your spam folder.',
                           style: TextStyle(
                             color: Colors.grey[500],
                             fontSize: 12,

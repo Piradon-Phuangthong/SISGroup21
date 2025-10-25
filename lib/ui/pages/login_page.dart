@@ -184,7 +184,20 @@ class _LoginState extends State<LoginPage> {
                           ),
                           child: IconButton(
                             icon: const Icon(Icons.arrow_back, color: Colors.white),
-                            onPressed: () => Navigator.of(context).pop(),
+                            onPressed: () {
+                              if (_isSignUp) {
+                                // If in sign up mode, switch back to sign in
+                                setState(() {
+                                  _isSignUp = false;
+                                  // Clear form when switching
+                                  _emailController.clear();
+                                  _passwordController.clear();
+                                  _usernameController.clear();
+                                });
+                              } else if (Navigator.of(context).canPop()) {
+                                Navigator.of(context).pop();
+                              }
+                            },
                           ),
                         ),
                         const Spacer(),
