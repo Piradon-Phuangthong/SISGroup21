@@ -5,19 +5,26 @@ class CtaPanel extends StatelessWidget {
   final VoidCallback onAdd;
   final VoidCallback onShare;
   final VoidCallback onQuickCall;
+  final Gradient? backgroundGradient;
+  final Gradient? callButtonGradient;
   const CtaPanel({
     super.key,
     required this.centerValue,
     required this.onAdd,
     required this.onShare,
     required this.onQuickCall,
+    this.backgroundGradient,
+    this.callButtonGradient,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1e40af).withOpacity(0.28),
+        color: backgroundGradient == null
+            ? const Color(0xFF1e40af).withOpacity(0.28)
+            : null,
+        gradient: backgroundGradient,
         borderRadius: BorderRadius.circular(22),
         boxShadow: const [
           BoxShadow(
@@ -37,7 +44,7 @@ class CtaPanel extends StatelessWidget {
             value: 'Channel',
             onTap: onAdd,
           ),
-          _CallButton(onTap: onQuickCall),
+          _CallButton(onTap: onQuickCall, gradient: callButtonGradient),
           _CtaItem(
             icon: Icons.share,
             title: 'Share',
@@ -106,7 +113,8 @@ class _CtaItem extends StatelessWidget {
 
 class _CallButton extends StatelessWidget {
   final VoidCallback? onTap;
-  const _CallButton({this.onTap});
+  final Gradient? gradient;
+  const _CallButton({this.onTap, this.gradient});
 
   @override
   Widget build(BuildContext context) {
@@ -118,12 +126,13 @@ class _CallButton extends StatelessWidget {
         height: 74,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          gradient: const RadialGradient(
-            center: Alignment(0, -0.4),
-            radius: 0.8,
-            colors: [Color(0xFF93c5fd), Color(0xFF60a5fa), Color(0xFF3b82f6)],
-            stops: [0.0, 0.7, 1.0],
-          ),
+          gradient: gradient ??
+              const RadialGradient(
+                center: Alignment(0, -0.4),
+                radius: 0.8,
+                colors: [Color(0xFF93c5fd), Color(0xFF60a5fa), Color(0xFF3b82f6)],
+                stops: [0.0, 0.7, 1.0],
+              ),
           boxShadow: const [
             BoxShadow(
               color: Colors.black45,
