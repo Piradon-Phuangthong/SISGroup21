@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:omada/core/theme/color_palette.dart';
-import 'package:omada/ui/widgets/custom_app_bar.dart';
 import 'package:omada/core/theme/design_tokens.dart';
 import 'package:omada/ui/widgets/app_bottom_nav.dart';
 // import 'package:omada/ui/widgets/theme_selector.dart';
@@ -15,7 +14,6 @@ import 'contacts/incoming_requests_sheet.dart';
 import 'package:omada/core/data/models/tag_model.dart';
 import 'package:omada/core/data/models/contact_channel_model.dart';
 import 'package:omada/core/controllers/contacts_controller.dart';
-import 'package:omada/ui/widgets/social_media_section.dart';
 import 'package:omada/core/controllers/favourites_controller.dart';
 import 'package:omada/ui/pages/deleted_contacts_page.dart';
 
@@ -220,11 +218,17 @@ class _ContactsScreenState extends State<ContactsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Contacts'),
+        title: const Text(
+          'Contacts',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
             tooltip: 'Deleted contacts',
-            icon: const Icon(Icons.delete_outline),
+            icon: const Icon(Icons.delete_outline, color: Colors.white),
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const DeletedContactsPage()),
@@ -233,7 +237,24 @@ class _ContactsScreenState extends State<ContactsScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: RadialGradient(
+            center: Alignment(0, -1.1),
+            radius: 1.2,
+            colors: [
+              Color(0xFF7dd3fc), // Sky-300
+              Color(0xFF60a5fa), // Blue-400
+              Color(0xFF3b82f6), // Blue-500
+              Color(0xFF2563eb), // Blue-600
+              Color(0xFF1d4ed8), // Blue-700
+              Color(0xFF1e40af), // Blue-800
+              Color(0xFF3730a3), // Indigo-700
+            ],
+            stops: [0.0, 0.2, 0.4, 0.6, 0.78, 0.9, 1.0],
+          ),
+        ),
+        child: Column(
         children: [
           // Color theme selector removed in favor of a single app palette
           Padding(
@@ -243,18 +264,34 @@ class _ContactsScreenState extends State<ContactsScreen> {
             ),
             child: TextField(
               controller: _searchController,
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: 'Search by name, email, or phone',
-                prefixIcon: const Icon(Icons.search),
+                hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+                prefixIcon: const Icon(Icons.search, color: Colors.white),
                 suffixIcon: _searchController.text.isEmpty
                     ? null
                     : IconButton(
-                        icon: const Icon(Icons.clear),
+                        icon: const Icon(Icons.clear, color: Colors.white),
                         onPressed: () {
                           _searchController.clear();
                           _refreshContacts();
                         },
                       ),
+                filled: true,
+                fillColor: Colors.white.withOpacity(0.2),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: const BorderSide(color: Colors.white, width: 2),
+                ),
               ),
             ),
           ),
@@ -268,18 +305,36 @@ class _ContactsScreenState extends State<ContactsScreen> {
               children: [
                 TextButton.icon(
                   onPressed: _openUserDiscoverySheet,
-                  icon: const Icon(Icons.person_add_alt_1_outlined),
-                  label: const Text('Discover users'),
+                  icon: const Icon(Icons.person_add_alt_1_outlined, color: Colors.white),
+                  label: const Text('Discover users', style: TextStyle(color: Colors.white)),
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.white.withOpacity(0.2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
                 ),
                 TextButton.icon(
                   onPressed: _openIncomingRequestsSheet,
-                  icon: const Icon(Icons.inbox_outlined),
-                  label: const Text('Requests'),
+                  icon: const Icon(Icons.inbox_outlined, color: Colors.white),
+                  label: const Text('Requests', style: TextStyle(color: Colors.white)),
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.white.withOpacity(0.2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
                 ),
                 TextButton.icon(
                   onPressed: _openManageTagsSheet,
-                  icon: const Icon(Icons.label_outline),
-                  label: const Text('Manage tags'),
+                  icon: const Icon(Icons.label_outline, color: Colors.white),
+                  label: const Text('Manage tags', style: TextStyle(color: Colors.white)),
+                  style: TextButton.styleFrom(
+                    backgroundColor: Colors.white.withOpacity(0.2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -304,6 +359,7 @@ class _ContactsScreenState extends State<ContactsScreen> {
             child: _buildBody(),
           ),
         ],
+        ),
       ),
       bottomNavigationBar: const AppBottomNav(active: AppNav.contacts),
       floatingActionButton: FloatingActionButton(

@@ -8,7 +8,6 @@ import 'package:omada/ui/widgets/app_bottom_nav.dart';
 import 'package:omada/ui/widgets/add_channel_sheet.dart';
 import 'package:omada/core/data/utils/channel_launcher.dart';
 import 'package:omada/core/controllers/profile_controller.dart';
-import 'profile/channel_grid.dart';
 import 'profile/cta_panel.dart';
 import 'profile/about_section.dart';
 import 'profile/avatar.dart';
@@ -40,187 +39,243 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
 
   @override
   Widget build(BuildContext context) {
-    // final colorBg1 = const Color(0xFF7F0F24);
-    // final colorBg2 = const Color(0xFF3C0A16);
-    // final colorCard = const Color(0xFF3B0D18); // reserved for future use
-    final colorPill = const Color(0xFF1d4ed8); // Blue-700
-    final colorPillActive = const Color(0xFF93c5fd); // Blue-300
-    final colorText = Colors.white;
-    // final colorMuted = const Color(0xFFF5D6D1).withOpacity(0.8);
+    const double topHeaderHeight = 315; // Gradient visible down to just below username
+    final colorTextOnHeader = Colors.white;
 
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: RadialGradient(
-            center: Alignment(0, -1.1),
-            radius: 1.2,
-            colors: [
-              Color(0xFF7dd3fc), // Sky-300
-              Color(0xFF60a5fa), // Blue-400
-              Color(0xFF3b82f6), // Blue-500
-              Color(0xFF2563eb), // Blue-600
-              Color(0xFF1d4ed8), // Blue-700
-              Color(0xFF1e40af), // Blue-800
-              Color(0xFF3730a3), // Indigo-700
-            ],
-            stops: [0.0, 0.2, 0.4, 0.6, 0.78, 0.9, 1.0],
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Header
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: OmadaTokens.space16,
-                  vertical: OmadaTokens.space12,
-                ),
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.circle, size: 22, color: colorText),
-                        const SizedBox(width: OmadaTokens.space8),
-                        Text(
-                          'Omada',
-                          style: TextStyle(
-                            color: colorText,
-                            fontWeight: FontWeight.w800,
-                            fontSize: OmadaTokens.fontLg,
-                          ),
-                        ),
-                      ],
-                    ),
-                    Positioned(
-                      right: 0,
-                      child: IconButton(
-                        tooltip: 'Account',
-                        icon: const Icon(
-                          Icons.account_circle,
-                          color: Colors.white,
-                        ),
-                        onPressed: () {
-                          Navigator.of(
-                            context,
-                          ).pushNamed('/account'); // or pushReplacementNamed
-                        },
-                      ),
-                    ),
-                  ],
-                ),
+      backgroundColor: Colors.white,
+      body: Stack(
+        children: [
+          // Top blue ombre section (same palette and size as Contacts)
+          Container(
+            height: topHeaderHeight,
+            width: double.infinity,
+            decoration: const BoxDecoration(
+              gradient: RadialGradient(
+                center: Alignment(0, -1.1),
+                radius: 1.2,
+                colors: [
+                  Color(0xFF7de3f8), // Light Cyan-Blue
+                  Color(0xFF64bdfb), // Sky Blue
+                  Color(0xFF5194fa), // Bright Blue
+                  Color(0xFF6a7af7), // Periwinkle
+                  Color(0xFF8765f3), // Soft Violet
+                  Color(0xFFa257e8), // Medium Purple
+                  Color(0xFFc44adf), // Magenta-Purple
+                ],
+                stops: [0.0, 0.2, 0.4, 0.6, 0.78, 0.9, 1.0],
               ),
+            ),
+          ),
 
-              // Data-driven content
-              Expanded(
-                child: FutureBuilder<ProfileData>(
-                  future: _future,
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState != ConnectionState.done) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (snapshot.hasError || !snapshot.hasData) {
-                      return Center(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16),
-                          child: Text(
-                            'Failed to load profile. ${snapshot.error ?? ''}',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: Colors.white70),
+          // Content
+          SafeArea(
+            child: Column(
+              children: [
+                // Top minimal header over the gradient
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: OmadaTokens.space16,
+                    vertical: OmadaTokens.space12,
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.circle, size: 22, color: colorTextOnHeader),
+                          const SizedBox(width: OmadaTokens.space8),
+                          Text(
+                            'Omada',
+                            style: TextStyle(
+                              color: colorTextOnHeader,
+                              fontWeight: FontWeight.w800,
+                              fontSize: OmadaTokens.fontLg,
+                            ),
                           ),
+                        ],
+                      ),
+                      Positioned(
+                        right: 0,
+                        child: IconButton(
+                          tooltip: 'Account',
+                          icon: const Icon(
+                            Icons.account_circle,
+                            color: Colors.white,
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).pushNamed('/account');
+                          },
                         ),
-                      );
-                    }
+                      ),
+                    ],
+                  ),
+                ),
 
-                    final data = snapshot.data!;
-                    final displayName =
-                        data.profile?.username ?? data.contact.displayName;
-                    final notes = data.contact.notes;
-                    final about = _aboutText(data);
+                // Body scrollable area on white background
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: FutureBuilder<ProfileData>(
+                      future: _future,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState != ConnectionState.done) {
+                          return const Padding(
+                            padding: EdgeInsets.only(top: 60),
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        }
+                        if (snapshot.hasError || !snapshot.hasData) {
+                          return Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Center(
+                              child: Text(
+                                'Failed to load profile. ${snapshot.error ?? ''}',
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          );
+                        }
 
-                    return Column(
-                      children: [
-                        Padding(
+                        final data = snapshot.data!;
+                        final displayName =
+                            data.profile?.username ?? data.contact.displayName;
+                        final notes = data.contact.notes;
+                        final about = _aboutText(data);
+
+                        // Top section (on gradient): Avatar + name (+ optional notes)
+                        final headerOnGradient = Padding(
                           padding: const EdgeInsets.symmetric(
                             horizontal: OmadaTokens.space16,
+                            vertical: OmadaTokens.space8,
                           ),
                           child: Column(
                             children: [
                               Avatar(
                                 displayName: displayName,
-                                colorText: colorText,
+                                colorText: Colors.white,
                               ),
                               const SizedBox(height: OmadaTokens.space4),
                               if (notes?.isNotEmpty == true)
                                 Text(
                                   notes!,
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    color: colorText.withOpacity(0.85),
-                                  ),
+                                  style: const TextStyle(color: Colors.white),
                                 ),
-                              const SizedBox(height: OmadaTokens.space12),
-                              AboutSection(title: about, textColor: colorText),
                             ],
                           ),
-                        ),
+                        );
 
-                        const SizedBox(height: OmadaTokens.space16),
-
-                        // Channel chips grid
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: OmadaTokens.space16,
+                        // Rest of screen on white background
+                        final bodyOnWhite = Container(
+                          width: double.infinity,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.zero,
                           ),
-                          child: ChannelGrid(
-                            colorPill: colorPill,
-                            colorPillActive: colorPillActive,
-                            colorText: colorText,
-                            channels: data.channels,
-                            selectedIds: _selectedChannelIds,
-                            onOpen: (id) {
-                              final ch = data.channels.firstWhere(
-                                (c) => c.id == id,
-                              );
-                              _launcher.openChannel(context, ch);
-                            },
-                            onLongPress: (id) =>
-                                _onChannelLongPress(context, data, id),
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: OmadaTokens.space16,
+                              vertical: OmadaTokens.space16,
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                AboutSection(title: about, textColor: Colors.black87),
+                                const SizedBox(height: OmadaTokens.space16),
+                                _ChannelCirclesGrid(
+                                  channels: data.channels,
+                                  selectedIds: _selectedChannelIds,
+                                  onOpen: (id) {
+                                    final ch =
+                                        data.channels.firstWhere((c) => c.id == id);
+                                    _launcher.openChannel(context, ch);
+                                  },
+                                  onLongPress: (id) =>
+                                      _onChannelLongPress(context, data, id),
+                                ),
+                                // extra space so list isn't hidden behind bottom sheet CTA
+                                const SizedBox(height: 120),
+                              ],
+                            ),
                           ),
-                        ),
+                        );
 
-                        const SizedBox(height: OmadaTokens.space12),
-
-                        // CTA / actions panel
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: OmadaTokens.space16,
-                          ),
-                          child: CtaPanel(
-                            centerValue: _selectedChannelIds.isEmpty
-                                ? 'Request'
-                                : '${_selectedChannelIds.length} selected',
-                            onAdd: () => _openAddChannel(context, data),
-                            onShare: () => _openShare(context, data),
-                            onQuickCall: () => _quickCall(context, data),
-                          ),
-                        ),
-
-                        const Spacer(),
-                      ],
-                    );
-                  },
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            headerOnGradient,
+                            bodyOnWhite,
+                          ],
+                        );
+                      },
+                    ),
+                  ),
                 ),
-              ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: const AppBottomNav(active: AppNav.profile),
+      bottomSheet: SafeArea(
+        top: false,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            OmadaTokens.space16,
+            0,
+            OmadaTokens.space16,
+            OmadaTokens.space8,
+          ),
+          child: Builder(
+            builder: (context) {
+              // Gradient palette per request
+              const palette = <Color>[
+                Color(0xFF7de3f8),
+                Color(0xFF64bdfb),
+                Color(0xFF5194fa),
+                Color(0xFF6a7af7),
+                Color(0xFF8765f3),
+                Color(0xFFa257e8),
+                Color(0xFFc44adf),
+              ];
+              final panelGradient = const LinearGradient(
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+                colors: palette,
+              );
+              final callButtonGradient = const RadialGradient(
+                center: Alignment(0, -0.4),
+                radius: 1.0,
+                colors: palette,
+              );
 
-              const SizedBox(height: OmadaTokens.space8),
-            ],
+              return CtaPanel(
+                centerValue: _selectedChannelIds.isEmpty
+                    ? 'Request'
+                    : '${_selectedChannelIds.length} selected',
+                onAdd: () async {
+                  final snapshot = await _future;
+                  if (!mounted) return;
+                  await _openAddChannel(context, snapshot);
+                },
+                onShare: () async {
+                  final snapshot = await _future;
+                  if (!mounted) return;
+                  await _openShare(context, snapshot);
+                },
+                onQuickCall: () async {
+                  final snapshot = await _future;
+                  if (!mounted) return;
+                  await _quickCall(context, snapshot);
+                },
+                backgroundGradient: panelGradient,
+                callButtonGradient: callButtonGradient,
+              );
+            },
           ),
         ),
       ),
-      bottomNavigationBar: const AppBottomNav(active: AppNav.profile),
     );
   }
 
@@ -464,3 +519,63 @@ String _aboutText(ProfileData data) {
   }
   return 'Set up your preferred contact channels and profile details.';
 }
+
+// Local compact grid of white circular channel icons
+class _ChannelCirclesGrid extends StatelessWidget {
+  final List<ContactChannelModel> channels;
+  final Set<String> selectedIds;
+  final void Function(String id) onOpen;
+  final void Function(String id)? onLongPress;
+
+  const _ChannelCirclesGrid({
+    required this.channels,
+    required this.selectedIds,
+    required this.onOpen,
+    this.onLongPress,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 4,
+        mainAxisSpacing: 12,
+        crossAxisSpacing: 12,
+        childAspectRatio: 1,
+      ),
+      itemCount: channels.length,
+      itemBuilder: (context, index) {
+  final c = channels[index];
+  final isSelected = selectedIds.contains(c.id);
+  // Use the same icon mapping used across the app (Contacts, Contact Card)
+  final iconData = ChannelKind.getIcon(c.kind).icon ?? Icons.link;
+        return InkWell(
+          customBorder: const CircleBorder(),
+          onTap: () => onOpen(c.id),
+          onLongPress: onLongPress == null ? null : () => onLongPress!(c.id),
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+              border: isSelected
+                  ? Border.all(color: Theme.of(context).colorScheme.primary, width: 2)
+                  : null,
+            ),
+            alignment: Alignment.center,
+            child: Icon(iconData, color: Colors.black87, size: 22),
+          ),
+        );
+      },
+    );
+  }
+}
+
