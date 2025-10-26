@@ -2,7 +2,7 @@
 
 This directory contains the source code for the Omada Contacts app, a contact management application built with Flutter and Supabase.
 
-## Directory Structure
+## Directory Structure:
 
 - `data/` - Data layer including models, repositories, and services
   - `exceptions/` - Custom exception classes

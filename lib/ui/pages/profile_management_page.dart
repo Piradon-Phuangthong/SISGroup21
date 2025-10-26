@@ -11,6 +11,8 @@ import 'package:omada/core/controllers/profile_controller.dart';
 import 'profile/cta_panel.dart';
 import 'profile/avatar.dart';
 import 'package:omada/core/theme/design_tokens.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:omada/core/data/utils/channel_presets.dart';
 
 class ProfileManagementPage extends StatefulWidget {
   const ProfileManagementPage({super.key});
@@ -24,6 +26,8 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
   final Set<String> _selectedChannelIds = <String>{};
   final ChannelLauncher _launcher = const ChannelLauncher();
   bool _defaultPrimaryEnsured = false;
+  String _quickActionValue = 'Call';
+  IconData _quickActionIcon = Icons.call;
 
   @override
   void initState() {
@@ -37,6 +41,115 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
     });
   }
 
+  ContactChannelModel? _findQuickTarget(ProfileData data) {
+    // Prefer primary with value/url
+    final primary = data.channels.where((c) => c.isPrimary).firstWhere(
+      (c) => (c.value?.isNotEmpty == true) || (c.url?.isNotEmpty == true),
+      orElse: () => ContactChannelModel(
+        id: '',
+        ownerId: data.contact.ownerId,
+        contactId: data.contact.id,
+        kind: '',
+        label: null,
+        value: null,
+        url: null,
+        extra: null,
+        isPrimary: false,
+        updatedAt: DateTime.now(),
+      ),
+    );
+    if (primary.id.isNotEmpty) return primary;
+
+    // Fallback: phone/mobile
+    final phone = data.channels.firstWhere(
+      (c) => (c.kind.toLowerCase() == 'phone' || c.kind.toLowerCase() == 'mobile') && (c.value?.isNotEmpty == true),
+      orElse: () => ContactChannelModel(
+        id: '',
+        ownerId: data.contact.ownerId,
+        contactId: data.contact.id,
+        kind: '',
+        label: null,
+        value: null,
+        url: null,
+        extra: null,
+        isPrimary: false,
+        updatedAt: DateTime.now(),
+      ),
+    );
+    if (phone.id.isNotEmpty) return phone;
+
+    // Any with value/url
+    final any = data.channels.firstWhere(
+      (c) => (c.value?.isNotEmpty == true) || (c.url?.isNotEmpty == true),
+      orElse: () => ContactChannelModel(
+        id: '',
+        ownerId: data.contact.ownerId,
+        contactId: data.contact.id,
+        kind: '',
+        label: null,
+        value: null,
+        url: null,
+        extra: null,
+        isPrimary: false,
+        updatedAt: DateTime.now(),
+      ),
+    );
+    return any.id.isNotEmpty ? any : null;
+  }
+
+  void _updateQuickLabel(ProfileData data) {
+    final target = _findQuickTarget(data);
+    String action;
+    IconData icon;
+    switch (target?.kind.toLowerCase() ?? '') {
+      case 'mobile':
+      case 'phone':
+        action = 'Call';
+        icon = Icons.call;
+        break;
+      case 'sms':
+        action = 'SMS';
+        icon = Icons.sms;
+        break;
+      case 'email':
+        action = 'Email';
+        icon = Icons.email_outlined;
+        break;
+      case 'whatsapp':
+        action = 'Message';
+        icon = Icons.chat;
+        break;
+      case 'telegram':
+        action = 'Telegram';
+        icon = Icons.send;
+        break;
+      case 'instagram':
+        action = 'DM';
+        icon = Icons.send;
+        break;
+      case 'linkedin':
+        action = 'Message';
+        icon = Icons.message;
+        break;
+      case 'website':
+        action = 'Open';
+        icon = Icons.public;
+        break;
+      default:
+        action = 'Open';
+        icon = Icons.open_in_new;
+    }
+    if (mounted) {
+      setState(() {
+        _quickActionValue = action;
+        _quickActionIcon = icon;
+      });
+    } else {
+      _quickActionValue = action;
+      _quickActionIcon = icon;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     const double topHeaderHeight = 315; // Gradient visible down to just below username
@@ -46,24 +159,21 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // Top blue ombre section (same palette and size as Contacts)
+          // Top ombre section with new palette
           Container(
             height: topHeaderHeight,
             width: double.infinity,
             decoration: const BoxDecoration(
               gradient: RadialGradient(
                 center: Alignment(0, -1.1),
-                radius: 1.2,
+                radius: 1.25,
                 colors: [
-                  Color(0xFF7de3f8), // Light Cyan-Blue
-                  Color(0xFF64bdfb), // Sky Blue
-                  Color(0xFF5194fa), // Bright Blue
-                  Color(0xFF6a7af7), // Periwinkle
-                  Color(0xFF8765f3), // Soft Violet
-                  Color(0xFFa257e8), // Medium Purple
-                  Color(0xFFc44adf), // Magenta-Purple
+                  Color(0xFFF15A29), // Warm Coral-Orange (top left)
+                  Color(0xFFE03C8A), // Magenta-Pink (mid)
+                  Color(0xFF7B3FE4), // Violet-Purple (bottom right)
+                  Color(0xFF5E2CCF), // Deep Purple (lower section)
                 ],
-                stops: [0.0, 0.2, 0.4, 0.6, 0.78, 0.9, 1.0],
+                stops: [0.0, 0.45, 0.8, 1.0],
               ),
             ),
           ),
@@ -146,6 +256,7 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                         // Ensure there's a default primary (prefer Mobile) once after load
                         WidgetsBinding.instance.addPostFrameCallback((_) {
                           _ensureDefaultPrimaryIfNeeded(data);
+                          _updateQuickLabel(data);
                         });
 
                         // Top section (on gradient): Avatar + name (+ optional notes)
@@ -156,14 +267,9 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                           ),
                           child: Column(
                             children: [
-                              _Breathing(
-                                minScale: 0.98,
-                                maxScale: 1.04,
-                                duration: const Duration(milliseconds: 2800),
-                                child: Avatar(
-                                  displayName: displayName,
-                                  colorText: Colors.white,
-                                ),
+                              Avatar(
+                                displayName: displayName,
+                                colorText: Colors.white,
                               ),
                               const SizedBox(height: OmadaTokens.space4),
                               if (notes?.isNotEmpty == true)
@@ -222,6 +328,8 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                                   },
                                   onLongPress: (id) => _onChannelLongPress(context, data, id),
                                   onTogglePrimary: (id) => _setPrimaryChannel(context, data, id),
+                                  onEdit: (id) => _editChannel(context, data, id),
+                                  onDelete: (id) => _deleteChannel(context, data, id),
                                 ),
                                 // extra space so list isn't hidden behind bottom sheet CTA
                                 const SizedBox(height: 120),
@@ -258,25 +366,18 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
           ),
           child: Builder(
             builder: (context) {
-              // Gradient palette per request
+              // New palette for Share (Request) button
               const palette = <Color>[
-                Color(0xFF7de3f8),
-                Color(0xFF64bdfb),
-                Color(0xFF5194fa),
-                Color(0xFF6a7af7),
-                Color(0xFF8765f3),
-                Color(0xFFa257e8),
-                Color(0xFFc44adf),
+                Color(0xFFF15A29), // Warm Coral-Orange
+                Color(0xFFE03C8A), // Magenta-Pink
+                Color(0xFF7B3FE4), // Violet-Purple
+                Color(0xFF5E2CCF), // Deep Purple
               ];
-              final panelGradient = const LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: palette,
-              );
               final callButtonGradient = const RadialGradient(
                 center: Alignment(0, -0.4),
                 radius: 1.0,
                 colors: palette,
+                stops: [0.0, 0.5, 0.8, 1.0],
               );
 
               return CtaPanel(
@@ -298,8 +399,11 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                   if (!mounted) return;
                   await _quickCall(context, snapshot);
                 },
-                backgroundGradient: panelGradient,
+                backgroundColor: Colors.white,
                 callButtonGradient: callButtonGradient,
+                quickTitleOverride: 'Quick',
+                quickValueOverride: _quickActionValue,
+                quickIconOverride: _quickActionIcon,
               );
             },
           ),
@@ -448,27 +552,155 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
     }
   }
 
+  Future<void> _editChannel(
+    BuildContext context,
+    ProfileData data,
+    String id,
+  ) async {
+    final ch = data.channels.firstWhere((c) => c.id == id);
+    final labelCtrl = TextEditingController(text: ch.label ?? _labelForChannel(ch));
+    final valueCtrl = TextEditingController(text: ch.value ?? '');
+    String _computeUrl(String kind, String value) => ChannelPresets.computeUrl(kind, value);
+    String previewUrl = _computeUrl(ch.kind, valueCtrl.text);
+
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+            left: 16,
+            right: 16,
+            top: 16,
+          ),
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Edit Channel', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  Text('Kind: ${ch.kind}', style: const TextStyle(color: Colors.black54)),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: labelCtrl,
+                    decoration: const InputDecoration(labelText: 'Label'),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: valueCtrl,
+                    decoration: const InputDecoration(labelText: 'Value'),
+                    onChanged: (v) => setState(() => previewUrl = _computeUrl(ch.kind, v)),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    readOnly: true,
+                    controller: TextEditingController(text: previewUrl),
+                    decoration: const InputDecoration(labelText: 'URL (auto)'),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: const Text('Cancel'),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: const Text('Save'),
+                      ),
+                    ],
+                  )
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      final repo = ContactChannelRepository(Supabase.instance.client);
+      final newLabel = labelCtrl.text.trim();
+      final newValue = valueCtrl.text.trim();
+      final newUrl = _computeUrl(ch.kind, newValue);
+      await repo.updateChannel(
+        ch.id,
+        label: newLabel.isEmpty ? null : newLabel,
+        value: newValue.isEmpty ? null : newValue,
+        url: newUrl.isEmpty ? null : newUrl,
+      );
+      if (!mounted) return;
+      _refresh();
+    }
+  }
+
+  Future<void> _deleteChannel(
+    BuildContext context,
+    ProfileData data,
+    String id,
+  ) async {
+    final ch = data.channels.firstWhere((c) => c.id == id);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Channel?'),
+        content: Text('Delete "${_labelForChannel(ch)}"? This action cannot be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final repo = ContactChannelRepository(Supabase.instance.client);
+      await repo.deleteChannel(id);
+      if (!mounted) return;
+      _refresh();
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Channel deleted')));
+    }
+  }
+
   Future<void> _quickCall(BuildContext context, ProfileData data) async {
-    String? number = data.contact.primaryMobile;
-    if (number == null || number.isEmpty) {
-      final primaryPhone = data.channels.firstWhere(
-        (c) =>
-            (c.kind.toLowerCase() == 'phone' ||
-                c.kind.toLowerCase() == 'mobile') &&
-            c.isPrimary &&
-            (c.value?.isNotEmpty == true),
+    // Prefer explicit primary channel
+    ContactChannelModel? target = data.channels.firstWhere(
+      (c) => c.isPrimary && ((c.value?.isNotEmpty == true) || (c.url?.isNotEmpty == true)),
+      orElse: () => ContactChannelModel(
+        id: '',
+        ownerId: data.contact.ownerId,
+        contactId: data.contact.id,
+        kind: '',
+        label: null,
+        value: null,
+        url: null,
+        extra: null,
+        isPrimary: false,
+        updatedAt: DateTime.now(),
+      ),
+    );
+
+    if (target.id.isEmpty) {
+      // Fallbacks: prefer phone/mobile with value, then any channel with value/url
+      target = data.channels.firstWhere(
+        (c) => (c.kind.toLowerCase() == 'phone' || c.kind.toLowerCase() == 'mobile') && (c.value?.isNotEmpty == true),
         orElse: () => data.channels.firstWhere(
-          (c) =>
-              (c.kind.toLowerCase() == 'phone' ||
-                  c.kind.toLowerCase() == 'mobile') &&
-              (c.value?.isNotEmpty == true),
+          (c) => (c.value?.isNotEmpty == true) || (c.url?.isNotEmpty == true),
           orElse: () => ContactChannelModel(
-            id: '_',
+            id: '',
             ownerId: data.contact.ownerId,
             contactId: data.contact.id,
-            kind: 'phone',
+            kind: '',
             label: null,
-            value: '',
+            value: null,
             url: null,
             extra: null,
             isPrimary: false,
@@ -476,24 +708,17 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
           ),
         ),
       );
-      number = primaryPhone.value;
     }
 
-    if (number == null || number.isEmpty) {
+    if (target.id.isEmpty) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('No number available')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No channel available to open')),
+      );
       return;
     }
 
-    final telUri = Uri.parse('tel:$number');
-    if (!await launchUrl(telUri)) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Unable to open dialer')));
-    }
+    await _launcher.openChannel(context, target);
   }
 
   Future<void> _openAddChannel(BuildContext context, ProfileData data) async {
@@ -591,6 +816,8 @@ class _ChannelList extends StatelessWidget {
   final void Function(String id) onOpen;
   final void Function(String id)? onLongPress;
   final void Function(String id) onTogglePrimary;
+  final void Function(String id) onEdit;
+  final void Function(String id) onDelete;
 
   const _ChannelList({
     required this.channels,
@@ -598,6 +825,8 @@ class _ChannelList extends StatelessWidget {
     required this.onOpen,
     this.onLongPress,
     required this.onTogglePrimary,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   Color _colorForKind(String kind) {
@@ -626,6 +855,33 @@ class _ChannelList extends StatelessWidget {
     }
   }
 
+  IconData _faIconForKind(String kind) {
+    switch (kind.toLowerCase()) {
+      case 'mobile':
+      case 'phone':
+      case 'call':
+        return FontAwesomeIcons.phone;
+      case 'sms':
+        return FontAwesomeIcons.message;
+      case 'email':
+        return FontAwesomeIcons.envelope;
+      case 'whatsapp':
+        return FontAwesomeIcons.whatsapp;
+      case 'telegram':
+        return FontAwesomeIcons.telegram;
+      case 'instagram':
+        return FontAwesomeIcons.instagram;
+      case 'linkedin':
+        return FontAwesomeIcons.linkedin;
+      case 'website':
+        return FontAwesomeIcons.globe;
+      case 'address':
+        return FontAwesomeIcons.locationDot;
+      default:
+        return FontAwesomeIcons.link;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
@@ -636,9 +892,12 @@ class _ChannelList extends StatelessWidget {
       itemBuilder: (context, index) {
         final c = channels[index];
         final isSelected = selectedIds.contains(c.id);
-        final iconData = ChannelKind.getIcon(c.kind).icon ?? Icons.link;
+        final iconData = _faIconForKind(c.kind);
         final iconColor = _colorForKind(c.kind);
         final label = _labelForChannel(c);
+        final valueText = (c.value?.isNotEmpty == true)
+            ? c.value!
+            : (c.url?.isNotEmpty == true ? c.url! : '');
 
         return InkWell(
           onTap: () => onOpen(c.id),
@@ -661,18 +920,43 @@ class _ChannelList extends StatelessWidget {
               children: [
                 SizedBox(
                   width: 44,
-                  child: Icon(iconData, color: iconColor, size: 24),
+                  child: FaIcon(iconData, color: iconColor, size: 22),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        label,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (valueText.isNotEmpty)
+                        const SizedBox(height: 2),
+                      if (valueText.isNotEmpty)
+                        Text(
+                          valueText,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.black54,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                    ],
                   ),
+                ),
+                // Action buttons: edit, star (primary), delete
+                IconButton(
+                  tooltip: 'Edit',
+                  icon: const Icon(Icons.edit, color: Colors.black54),
+                  onPressed: () => onEdit(c.id),
                 ),
                 IconButton(
                   tooltip: c.isPrimary ? 'Primary' : 'Set as primary',
@@ -681,6 +965,11 @@ class _ChannelList extends StatelessWidget {
                     color: c.isPrimary ? Colors.amber.shade600 : Colors.black38,
                   ),
                   onPressed: () => onTogglePrimary(c.id),
+                ),
+                IconButton(
+                  tooltip: 'Delete',
+                  icon: const Icon(Icons.delete, color: Colors.redAccent),
+                  onPressed: () => onDelete(c.id),
                 ),
               ],
             ),
@@ -692,69 +981,5 @@ class _ChannelList extends StatelessWidget {
 }
 
 // Subtle breathing animation wrapper for the avatar
-class _Breathing extends StatefulWidget {
-  final Widget child;
-  final double minScale;
-  final double maxScale;
-  final Duration duration;
-
-  const _Breathing({
-    required this.child,
-    this.minScale = 0.98,
-    this.maxScale = 1.04,
-    this.duration = const Duration(milliseconds: 2800),
-  });
-
-  @override
-  State<_Breathing> createState() => _BreathingState();
-}
-
-class _BreathingState extends State<_Breathing>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _scale;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: widget.duration,
-    );
-    final curved = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-      reverseCurve: Curves.easeInOut,
-    );
-    _scale = Tween<double>(begin: widget.minScale, end: widget.maxScale)
-        .animate(curved);
-
-    // Respect reduced motion if available
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final mq = context.mounted ? MediaQuery.maybeOf(context) : null;
-      final disable = mq?.disableAnimations ?? false;
-      if (!disable && mounted) {
-        _controller.repeat(reverse: true);
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final mq = MediaQuery.maybeOf(context);
-    final disable = mq?.disableAnimations ?? false;
-    if (disable) return widget.child;
-
-    return ScaleTransition(
-      scale: _scale,
-      child: widget.child,
-    );
-  }
-}
+// Breathing effect moved inside the Avatar so only the circle animates, not the username text.
 

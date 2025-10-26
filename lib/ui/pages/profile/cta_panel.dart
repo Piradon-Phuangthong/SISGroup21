@@ -7,6 +7,10 @@ class CtaPanel extends StatelessWidget {
   final VoidCallback onQuickCall;
   final Gradient? backgroundGradient;
   final Gradient? callButtonGradient;
+  final Color? backgroundColor;
+  final String? quickTitleOverride;
+  final String? quickValueOverride;
+  final IconData? quickIconOverride;
   const CtaPanel({
     super.key,
     required this.centerValue,
@@ -15,15 +19,38 @@ class CtaPanel extends StatelessWidget {
     required this.onQuickCall,
     this.backgroundGradient,
     this.callButtonGradient,
+    this.backgroundColor,
+    this.quickTitleOverride,
+    this.quickValueOverride,
+    this.quickIconOverride,
   });
 
   @override
   Widget build(BuildContext context) {
+    final Color panelColor = backgroundGradient == null
+        ? (backgroundColor ?? const Color(0xFF1e40af).withValues(alpha: 0.28))
+        : Colors.transparent;
+    final bool isLightPanel = backgroundGradient == null &&
+        (backgroundColor?.computeLuminance() ?? 0) > 0.75;
+    final Color primaryTextOnPanel = isLightPanel
+        ? Theme.of(context).colorScheme.onSurface
+        : Colors.white;
+    final Color secondaryTextOnPanel = isLightPanel
+        ? Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.72)
+        : Colors.white.withValues(alpha: 0.95);
+    final Color circleFill = isLightPanel
+        ? Colors.black.withOpacity(0.04)
+        : Colors.white.withValues(alpha: 0.30);
+    final Color circleBorder = isLightPanel
+        ? Colors.black.withOpacity(0.08)
+        : Colors.white.withValues(alpha: 0.8);
+  final Color sideIconColor = isLightPanel
+    ? Theme.of(context).colorScheme.onSurface
+    : Colors.white;
+
     return Container(
       decoration: BoxDecoration(
-        color: backgroundGradient == null
-            ? const Color(0xFF1e40af).withValues(alpha: 0.28)
-            : null,
+        color: backgroundGradient == null ? panelColor : null,
         gradient: backgroundGradient,
         borderRadius: BorderRadius.circular(22),
         boxShadow: const [
@@ -43,6 +70,11 @@ class CtaPanel extends StatelessWidget {
             title: 'Add',
             value: 'Channel',
             onTap: onAdd,
+            titleColor: secondaryTextOnPanel,
+            valueColor: primaryTextOnPanel,
+            circleFill: circleFill,
+            circleBorder: circleBorder,
+            iconColor: sideIconColor,
           ),
           // Center: Share (slightly larger)
           _CenterActionButton(
@@ -51,13 +83,19 @@ class CtaPanel extends StatelessWidget {
             gradient: callButtonGradient,
             size: 82,
             caption: centerValue,
+            captionColor: primaryTextOnPanel,
           ),
           // Right: Quick Call moved from center
           _CtaItem(
-            icon: Icons.call,
-            title: 'Call',
-            value: 'Quick',
+            icon: quickIconOverride ?? Icons.call,
+            title: (quickTitleOverride ?? 'Quick').toUpperCase(),
+            value: quickValueOverride ?? 'Call',
             onTap: onQuickCall,
+            titleColor: secondaryTextOnPanel,
+            valueColor: primaryTextOnPanel,
+            circleFill: circleFill,
+            circleBorder: circleBorder,
+            iconColor: sideIconColor,
           ),
         ],
       ),
@@ -70,11 +108,21 @@ class _CtaItem extends StatelessWidget {
   final String title;
   final String value;
   final VoidCallback? onTap;
+  final Color? titleColor;
+  final Color? valueColor;
+  final Color? circleFill;
+  final Color? circleBorder;
+  final Color? iconColor;
   const _CtaItem({
     required this.icon,
     required this.title,
     required this.value,
     this.onTap,
+    this.titleColor,
+    this.valueColor,
+    this.circleFill,
+    this.circleBorder,
+    this.iconColor,
   });
 
   @override
@@ -90,20 +138,22 @@ class _CtaItem extends StatelessWidget {
               width: 54,
               height: 54,
               decoration: BoxDecoration(
-                // Make the button background less transparent for better visibility
-                color: Colors.white.withValues(alpha: 0.30),
-                // Add faint white border for extra contrast on deep gradient areas
-                border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 1),
+                // Button background and border adapt to panel brightness
+                color: circleFill ?? Colors.white.withValues(alpha: 0.30),
+                border: Border.all(
+                  color: circleBorder ?? Colors.white.withValues(alpha: 0.8),
+                  width: 1,
+                ),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: Colors.white, size: 22),
+              child: Icon(icon, color: iconColor ?? Colors.white, size: 22),
             ),
             const SizedBox(height: 6),
             Text(
               title.toUpperCase(),
               style: TextStyle(
-                // Slightly increase label opacity to improve legibility
-                color: Colors.white.withValues(alpha: 0.95),
+                // Label color adapts to panel brightness
+                color: titleColor ?? Colors.white.withValues(alpha: 0.95),
                 fontSize: 12,
                 letterSpacing: 0.8,
               ),
@@ -111,8 +161,8 @@ class _CtaItem extends StatelessWidget {
             const SizedBox(height: 2),
             Text(
               value,
-              style: const TextStyle(
-                color: Colors.white,
+              style: TextStyle(
+                color: valueColor ?? Colors.white,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -132,6 +182,7 @@ class _CenterActionButton extends StatelessWidget {
   final Gradient? gradient;
   final double size;
   final String? caption;
+  final Color? captionColor;
 
   const _CenterActionButton({
     required this.icon,
@@ -139,6 +190,7 @@ class _CenterActionButton extends StatelessWidget {
     this.gradient,
     this.size = 82,
     this.caption,
+    this.captionColor,
   });
 
   @override
@@ -177,8 +229,8 @@ class _CenterActionButton extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             caption!,
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: captionColor ?? Colors.white,
               fontWeight: FontWeight.w700,
             ),
           ),
