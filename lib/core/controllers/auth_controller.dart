@@ -27,4 +27,16 @@ class AuthController {
   }
 
   Future<void> signOut() => client.auth.signOut();
+
+  Future<void> resendEmailVerification() async {
+    final user = client.auth.currentUser;
+    if (user == null) {
+      throw Exception('No user found');
+    }
+    
+    await client.auth.resend(
+      type: OtpType.signup,
+      email: user.email!,
+    );
+  }
 }

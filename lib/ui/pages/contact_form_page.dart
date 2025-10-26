@@ -6,6 +6,7 @@ import 'package:omada/core/data/utils/validation_utils.dart';
 import 'package:omada/core/data/models/tag_model.dart';
 import 'package:omada/core/theme/design_tokens.dart';
 import 'package:omada/ui/widgets/app_card.dart';
+import 'package:omada/ui/widgets/app_bottom_nav.dart';
 
 class ContactFormPage extends StatefulWidget {
   final ContactModel? contact;
@@ -20,7 +21,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
   final _formKey = GlobalKey<FormState>();
   late final ContactFormController _controller;
 
-  final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _givenNameController = TextEditingController();
   final TextEditingController _familyNameController = TextEditingController();
   final TextEditingController _primaryMobileController =
@@ -41,7 +41,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
     if (contact != null) {
       // If editing an existing contact, start in read-only mode
       _isEditing = false;
-      _fullNameController.text = contact.fullName ?? '';
       _givenNameController.text = contact.givenName ?? '';
       _familyNameController.text = contact.familyName ?? '';
       _primaryMobileController.text = contact.primaryMobile ?? '';
@@ -57,7 +56,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
 
   @override
   void dispose() {
-    _fullNameController.dispose();
     _givenNameController.dispose();
     _familyNameController.dispose();
     _primaryMobileController.dispose();
@@ -70,15 +68,16 @@ class _ContactFormPageState extends State<ContactFormPage> {
 
     setState(() => _submitting = true);
 
-    final fullName = _fullNameController.text.trim().isEmpty
-        ? null
-        : _fullNameController.text.trim();
     final givenName = _givenNameController.text.trim().isEmpty
         ? null
         : _givenNameController.text.trim();
     final familyName = _familyNameController.text.trim().isEmpty
         ? null
         : _familyNameController.text.trim();
+    // Build full name from given name + family name
+    final fullName = givenName != null || familyName != null
+        ? '${givenName ?? ''} ${familyName ?? ''}'.trim()
+        : null;
     final primaryMobile = _primaryMobileController.text.trim();
     final primaryEmail = _primaryEmailController.text.trim().isEmpty
         ? null
@@ -128,6 +127,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
         : 'Unnamed Contact';
 
     return Scaffold(
+      bottomNavigationBar: const AppBottomNav(active: AppNav.contacts),
       body: Form(
         key: _formKey,
         child: CustomScrollView(
@@ -171,9 +171,14 @@ class _ContactFormPageState extends State<ContactFormPage> {
               flexibleSpace: FlexibleSpaceBar(
                 background: Container(
                   decoration: const BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage('assets/jpg/banner.jpg'),
-                      fit: BoxFit.cover,
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF3B82F6), // Blue
+                        Color(0xFF9370DB), // Medium Purple
+                      ],
+                      stops: [0.0, 1.0],
                     ),
                   ),
                   child: SafeArea(
@@ -327,18 +332,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
                               ],
                             ),
                             const SizedBox(height: OmadaTokens.space16),
-                            // Full Name Field
-                            _buildFormFieldWithIcon(
-                              icon: Icons.person,
-                              label: 'Full Name',
-                              controller: _fullNameController,
-                              validator: _isEditing
-                                  ? (_) => _validateNameFields()
-                                  : null,
-                              textCapitalization: TextCapitalization.words,
-                              enabled: _isEditing,
-                            ),
-                            const SizedBox(height: OmadaTokens.space16),
                             // Given and Family Name Row
                             Row(
                               children: [
@@ -469,8 +462,10 @@ class _ContactFormPageState extends State<ContactFormPage> {
                         ),
                       ),
                       const SizedBox(height: OmadaTokens.space24),
-                      // Tags Section (only show when editing)
-                      if (_isEditing) _buildTagSection(),
+                      // Tags Section
+                      AppCard(
+                        child: _buildTagSection(),
+                      ),
                       // Save Button (only show when editing)
                       if (_isEditing) ...[
                         const SizedBox(height: OmadaTokens.space24),
@@ -510,7 +505,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
       if (!_isEditing && widget.contact != null) {
         // If canceling edit, restore original values
         final contact = widget.contact!;
-        _fullNameController.text = contact.fullName ?? '';
         _givenNameController.text = contact.givenName ?? '';
         _familyNameController.text = contact.familyName ?? '';
         _primaryMobileController.text = contact.primaryMobile ?? '';
@@ -650,11 +644,25 @@ class _ContactFormPageState extends State<ContactFormPage> {
   }
 
   String? _validateNameFields() {
-    return _controller.validateNameTriplet(
-      full: _fullNameController.text.trim(),
-      given: _givenNameController.text.trim(),
-      family: _familyNameController.text.trim(),
-    );
+    final given = _givenNameController.text.trim();
+    final family = _familyNameController.text.trim();
+    
+    // At least one name field must be provided
+    if (given.isEmpty && family.isEmpty) {
+      return 'Please provide at least a given name or family name';
+    }
+    
+    // Validate given name if provided
+    if (given.isNotEmpty && !ValidationUtils.isValidContactName(given)) {
+      return 'Invalid given name';
+    }
+    
+    // Validate family name if provided
+    if (family.isNotEmpty && !ValidationUtils.isValidContactName(family)) {
+      return 'Invalid family name';
+    }
+    
+    return null;
   }
 
   Future<void> _loadTags({String? contactId}) async {
@@ -678,14 +686,30 @@ class _ContactFormPageState extends State<ContactFormPage> {
   }
 
   Widget _buildTagSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Tags',
-          style: Theme.of(
-            context,
-          ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+    return Padding(
+      padding: const EdgeInsets.all(OmadaTokens.space20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Tags',
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            if (!_isEditing)
+              TextButton.icon(
+                onPressed: () => setState(() => _isEditing = true),
+                icon: const Icon(Icons.edit, size: 18),
+                label: const Text('Edit Tags'),
+                style: TextButton.styleFrom(
+                  foregroundColor: Theme.of(context).primaryColor,
+                ),
+              ),
+          ],
         ),
         const SizedBox(height: OmadaTokens.space8),
         Wrap(
@@ -730,7 +754,8 @@ class _ContactFormPageState extends State<ContactFormPage> {
             ],
           ],
         ),
-      ],
+        ],
+      ),
     );
   }
 

@@ -98,13 +98,17 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                       right: 0,
                       child: IconButton(
                         tooltip: 'Account',
-                        icon: const Icon(Icons.account_circle, color: Colors.white),
+                        icon: const Icon(
+                          Icons.account_circle,
+                          color: Colors.white,
+                        ),
                         onPressed: () {
-                          Navigator.of(context).pushNamed('/account'); // or pushReplacementNamed
+                          Navigator.of(
+                            context,
+                          ).pushNamed('/account'); // or pushReplacementNamed
                         },
                       ),
-              ),
-
+                    ),
                   ],
                 ),
               ),

@@ -40,6 +40,14 @@ class _ContactScreenState extends State<ContactScreen> {
   final TextEditingController _searchController = TextEditingController();
   DateTime? _lastSearchChangeAt;
 
+  // Preloaded data
+  Map<String, List<TagModel>> _tagsByContact = {};
+  Map<String, List<ContactChannelModel>> _channelsByContact = {};
+
+  // Refresh indicator key
+  final GlobalKey<RefreshIndicatorState> _refreshIndicatorKey =
+      GlobalKey<RefreshIndicatorState>();
+
   @override
   void initState() {
     super.initState();
@@ -88,6 +96,10 @@ class _ContactScreenState extends State<ContactScreen> {
         (a, b) =>
             a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
       );
+
+      // Preload tags and channels for the fetched contacts
+      await _preloadContactDetails(fetched);
+
       setState(() {
         _contacts = fetched;
         _applyClientFilters();
@@ -96,6 +108,35 @@ class _ContactScreenState extends State<ContactScreen> {
       setState(() => _error = e.toString());
     } finally {
       if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _preloadContactDetails(List<ContactModel> contacts) async {
+    if (contacts.isEmpty) {
+      setState(() {
+        _tagsByContact = {};
+        _channelsByContact = {};
+      });
+      return;
+    }
+
+    try {
+      final [channelsResult, tagsResult] = await Future.wait([
+        _controller.getChannelsForContacts(contacts),
+        _controller.getTagsForContacts(contacts),
+      ]);
+
+      setState(() {
+        _channelsByContact =
+            channelsResult as Map<String, List<ContactChannelModel>>;
+        _tagsByContact = tagsResult as Map<String, List<TagModel>>;
+      });
+    } catch (e) {
+      // If preloading fails, clear the data and continue
+      setState(() {
+        _tagsByContact = {};
+        _channelsByContact = {};
+      });
     }
   }
 
@@ -146,15 +187,6 @@ class _ContactScreenState extends State<ContactScreen> {
     setState(() => _visibleContacts = filtered);
   }
 
-  Future<Map<String, List<TagModel>>> _getTagsForVisibleContacts() async {
-    return _controller.getTagsForContacts(_visibleContacts);
-  }
-
-  Future<Map<String, List<ContactChannelModel>>>
-  _getChannelsForVisibleContacts() async {
-    return _controller.getChannelsForContacts(_visibleContacts);
-  }
-
   Future<void> _onAddContact() async {
     final created = await Navigator.of(
       context,
@@ -174,9 +206,39 @@ class _ContactScreenState extends State<ContactScreen> {
   }
 
   Future<void> _onDeleteContact(ContactModel contact) async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Contact?'),
+        content: Text(
+          'Are you sure you want to delete "${contact.displayName}"?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    // If user cancelled, return early
+    if (confirmed != true) return;
+
     final removedContact = contact;
     setState(() {
       _contacts = _contacts.where((c) => c.id != removedContact.id).toList();
+      _visibleContacts = _visibleContacts
+          .where((c) => c.id != removedContact.id)
+          .toList();
+      _tagsByContact.remove(removedContact.id);
+      _channelsByContact.remove(removedContact.id);
     });
 
     try {
@@ -197,7 +259,10 @@ class _ContactScreenState extends State<ContactScreen> {
       );
     } catch (e) {
       // Revert UI on error
-      setState(() => _contacts = [..._contacts, removedContact]);
+      setState(() {
+        _contacts = [..._contacts, removedContact];
+        _applyClientFilters();
+      });
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
@@ -209,6 +274,11 @@ class _ContactScreenState extends State<ContactScreen> {
     _favouritesController.toggleFavourite(contactId);
   }
 
+  // Method to trigger refresh programmatically if needed
+  Future<void> _handleRefresh() async {
+    await Future.wait([_refreshContacts(), _refreshTags()]);
+  }
+
   @override
   Widget build(BuildContext context) {
     final double expandedHeight = 315;
@@ -216,98 +286,75 @@ class _ContactScreenState extends State<ContactScreen> {
 
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: expandedHeight,
-            collapsedHeight: collapsedHeight,
-            pinned: true,
+      body: RefreshIndicator(
+        key: _refreshIndicatorKey,
+        onRefresh: _handleRefresh,
+        displacement: 80.0, // How far down the indicator comes
+        color: Colors.blue,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        strokeWidth: 2.0,
+        child: CustomScrollView(
+          physics:
+              const AlwaysScrollableScrollPhysics(), // Important for RefreshIndicator to work
+          slivers: [
+            SliverAppBar(
+              expandedHeight: expandedHeight,
+              collapsedHeight: collapsedHeight,
+              pinned: true,
+              forceMaterialTransparency: true,
+              flexibleSpace: LayoutBuilder(
+                builder: (context, constraints) {
+                  const double collapseThreshold = 0.99;
 
-            // floating: true,
-            // snap: true,
-            // automaticallyImplyLeading: false,
-            forceMaterialTransparency: true,
-            flexibleSpace: LayoutBuilder(
-              builder: (context, constraints) {
-                final double currentHeight = constraints.biggest.height;
+                  final double currentHeight = constraints.biggest.height;
 
-                final double t =
-                    ((currentHeight - collapsedHeight) /
-                            (expandedHeight - collapsedHeight))
-                        .clamp(0.0, 1.0);
-                // print("reported t: $t");
-                // print("current height: $currentHeight");
-                // print("min height: $minHeight");
-                // print(
-                //   "collapsed height $collapsedHeight, $minHeight, $systemMinHeight",
-                // );
+                  final double t =
+                      ((currentHeight - collapsedHeight) /
+                              (expandedHeight - collapsedHeight))
+                          .clamp(0.0, 1.0);
 
-                // if (_searchController.text.isNotEmpty) {
-                //   _searchController.clear();
-                //   WidgetsBinding.instance.addPostFrameCallback((_) {
-                //     _refreshContacts();
-                //   });
-                // }
-
-                if (currentHeight > (expandedHeight + collapsedHeight) / 2) {
-                  return ExpandedContactHeader(
-                    onDiscoverUsers: _openUserDiscoverySheet,
-                    onGetDeleted: _openDeletedContacts,
-                    onGetRequests: _openIncomingRequestsSheet,
-                    onManageTags: _openManageTagsSheet,
-                    onAddContact: _onAddContact,
-                    onGetAccountPage: _openAccountPage,
-                    onSearchChanged: _onSearchChanged,
-                    searchController: _searchController,
-                  );
-                } else {
-                  return CollapsedContactHeader(
-                    onAddContact: _onAddContact,
-                    onSearchChanged: _onSearchChanged,
-                    searchController: _searchController,
-                  );
-                }
-              },
-            ),
-          ),
-          // SliverList(
-          //   delegate: SliverChildBuilderDelegate(
-          //     (context, index) => ContactCard(
-          //       name: "name #$index",
-          //       phone: "phone #$index",
-          //       tags: [
-          //         Tag("Family", 0),
-          //         Tag("Work", 1),
-          //         Tag("Friends", 2),
-          //         Tag("Urgent", 3),
-          //         Tag("School", 4),
-          //         Tag("Fitness", 5),
-          //       ],
-          //       lastContact: DateTime.now(),
-          //     ),
-          //     childCount: 50,
-          //   ),
-          // ),
-          if (_tags.isNotEmpty)
-            SliverToBoxAdapter(
-              child: FilterRow(
-                tags: _tags,
-                selectedTagIds: _selectedTagIds,
-                onTagToggle: (tag) async {
-                  setState(() {
-                    if (_selectedTagIds.contains(tag.id)) {
-                      _selectedTagIds.remove(tag.id);
-                    } else {
-                      _selectedTagIds.add(tag.id);
-                    }
-                  });
-                  await _refreshContacts();
+                  // if (currentHeight > (expandedHeight + collapsedHeight) / 2)
+                  if (t > collapseThreshold) {
+                    return ExpandedContactHeader(
+                      onDiscoverUsers: _openUserDiscoverySheet,
+                      onGetDeleted: _openDeletedContacts,
+                      onGetRequests: _openIncomingRequestsSheet,
+                      onManageTags: _openManageTagsSheet,
+                      onAddContact: _onAddContact,
+                      onGetAccountPage: _openAccountPage,
+                      onSearchChanged: _onSearchChanged,
+                      searchController: _searchController,
+                      contactCount: _visibleContacts.length,
+                    );
+                  } else {
+                    return CollapsedContactHeader(
+                      onAddContact: _onAddContact,
+                      onSearchChanged: _onSearchChanged,
+                      searchController: _searchController,
+                    );
+                  }
                 },
               ),
             ),
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
+            if (_tags.isNotEmpty)
+              SliverToBoxAdapter(
+                child: FilterRow(
+                  tags: _tags,
+                  selectedTagIds: _selectedTagIds,
+                  onTagToggle: (tag) async {
+                    setState(() {
+                      if (_selectedTagIds.contains(tag.id)) {
+                        _selectedTagIds.remove(tag.id);
+                      } else {
+                        _selectedTagIds.add(tag.id);
+                      }
+                    });
+                    await _refreshContacts();
+                  },
+                ),
+              ),
+            SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
                 // Handle different states based on index
                 if (_isLoading && _visibleContacts.isEmpty) {
                   return const Center(child: CircularProgressIndicator());
@@ -321,65 +368,34 @@ class _ContactScreenState extends State<ContactScreen> {
 
                 // Return contact tile for actual contacts
                 final contact = _visibleContacts[index];
-                return FutureBuilder<Map<String, List<TagModel>>>(
-                  future: _getTagsForVisibleContacts(),
-                  builder: (context, snapshot) {
-                    final tagsByContact = snapshot.data ?? const {};
-                    return ContactCard(
-                      contact: contact,
-                      tags: tagsByContact[contact.id] ?? const [],
-                      isFavourite: _favouritesController.isFavourite(
-                        contact.id,
-                      ),
-                      onFavouriteToggle: () => _toggleFavourite(contact.id),
-                      onTagTap: (tag) async {
-                        setState(() {
-                          if (_selectedTagIds.contains(tag.id)) {
-                            _selectedTagIds.remove(tag.id);
-                          } else {
-                            _selectedTagIds.add(tag.id);
-                          }
-                        });
-                        await _refreshContacts();
-                      },
-                      onLongPress: () => _onEditContact(contact),
-                      onEdit: () => _onEditContact(contact),
-                      onDelete: () => _onDeleteContact(contact),
-                    );
-                    // return ContactTile(
-                    //   contact: contact,
-                    //   tags: tagsByContact[contact.id] ?? const [],
-                    //   isFavourite: _favouritesController.isFavourite(
-                    //     contact.id,
-                    //   ),
-                    //   onFavouriteToggle: () => _toggleFavourite(contact.id),
-                    //   onTagTap: (tag) async {
-                    //     setState(() {
-                    //       if (_selectedTagIds.contains(tag.id)) {
-                    //         _selectedTagIds.remove(tag.id);
-                    //       } else {
-                    //         _selectedTagIds.add(tag.id);
-                    //       }
-                    //     });
-                    //     await _refreshContacts();
-                    //   },
-                    //   onTap: () => _onEditContact(contact),
-                    //   onEdit: () => _onEditContact(contact),
-                    //   onDelete: () => _onDeleteContact(contact),
-                    // );
+                return ContactCard(
+                  contact: contact,
+                  tags: _tagsByContact[contact.id] ?? const [],
+                  channels: _channelsByContact[contact.id] ?? const [],
+                  isFavourite: _favouritesController.isFavourite(contact.id),
+                  onFavouriteToggle: () => _toggleFavourite(contact.id),
+                  onTagTap: (tag) async {
+                    setState(() {
+                      if (_selectedTagIds.contains(tag.id)) {
+                        _selectedTagIds.remove(tag.id);
+                      } else {
+                        _selectedTagIds.add(tag.id);
+                      }
+                    });
+                    await _refreshContacts();
                   },
+                  onLongPress: () => _onEditContact(contact),
+                  onEdit: () => _onEditContact(contact),
+                  onDelete: () => _onDeleteContact(contact),
                 );
-              },
-              childCount: _getChildCount(), // Implement this method
+              }, childCount: _getChildCount()),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
       bottomNavigationBar: const AppBottomNav(active: AppNav.contacts),
     );
   }
-
-  // SLIVERLISTCHILDBUILDER
 
   int _getChildCount() {
     if (_isLoading && _visibleContacts.isEmpty) return 1;
@@ -400,7 +416,7 @@ class _ContactScreenState extends State<ContactScreen> {
             Text(_error!, textAlign: TextAlign.center),
             const SizedBox(height: 16),
             ElevatedButton(
-              onPressed: _refreshContacts,
+              onPressed: _handleRefresh,
               child: const Text('Retry'),
             ),
           ],
@@ -424,77 +440,7 @@ class _ContactScreenState extends State<ContactScreen> {
     );
   }
 
-  // THE OTHER STUFF
-
-  Widget _buildBody() {
-    if (_isLoading && _visibleContacts.isEmpty) {
-      return const Center(child: CircularProgressIndicator());
-    }
-    if (_error != null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error_outline, size: 48),
-              const SizedBox(height: 8),
-              Text(_error!, textAlign: TextAlign.center),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _refreshContacts,
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-    if (_visibleContacts.isEmpty) {
-      return Padding(
-        padding: const EdgeInsets.only(top: 100),
-        child: Column(
-          children: const [
-            Icon(Icons.contact_page_outlined, size: 72, color: Colors.grey),
-            SizedBox(height: 12),
-            Text('No contacts yet'),
-            SizedBox(height: 4),
-            Text('Tap + to add your first contact'),
-          ],
-        ),
-      );
-    }
-    return FutureBuilder<Map<String, List<TagModel>>>(
-      future: _getTagsForVisibleContacts(),
-      builder: (context, snapshot) {
-        final tagsByContact = snapshot.data ?? const {};
-        return Column(
-          children: _visibleContacts.map((contact) {
-            return ContactTile(
-              contact: contact,
-              tags: tagsByContact[contact.id] ?? const [],
-              isFavourite: _favouritesController.isFavourite(contact.id),
-              onFavouriteToggle: () => _toggleFavourite(contact.id),
-              onTagTap: (tag) async {
-                setState(() {
-                  if (_selectedTagIds.contains(tag.id)) {
-                    _selectedTagIds.remove(tag.id);
-                  } else {
-                    _selectedTagIds.add(tag.id);
-                  }
-                });
-                await _refreshContacts();
-              },
-              onTap: () => _onEditContact(contact),
-              onEdit: () => _onEditContact(contact),
-              onDelete: () => _onDeleteContact(contact),
-            );
-          }).toList(),
-        );
-      },
-    );
-  }
-
+  // ... rest of your methods remain the same
   Future<void> _openManageTagsSheet() async {
     await _refreshTags();
     final result = await Navigator.of(context).push<bool>(
