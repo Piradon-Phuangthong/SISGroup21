@@ -217,7 +217,7 @@ class _OmadasTestPageState extends State<OmadasTestPage> {
   Future<void> _testDiscovery() async {
     // Ensure services are initialized (in case of hot reload issues)
     if (!mounted) return;
-    
+
     setState(() {
       _status = 'Testing discovery...';
       _publicOmadas = [];
@@ -225,10 +225,10 @@ class _OmadasTestPageState extends State<OmadasTestPage> {
 
     try {
       print('🔍 Starting discovery test...');
-      
+
       // Reinitialize service if needed (hot reload safety)
       final service = _omadaServiceExtended;
-      
+
       final discoverable = await service.getPublicOmadas();
       print('✅ Discovery returned ${discoverable.length} omadas');
 
@@ -258,7 +258,9 @@ class _OmadasTestPageState extends State<OmadasTestPage> {
         _debugAllPublic = allPublic;
       });
       // ignore: avoid_print
-      print('🧪 Debug: Loaded ${allPublic.length} public omadas (including my own)');
+      print(
+        '🧪 Debug: Loaded ${allPublic.length} public omadas (including my own)',
+      );
       if (allPublic.isEmpty && mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -337,34 +339,34 @@ class _OmadasTestPageState extends State<OmadasTestPage> {
                 ),
               ),
 
-              if (_debugAllPublic.isNotEmpty) ...[
-                const Divider(height: 24),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text(
-                    'Debug: ALL public omadas (including your own) — ${_debugAllPublic.length} found',
-                    style: Theme.of(context).textTheme.titleSmall,
-                  ),
+            if (_debugAllPublic.isNotEmpty) ...[
+              const Divider(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Text(
+                  'Debug: ALL public omadas (including your own) — ${_debugAllPublic.length} found',
+                  style: Theme.of(context).textTheme.titleSmall,
                 ),
-                const SizedBox(height: 8),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ..._debugAllPublic.map(
-                        (o) => ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text(o.name),
-                          subtitle: Text(
-                            'Owner: ${o.ownerId.substring(0, 8)}… • Members: ${o.memberCount ?? 0} • ${o.isPublic ? 'Public' : 'Private'}',
-                          ),
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ..._debugAllPublic.map(
+                      (o) => ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(o.name),
+                        subtitle: Text(
+                          'Owner: ${o.ownerId.substring(0, 8)}… • Members: ${o.memberCount ?? 0} • ${o.isPublic ? 'Public' : 'Private'}',
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
+            ],
             const SizedBox(height: 16),
 
             // Statistics

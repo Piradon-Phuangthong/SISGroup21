@@ -81,35 +81,10 @@ class OmadaServiceExtended {
 
     try {
       print('📊 Trying omadas_with_counts view...');
-  final response = await _client
-          .from('omadas_with_counts')
-          .select()
-          .eq('visibility', 'public')
-          .eq('is_deleted', false)
-          .neq('owner_id', _userId)
-          .not(
-            'id',
-            'in',
-    // Use memberships (user-based) to exclude groups I'm already in
-    '(select omada_id from omada_memberships where user_id=$_userId)',
-          )
-          .order('member_count', ascending: false)
-          .limit(limit);
-
-      final omadas = (response as List)
-          .map((json) => OmadaModel.fromJson(json))
-          .toList();
-
-      print('✅ Loaded ${omadas.length} public omadas from omadas_with_counts');
-      return omadas;
-    } catch (e) {
-      print('⚠️ omadas_with_counts failed: $e');
-      print('📊 Falling back to base omadas table...');
-
-      // Fallback: base table with visibility filter
+      List<dynamic> response;
       try {
-        final response = await _client
-            .from('omadas')
+        response = await _client
+            .from('omadas_with_counts')
             .select()
             .eq('visibility', 'public')
             .eq('is_deleted', false)
@@ -120,10 +95,62 @@ class OmadaServiceExtended {
               // Use memberships (user-based) to exclude groups I'm already in
               '(select omada_id from omada_memberships where user_id=$_userId)',
             )
-            .order('name')
+            .order('member_count', ascending: false)
             .limit(limit);
+      } catch (subqError) {
+        // If memberships table doesn't exist or RLS blocks it, run without membership exclusion
+        print('ℹ️ Membership subquery not available in view path: $subqError');
+        response = await _client
+            .from('omadas_with_counts')
+            .select()
+            .eq('visibility', 'public')
+            .eq('is_deleted', false)
+            .neq('owner_id', _userId)
+            .order('member_count', ascending: false)
+            .limit(limit);
+      }
 
-        final omadas = (response as List)
+      final omadas = response.map((json) => OmadaModel.fromJson(json)).toList();
+
+      print('✅ Loaded ${omadas.length} public omadas from omadas_with_counts');
+      return omadas;
+    } catch (e) {
+      print('⚠️ omadas_with_counts failed: $e');
+      print('📊 Falling back to base omadas table...');
+
+      // Fallback: base table with visibility filter
+      try {
+        List<dynamic> response;
+        try {
+          response = await _client
+              .from('omadas')
+              .select()
+              .eq('visibility', 'public')
+              .eq('is_deleted', false)
+              .neq('owner_id', _userId)
+              .not(
+                'id',
+                'in',
+                // Use memberships (user-based) to exclude groups I'm already in
+                '(select omada_id from omada_memberships where user_id=$_userId)',
+              )
+              .order('name')
+              .limit(limit);
+        } catch (subqError) {
+          print(
+            'ℹ️ Membership subquery not available in base path: $subqError',
+          );
+          response = await _client
+              .from('omadas')
+              .select()
+              .eq('visibility', 'public')
+              .eq('is_deleted', false)
+              .neq('owner_id', _userId)
+              .order('name')
+              .limit(limit);
+        }
+
+        final omadas = response
             .map((json) => OmadaModel.fromJson(json))
             .toList();
 
