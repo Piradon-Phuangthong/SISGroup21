@@ -177,18 +177,34 @@ class OmadaServiceExtended {
   }) async {
     // Strategy: insert minimal supported columns first (more portable), then best-effort update extras.
     try {
-      final baseResponse = await _client
-          .from('omadas')
-          .insert({
-            'owner_id': _userId,
-            'name': name,
-            if (description != null) 'description': description,
-            if (avatarUrl != null) 'avatar_url': avatarUrl,
-            // Include visibility in initial insert to avoid database defaults
-            'visibility': isPublic ? 'public' : 'private',
-          })
-          .select()
-          .single();
+      // Try inserting with visibility field first
+      Map<String, dynamic> baseResponse;
+      try {
+        baseResponse = await _client
+            .from('omadas')
+            .insert({
+              'owner_id': _userId,
+              'name': name,
+              if (description != null) 'description': description,
+              if (avatarUrl != null) 'avatar_url': avatarUrl,
+              // Include visibility in initial insert to avoid database defaults
+              'visibility': isPublic ? 'public' : 'private',
+            })
+            .select()
+            .single();
+      } catch (e) {
+        // Fallback: try without visibility field for older schemas
+        baseResponse = await _client
+            .from('omadas')
+            .insert({
+              'owner_id': _userId,
+              'name': name,
+              if (description != null) 'description': description,
+              if (avatarUrl != null) 'avatar_url': avatarUrl,
+            })
+            .select()
+            .single();
+      }
 
       var omada = OmadaModel.fromJson(baseResponse);
 
@@ -201,8 +217,10 @@ class OmadaServiceExtended {
         advanced['join_policy'] = joinPolicy.dbValue;
       }
       // Handle both is_public and visibility fields for different schema versions
-      // Set is_public field for newer schemas (visibility already set in initial insert)
+      // Set is_public field for newer schemas (visibility already set in initial insert if possible)
       advanced['is_public'] = isPublic;
+      // Also try to set visibility if it wasn't set in the initial insert
+      advanced['visibility'] = isPublic ? 'public' : 'private';
 
       if (advanced.isNotEmpty) {
         try {
@@ -217,7 +235,6 @@ class OmadaServiceExtended {
           }
         } catch (e) {
           // Log the error for debugging but don't fail the creation
-          print('Warning: Could not update advanced omada fields: $e');
           // Ignore if columns don't exist or RLS prevents update; base insert already succeeded
         }
       }
