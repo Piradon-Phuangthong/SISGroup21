@@ -9,21 +9,22 @@ class ExpandedOmadaHeader extends StatelessWidget {
     required this.onDiscover,
     required this.onRequests,
     required this.onCreate,
-    this.gradientStart = const Color(0xFF6A11CB), // 💜 change me
-    this.gradientEnd   = const Color(0xFF2575FC), // 💙 change me
+    required this.gradientStart,
+    required this.gradientEnd,
   });
 
   final TextEditingController searchController;
   final VoidCallback onSearchChanged;
-  final Future<void> Function() onDiscover;
-  final Future<void> Function() onRequests;
-  final Future<void> Function() onCreate;
+  final VoidCallback onDiscover;
+  final VoidCallback onRequests;
+  final VoidCallback onCreate;
 
   final Color gradientStart;
   final Color gradientEnd;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -32,94 +33,138 @@ class ExpandedOmadaHeader extends StatelessWidget {
           end: Alignment.bottomRight,
         ),
       ),
-      padding: const EdgeInsets.only(
-        // Push everything down a bit so "OMADAS" sits lower
-        top: OmadaTokens.space24 + 60,
-        left: OmadaTokens.space16,
-        right: OmadaTokens.space16,
-        bottom: OmadaTokens.space16,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          // Title (logo text)
-          Text(
-            'OMADAS',
-            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+      child: SafeArea(
+        bottom: false,
+        child: Padding(
+          // ↑ a touch more top padding to sit lower
+          padding: const EdgeInsets.fromLTRB(20, 28, 20, 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // extra spacer so title sits lower than the notch
+              const SizedBox(height: 6),
+
+              // Title → “Omadas” (not all caps)
+              Text(
+                'Omadas',
+                style: theme.textTheme.headlineSmall?.copyWith(
                   color: Colors.white,
-                  fontWeight: FontWeight.w800,
-                  letterSpacing: 1,
-                ),
-          ),
-
-          const SizedBox(height: OmadaTokens.space16),
-
-          // 🔁 switched order: Search bar FIRST…
-          Container(
-            decoration: BoxDecoration(
-              color: const Color.fromARGB(255, 213, 224, 219).withOpacity(0.52),
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: TextField(
-              controller: searchController,
-              onChanged: (_) => onSearchChanged(),
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                hintText: 'Search Omadas...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: searchController.text.isEmpty
-                    ? null
-                    : IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          searchController.clear();
-                          onSearchChanged();
-                        },
-                      ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 14,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: .5,
                 ),
               ),
-            ),
-          ),
+              const SizedBox(height: 12),
 
-          const SizedBox(height: OmadaTokens.space16),
+              // Shorter search bar: center + max width cap
+              Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 520),
+                  child: FractionallySizedBox(
+                    // 0.88 of available width on small screens
+                    widthFactor: 0.88,
+                    child: TextField(
+                      controller: searchController,
+                      onChanged: (_) => onSearchChanged(),
+                      textInputAction: TextInputAction.search,
+                      style: const TextStyle(color: Colors.white), // typing color
+                      decoration: InputDecoration(
+                        hintText: 'Search Omadas...',
+                        hintStyle: const TextStyle(color: Colors.white70), // hint color
+                        prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                        filled: true,
+                        fillColor: Colors.white.withOpacity(0.18),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(28),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
 
-          // …and Buttons row AFTER the search bar
-          Wrap(
-            spacing: OmadaTokens.space16,
-            children: [
-              _roundIcon(context, Icons.explore, 'Discover', onDiscover),
-              _roundIcon(context, Icons.inbox_outlined, 'Requests', onRequests),
-              _roundIcon(context, Icons.add, 'Create', onCreate),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 18), // buttons sit a bit lower
+
+              // Action row (Discover • Requests • Add)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: const [
+                  _HeaderActionTile(
+                    icon: Icons.travel_explore,
+                    label: 'Discover',
+                    keyId: 'discover',
+                  ),
+                  SizedBox(width: 12),
+                  _HeaderActionTile(
+                    icon: Icons.inbox_outlined,
+                    label: 'Requests',
+                    keyId: 'requests',
+                  ),
+                  SizedBox(width: 12),
+                  _HeaderActionTile(
+                    icon: Icons.add,
+                    label: 'Add',
+                    keyId: 'create',
+                  ),
+                ],
+              ),
+              const SizedBox(height: 6),
             ],
           ),
-        ],
+        ),
       ),
     );
   }
+}
 
-  Widget _roundIcon(
-    BuildContext context,
-    IconData icon,
-    String tooltip,
-    Future<void> Function() onTap,
-  ) {
-    return Tooltip(
-      message: tooltip,
-      child: InkWell(
-        onTap: () => onTap(),
-        borderRadius: BorderRadius.circular(24),
-        child: Container(
-          width: 44,
-          height: 44,
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.25),
-            borderRadius: BorderRadius.circular(22),
+class _HeaderActionTile extends StatelessWidget {
+  const _HeaderActionTile({
+    required this.icon,
+    required this.label,
+    required this.keyId,
+  });
+
+  final IconData icon;
+  final String label;
+  final String keyId;
+
+  @override
+  Widget build(BuildContext context) {
+    VoidCallback? onTap;
+    final parent =
+        context.findAncestorWidgetOfExactType<ExpandedOmadaHeader>();
+    if (parent != null) {
+      if (keyId == 'discover') onTap = parent.onDiscover;
+      if (keyId == 'requests') onTap = parent.onRequests;
+      if (keyId == 'create') onTap = parent.onCreate;
+    }
+
+    final tile = Container(
+      width: 64,
+      height: 64,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.18),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Icon(icon, color: Colors.white),
+    );
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        children: [
+          tile,
+          const SizedBox(height: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
           ),
-          child: Icon(icon, color: Colors.white),
-        ),
+        ],
       ),
     );
   }

@@ -5,23 +5,30 @@ class CtaPanel extends StatelessWidget {
   final VoidCallback onAdd;
   final VoidCallback onShare;
   final VoidCallback onQuickCall;
+  final Gradient? backgroundGradient;
+  final Gradient? callButtonGradient;
   const CtaPanel({
     super.key,
     required this.centerValue,
     required this.onAdd,
     required this.onShare,
     required this.onQuickCall,
+    this.backgroundGradient,
+    this.callButtonGradient,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF1e40af).withOpacity(0.28),
+        color: backgroundGradient == null
+            ? const Color(0xFF1e40af).withValues(alpha: 0.28)
+            : null,
+        gradient: backgroundGradient,
         borderRadius: BorderRadius.circular(22),
         boxShadow: const [
           BoxShadow(
-            color: Colors.black38,
+            color: Color.fromARGB(96, 15, 85, 117),
             blurRadius: 24,
             offset: Offset(0, 10),
           ),
@@ -37,12 +44,20 @@ class CtaPanel extends StatelessWidget {
             value: 'Channel',
             onTap: onAdd,
           ),
-          _CallButton(onTap: onQuickCall),
-          _CtaItem(
+          // Center: Share (slightly larger)
+          _CenterActionButton(
             icon: Icons.share,
-            title: 'Share',
-            value: centerValue,
             onTap: onShare,
+            gradient: callButtonGradient,
+            size: 82,
+            caption: centerValue,
+          ),
+          // Right: Quick Call moved from center
+          _CtaItem(
+            icon: Icons.call,
+            title: 'Call',
+            value: 'Quick',
+            onTap: onQuickCall,
           ),
         ],
       ),
@@ -75,7 +90,10 @@ class _CtaItem extends StatelessWidget {
               width: 54,
               height: 54,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.08),
+                // Make the button background less transparent for better visibility
+                color: Colors.white.withValues(alpha: 0.30),
+                // Add faint white border for extra contrast on deep gradient areas
+                border: Border.all(color: Colors.white.withValues(alpha: 0.8), width: 1),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: Colors.white, size: 22),
@@ -84,7 +102,8 @@ class _CtaItem extends StatelessWidget {
             Text(
               title.toUpperCase(),
               style: TextStyle(
-                color: Colors.white.withOpacity(0.85),
+                // Slightly increase label opacity to improve legibility
+                color: Colors.white.withValues(alpha: 0.95),
                 fontSize: 12,
                 letterSpacing: 0.8,
               ),
@@ -104,37 +123,67 @@ class _CtaItem extends StatelessWidget {
   }
 }
 
-class _CallButton extends StatelessWidget {
+// _CallButton removed after swapping: center action is now Share.
+
+// Center prominent action button with optional caption (used for Share)
+class _CenterActionButton extends StatelessWidget {
+  final IconData icon;
   final VoidCallback? onTap;
-  const _CallButton({this.onTap});
+  final Gradient? gradient;
+  final double size;
+  final String? caption;
+
+  const _CenterActionButton({
+    required this.icon,
+    this.onTap,
+    this.gradient,
+    this.size = 82,
+    this.caption,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      customBorder: const CircleBorder(),
-      onTap: onTap,
-      child: Container(
-        width: 74,
-        height: 74,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: const RadialGradient(
-            center: Alignment(0, -0.4),
-            radius: 0.8,
-            colors: [Color(0xFF93c5fd), Color(0xFF60a5fa), Color(0xFF3b82f6)],
-            stops: [0.0, 0.7, 1.0],
-          ),
-          boxShadow: const [
-            BoxShadow(
-              color: Colors.black45,
-              blurRadius: 18,
-              offset: Offset(0, 6),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: gradient ??
+                  const RadialGradient(
+                    center: Alignment(0, -0.4),
+                    radius: 0.9,
+                    colors: [Color(0xFF93c5fd), Color(0xFF60a5fa), Color(0xFF3b82f6)],
+                    stops: [0.0, 0.7, 1.0],
+                  ),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color.fromARGB(115, 38, 55, 112),
+                  blurRadius: 18,
+                  offset: Offset(0, 6),
+                ),
+              ],
+              border: Border.all(color: Colors.black.withValues(alpha: 0.08), width: 6),
             ),
-          ],
-          border: Border.all(color: Colors.black.withOpacity(0.08), width: 6),
+            child: Icon(icon, size: 34, color: const Color.fromARGB(221, 241, 240, 240)),
+          ),
         ),
-        child: const Icon(Icons.bolt, size: 34, color: Colors.black87),
-      ),
+        if (caption != null) ...[
+          const SizedBox(height: 6),
+          Text(
+            caption!,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

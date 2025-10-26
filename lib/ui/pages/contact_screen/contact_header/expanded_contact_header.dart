@@ -65,7 +65,7 @@ class _ExpandedContactHeaderState extends State<ExpandedContactHeader> {
 
               // App Title
               const Text(
-                "Omada",
+                "Contacts",
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.bold,
