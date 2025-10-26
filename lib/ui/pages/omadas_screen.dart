@@ -51,16 +51,19 @@ class _OmadasScreenState extends State<OmadasScreen> {
 
   // ───────────────────── Data ─────────────────────
   Future<void> _loadAll() async {
-    setState(() { _isLoading = true; _error = null; });
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
       final results = await Future.wait([
         _omadaService.getMyOmadas(),
         _omadaService.getPublicOmadas(),
         _omadaService.getMyJoinRequests(),
       ]);
-      _myOmadas     = results[0] as List<OmadaModel>;
+      _myOmadas = results[0] as List<OmadaModel>;
       _publicOmadas = results[1] as List<OmadaModel>;
-      _myRequests   = results[2] as List<JoinRequestModel>;
+      _myRequests = results[2] as List<JoinRequestModel>;
       _applyClientFilters();
     } catch (e) {
       _error = e.toString();
@@ -75,7 +78,8 @@ class _OmadasScreenState extends State<OmadasScreen> {
     Future.delayed(const Duration(milliseconds: 300)).then((_) {
       final last = _lastSearchChangeAt;
       if (last == null) return;
-      if (DateTime.now().difference(last) >= const Duration(milliseconds: 290)) {
+      if (DateTime.now().difference(last) >=
+          const Duration(milliseconds: 290)) {
         _applyClientFilters();
       }
     });
@@ -144,7 +148,22 @@ class _OmadasScreenState extends State<OmadasScreen> {
   }
 
   Future<void> _openDiscoverSheet() async {
-    try { _publicOmadas = await _omadaService.getPublicOmadas(); } catch (_) {}
+    try {
+      _publicOmadas = await _omadaService.getPublicOmadas();
+      print('✅ Loaded ${_publicOmadas.length} public omadas for discovery');
+    } catch (e, stackTrace) {
+      print('❌ Error loading public omadas: $e');
+      print('Stack trace: $stackTrace');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load public omadas: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    }
     if (!mounted) return;
 
     await showModalBottomSheet(
@@ -163,16 +182,16 @@ class _OmadasScreenState extends State<OmadasScreen> {
   }
 
   Future<void> _openRequestsSheet() async {
-    try { _myRequests = await _omadaService.getMyJoinRequests(); } catch (_) {}
+    try {
+      _myRequests = await _omadaService.getMyJoinRequests();
+    } catch (_) {}
     if (!mounted) return;
 
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (_) => _RequestsSheet(
-        requests: _myRequests,
-        onCancel: _cancelRequest,
-      ),
+      builder: (_) =>
+          _RequestsSheet(requests: _myRequests, onCancel: _cancelRequest),
     );
 
     await _loadAll();
@@ -182,8 +201,9 @@ class _OmadasScreenState extends State<OmadasScreen> {
     try {
       await _omadaService.cancelJoinRequest(omadaId);
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Request cancelled')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Request cancelled')));
       await _loadAll();
     } catch (e) {
       if (!mounted) return;
@@ -223,7 +243,7 @@ class _OmadasScreenState extends State<OmadasScreen> {
                     onCreate: _showCreateOmadaSheet,
                     // tweak gradient here if you like:
                     gradientStart: const Color(0xFF64bdfb),
-                    gradientEnd:   const Color(0xFFa257e8),
+                    gradientEnd: const Color(0xFFa257e8),
                   );
                 } else {
                   return CollapsedOmadaHeader(
@@ -231,7 +251,7 @@ class _OmadasScreenState extends State<OmadasScreen> {
                     onSearchChanged: _onSearchChanged,
                     onCreate: _showCreateOmadaSheet,
                     gradientStart: const Color(0xFF64bdfb),
-                    gradientEnd:   const Color(0xFFa257e8),
+                    gradientEnd: const Color(0xFFa257e8),
                   );
                 }
               },
@@ -239,35 +259,32 @@ class _OmadasScreenState extends State<OmadasScreen> {
           ),
 
           SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
-                if (_isLoading && _visibleOmadas.isEmpty) {
-                  return const Padding(
-                    padding: EdgeInsets.only(top: 48),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-                if (_error != null && _visibleOmadas.isEmpty) {
-                  return _buildError();
-                }
-                if (_visibleOmadas.isEmpty) {
-                  return _buildEmpty();
-                }
-
-                final omada = _visibleOmadas[index];
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: OmadaTokens.space16,
-                    vertical: OmadaTokens.space8,
-                  ),
-                  child: OmadaCard(
-                    omada: omada,
-                    onTap: () => _navigateToOmada(omada),
-                  ),
+            delegate: SliverChildBuilderDelegate((context, index) {
+              if (_isLoading && _visibleOmadas.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.only(top: 48),
+                  child: Center(child: CircularProgressIndicator()),
                 );
-              },
-              childCount: _childCount(),
-            ),
+              }
+              if (_error != null && _visibleOmadas.isEmpty) {
+                return _buildError();
+              }
+              if (_visibleOmadas.isEmpty) {
+                return _buildEmpty();
+              }
+
+              final omada = _visibleOmadas[index];
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: OmadaTokens.space16,
+                  vertical: OmadaTokens.space8,
+                ),
+                child: OmadaCard(
+                  omada: omada,
+                  onTap: () => _navigateToOmada(omada),
+                ),
+              );
+            }, childCount: _childCount()),
           ),
         ],
       ),
@@ -344,7 +361,9 @@ class _DiscoverOmadasSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (publicOmadas.isEmpty) {
-      return const SafeArea(child: Center(child: Text('No public Omadas available')));
+      return const SafeArea(
+        child: Center(child: Text('No public Omadas available')),
+      );
     }
 
     return DraggableScrollableSheet(
@@ -397,13 +416,19 @@ class _DiscoverOmadasSheet extends StatelessWidget {
                     ],
                   ),
                   trailing: isMember
-                      ? const Chip(label: Text('Member'), backgroundColor: Colors.green)
+                      ? const Chip(
+                          label: Text('Member'),
+                          backgroundColor: Colors.green,
+                        )
                       : pending
-                          ? const Chip(label: Text('Pending'), backgroundColor: Colors.orange)
-                          : IconButton(
-                              icon: const Icon(Icons.add),
-                              onPressed: () => onJoinOrRequest(omada),
-                            ),
+                      ? const Chip(
+                          label: Text('Pending'),
+                          backgroundColor: Colors.orange,
+                        )
+                      : IconButton(
+                          icon: const Icon(Icons.add),
+                          onPressed: () => onJoinOrRequest(omada),
+                        ),
                   onTap: isMember ? () => onOpenOmada(omada) : null,
                 ),
               );
@@ -417,19 +442,19 @@ class _DiscoverOmadasSheet extends StatelessWidget {
 
 // ───────────────────── Bottom sheet: Requests ─────────────────────
 class _RequestsSheet extends StatelessWidget {
-  const _RequestsSheet({
-    required this.requests,
-    required this.onCancel,
-  });
+  const _RequestsSheet({required this.requests, required this.onCancel});
 
   final List<JoinRequestModel> requests;
   final Future<void> Function(String omadaId) onCancel;
 
   IconData _icon(JoinRequestStatus s) {
     switch (s) {
-      case JoinRequestStatus.pending:  return Icons.pending;
-      case JoinRequestStatus.approved: return Icons.check_circle;
-      case JoinRequestStatus.rejected: return Icons.cancel;
+      case JoinRequestStatus.pending:
+        return Icons.pending;
+      case JoinRequestStatus.approved:
+        return Icons.check_circle;
+      case JoinRequestStatus.rejected:
+        return Icons.cancel;
     }
   }
 
@@ -471,11 +496,15 @@ class _RequestsSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Status: ${r.status.dbValue}'),
-                      Text('Requested: ${_fmt(r.createdAt)}',
-                          style: Theme.of(context).textTheme.bodySmall),
+                      Text(
+                        'Requested: ${_fmt(r.createdAt)}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                       if (r.reviewedAt != null)
-                        Text('Reviewed: ${_fmt(r.reviewedAt!)}',
-                            style: Theme.of(context).textTheme.bodySmall),
+                        Text(
+                          'Reviewed: ${_fmt(r.reviewedAt!)}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
                     ],
                   ),
                   trailing: r.isPending

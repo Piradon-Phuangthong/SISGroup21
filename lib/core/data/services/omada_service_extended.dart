@@ -75,12 +75,79 @@ class OmadaServiceExtended {
   }
 
   /// Fetch public omadas (for discovery)
+  /// Excludes omadas that the current user is already a member of or owns
   Future<List<OmadaModel>> getPublicOmadas({int limit = 50}) async {
+    print('🔍 Fetching public omadas for user: $_userId');
+
     try {
+      print('📊 Trying omadas_with_counts view...');
+  final response = await _client
+          .from('omadas_with_counts')
+          .select()
+          .eq('visibility', 'public')
+          .eq('is_deleted', false)
+          .neq('owner_id', _userId)
+          .not(
+            'id',
+            'in',
+    // Use memberships (user-based) to exclude groups I'm already in
+    '(select omada_id from omada_memberships where user_id=$_userId)',
+          )
+          .order('member_count', ascending: false)
+          .limit(limit);
+
+      final omadas = (response as List)
+          .map((json) => OmadaModel.fromJson(json))
+          .toList();
+
+      print('✅ Loaded ${omadas.length} public omadas from omadas_with_counts');
+      return omadas;
+    } catch (e) {
+      print('⚠️ omadas_with_counts failed: $e');
+      print('📊 Falling back to base omadas table...');
+
+      // Fallback: base table with visibility filter
+      try {
+        final response = await _client
+            .from('omadas')
+            .select()
+            .eq('visibility', 'public')
+            .eq('is_deleted', false)
+            .neq('owner_id', _userId)
+            .not(
+              'id',
+              'in',
+              // Use memberships (user-based) to exclude groups I'm already in
+              '(select omada_id from omada_memberships where user_id=$_userId)',
+            )
+            .order('name')
+            .limit(limit);
+
+        final omadas = (response as List)
+            .map((json) => OmadaModel.fromJson(json))
+            .toList();
+
+        print('✅ Loaded ${omadas.length} public omadas from base table');
+        final enriched = await _enrichWithCounts(omadas);
+        print('✅ Enriched with member counts');
+        return enriched;
+      } catch (fallbackError) {
+        print('❌ Fallback also failed: $fallbackError');
+        // Return empty list rather than throwing
+        return [];
+      }
+    }
+  }
+
+  /// DEBUG: Fetch all public omadas visible via RLS without excluding owner or membership
+  /// This helps verify data presence when discovery returns 0.
+  Future<List<OmadaModel>> getDebugPublicOmadasAll({int limit = 50}) async {
+    try {
+      // Prefer the view if present
       final response = await _client
           .from('omadas_with_counts')
           .select()
-          .eq('is_public', true)
+          .eq('visibility', 'public')
           .eq('is_deleted', false)
           .order('member_count', ascending: false)
           .limit(limit);
@@ -89,9 +156,23 @@ class OmadaServiceExtended {
           .map((json) => OmadaModel.fromJson(json))
           .toList();
     } catch (e) {
-      // Fallback: base table only has basic columns, no is_public filter available
-      // Return empty list for discovery when advanced schema not applied
-      return [];
+      // Fallback to base table
+      try {
+        final response = await _client
+            .from('omadas')
+            .select()
+            .eq('visibility', 'public')
+            .eq('is_deleted', false)
+            .order('name')
+            .limit(limit);
+
+        final omadas = (response as List)
+            .map((json) => OmadaModel.fromJson(json))
+            .toList();
+        return await _enrichWithCounts(omadas);
+      } catch (_) {
+        return [];
+      }
     }
   }
 
