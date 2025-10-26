@@ -9,7 +9,7 @@ import 'package:omada/core/data/models/tag_model.dart';
 import 'package:omada/core/theme/design_tokens.dart';
 import 'package:omada/ui/widgets/app_card.dart';
 import 'package:omada/ui/widgets/app_bottom_nav.dart';
-
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 class ContactFormPage extends StatefulWidget {
   final ContactModel? contact;
 
@@ -159,25 +159,6 @@ class _ContactFormPageState extends State<ContactFormPage> {
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ),
-              actions: [
-                Container(
-                  margin: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: Colors.white.withOpacity(0.3)),
-                  ),
-                  child: IconButton(
-                    icon: const Icon(
-                      Icons.favorite_border,
-                      color: Colors.white,
-                    ),
-                    onPressed: () {
-                      // TODO: Implement favorite functionality
-                    },
-                  ),
-                ),
-              ],
               flexibleSpace: FlexibleSpaceBar(
                 background: Container(
                   decoration: const BoxDecoration(
@@ -595,14 +576,14 @@ class _ContactFormPageState extends State<ContactFormPage> {
         switch (channel.kind) {
           case ChannelKind.linkedin:
             return _buildSocialMediaButton(
-              icon: Icons.business,
+              icon: FontAwesomeIcons.linkedin,
               label: 'LinkedIn',
               backgroundColor: const Color(0xFF0A66C2),
               onTap: () => _openSocialMediaProfile(channel),
             );
           case ChannelKind.instagram:
             return _buildSocialMediaButton(
-              icon: Icons.camera_alt,
+              icon: FontAwesomeIcons.instagram,
               label: 'Instagram',
               backgroundColor: const Color(0xFFE1306C),
               gradient: const LinearGradient(
@@ -616,28 +597,28 @@ class _ContactFormPageState extends State<ContactFormPage> {
             );
           case ChannelKind.whatsapp:
             return _buildSocialMediaButton(
-              icon: Icons.chat,
+              icon: FontAwesomeIcons.whatsapp,
               label: 'WhatsApp',
               backgroundColor: const Color(0xFF25D366),
               onTap: () => _openSocialMediaProfile(channel),
             );
           case ChannelKind.messenger:
             return _buildSocialMediaButton(
-              icon: Icons.message,
+              icon: FontAwesomeIcons.facebookMessenger,
               label: 'Messenger',
               backgroundColor: const Color(0xFF0088CC),
               onTap: () => _openSocialMediaProfile(channel),
             );
           case 'mobile':
             return _buildSocialMediaButton(
-              icon: Icons.phone,
+              icon: FontAwesomeIcons.phone,
               label: 'Call',
               backgroundColor: const Color(0xFF4CAF50),
               onTap: () => _openSocialMediaProfile(channel),
             );
           case 'email':
             return _buildSocialMediaButton(
-              icon: Icons.email,
+              icon: FontAwesomeIcons.envelope,
               label: 'Email',
               backgroundColor: const Color(0xFF2196F3),
               onTap: () => _openSocialMediaProfile(channel),

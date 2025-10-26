@@ -147,7 +147,6 @@ class ChannelKind {
     email,
     messenger,
     whatsapp,
-    messenger,
     instagram,
     facebook,
     linkedin,
