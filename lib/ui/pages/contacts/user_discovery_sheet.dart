@@ -277,26 +277,57 @@ class _UserDiscoverySheetState extends State<UserDiscoverySheet> {
                   topRight: Radius.circular(16),
                 ),
               ),
-              child: Padding(
-                padding: const EdgeInsets.all(OmadaTokens.space16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Header
-                    Row(
-                      children: [
-                        Text(
-                          'Discover Users',
-                          style: Theme.of(context).textTheme.titleLarge,
-                        ),
-                        const Spacer(),
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () => Navigator.of(context).pop(),
-                        ),
-                      ],
+              child: Column(
+                children: [
+                  // Gradient Header
+                  Container(
+                    width: double.infinity,
+                    decoration: const BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Color(0xFFFF5733), // Red-orange
+                          Color(0xFF4A00B0), // Deep purple
+                        ],
+                      ),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(16),
+                        topRight: Radius.circular(16),
+                      ),
                     ),
-                    const SizedBox(height: OmadaTokens.space16),
+                    child: SafeArea(
+                      bottom: false,
+                      child: Padding(
+                        padding: const EdgeInsets.all(OmadaTokens.space16),
+                        child: Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                'Discover Users',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Icons.close, color: Colors.white),
+                              onPressed: () => Navigator.of(context).pop(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  // Content
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(OmadaTokens.space16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
 
                     // Search Field
                     TextField(
@@ -395,8 +426,11 @@ class _UserDiscoverySheetState extends State<UserDiscoverySheet> {
                               },
                             ),
                     ),
-                  ],
-                ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             );
           },

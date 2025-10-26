@@ -47,12 +47,22 @@ class FilterRow extends StatelessWidget {
     final bool isSelected = selectedTagIds.contains(tag.id);
     final palette = Theme.of(context).extension<AppPaletteTheme>();
     final Color tagColor =
+<<<<<<< HEAD
         palette?.colorForId(tag.id) ?? Theme.of(context).colorScheme.secondary;
+=======
+        palette?.colorForId(tag.id) ?? Theme.of(context).colorScheme.primary;
+    final isDark = Theme.of(context).colorScheme.brightness == Brightness.dark;
+    final isLight =
+        Theme.of(context).colorScheme.brightness == Brightness.light;
+>>>>>>> main
     return ElevatedButton(
       onPressed: () => onTagToggle(tag),
       style: ElevatedButton.styleFrom(
-        backgroundColor: isSelected ? tagColor : null,
+        backgroundColor: isSelected
+            ? tagColor
+            : (isDark ? Color.fromARGB(255, 29, 26, 33) : Colors.white),
         foregroundColor: isSelected ? Colors.white : tagColor,
+        elevation: isLight ? 0 : null,
       ),
       child: Text(tag.name),
     );

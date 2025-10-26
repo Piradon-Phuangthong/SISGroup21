@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:omada/core/theme/design_tokens.dart';
+import 'package:omada/ui/pages/contact_screen/contact_card.dart';
 import 'package:omada/ui/widgets/app_bottom_nav.dart';
 import 'package:omada/core/supabase/supabase_instance.dart';
 import 'package:omada/core/data/models/contact_model.dart';
+import 'package:omada/core/data/models/contact_channel_model.dart';
+import 'package:omada/core/data/models/tag_model.dart';
 import 'package:omada/core/controllers/contacts_controller.dart';
 import 'package:omada/core/controllers/favourites_controller.dart';
 import 'package:omada/ui/pages/contact_form_page.dart';
@@ -22,6 +25,10 @@ class _FavouritesPageState extends State<FavouritesPage> {
   bool _isLoading = false;
   String? _error;
   final TextEditingController _searchController = TextEditingController();
+
+  // Preloaded data for ContactCard
+  Map<String, List<TagModel>> _tagsByContact = {};
+  Map<String, List<ContactChannelModel>> _channelsByContact = {};
 
   @override
   void initState() {
@@ -57,6 +64,10 @@ class _FavouritesPageState extends State<FavouritesPage> {
         (a, b) =>
             a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase()),
       );
+
+      // Preload tags and channels for the fetched contacts
+      await _preloadContactDetails(fetched);
+
       setState(() {
         _allContacts = fetched;
         _applyFilters();
@@ -68,18 +79,47 @@ class _FavouritesPageState extends State<FavouritesPage> {
     }
   }
 
+  Future<void> _preloadContactDetails(List<ContactModel> contacts) async {
+    if (contacts.isEmpty) {
+      setState(() {
+        _tagsByContact = {};
+        _channelsByContact = {};
+      });
+      return;
+    }
+
+    try {
+      final [channelsResult, tagsResult] = await Future.wait([
+        _controller.getChannelsForContacts(contacts),
+        _controller.getTagsForContacts(contacts),
+      ]);
+
+      setState(() {
+        _channelsByContact =
+            channelsResult as Map<String, List<ContactChannelModel>>;
+        _tagsByContact = tagsResult as Map<String, List<TagModel>>;
+      });
+    } catch (e) {
+      // If preloading fails, clear the data and continue
+      setState(() {
+        _tagsByContact = {};
+        _channelsByContact = {};
+      });
+    }
+  }
+
   void _onSearchChanged() {
     _applyFilters();
   }
 
   void _applyFilters() {
     final query = _searchController.text.trim().toLowerCase();
-    
+
     // Filter to only favourite contacts
     List<ContactModel> filtered = _allContacts
         .where((c) => _favouritesController.isFavourite(c.id))
         .toList();
-    
+
     // Apply search filter
     if (query.isNotEmpty) {
       filtered = filtered.where((c) {
@@ -93,7 +133,7 @@ class _FavouritesPageState extends State<FavouritesPage> {
         return fields.contains(query);
       }).toList();
     }
-    
+
     setState(() => _visibleFavourites = filtered);
   }
 
@@ -106,6 +146,73 @@ class _FavouritesPageState extends State<FavouritesPage> {
       MaterialPageRoute(builder: (_) => ContactFormPage(contact: contact)),
     );
     if (updated == true) await _refreshContacts();
+  }
+
+  Future<void> _onDeleteContact(ContactModel contact) async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Contact?'),
+        content: Text(
+          'Are you sure you want to delete "${contact.displayName}"?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    // If user cancelled, return early
+    if (confirmed != true) return;
+
+    final removedContact = contact;
+    setState(() {
+      _allContacts = _allContacts
+          .where((c) => c.id != removedContact.id)
+          .toList();
+      _visibleFavourites = _visibleFavourites
+          .where((c) => c.id != removedContact.id)
+          .toList();
+      _tagsByContact.remove(removedContact.id);
+      _channelsByContact.remove(removedContact.id);
+    });
+
+    try {
+      await _controller.deleteContact(removedContact.id);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).clearSnackBars();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Deleted ${removedContact.displayName}'),
+          action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () async {
+              await _controller.restoreContact(removedContact.id);
+              await _refreshContacts();
+            },
+          ),
+        ),
+      );
+    } catch (e) {
+      // Revert UI on error
+      setState(() {
+        _allContacts = [..._allContacts, removedContact];
+        _applyFilters();
+      });
+      if (!mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to delete: $e')));
+    }
   }
 
   @override
@@ -173,10 +280,7 @@ class _FavouritesPageState extends State<FavouritesPage> {
               const SizedBox(height: OmadaTokens.space4),
               Text(
                 '${_visibleFavourites.length} starred contacts',
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontSize: 16,
-                ),
+                style: const TextStyle(color: Colors.white70, fontSize: 16),
               ),
             ],
           ),
@@ -201,6 +305,7 @@ class _FavouritesPageState extends State<FavouritesPage> {
       ),
       child: TextField(
         controller: _searchController,
+        style: TextStyle(color: Colors.black87),
         decoration: InputDecoration(
           hintText: 'Search favourites...',
           hintStyle: TextStyle(color: Colors.grey[600]),
@@ -225,10 +330,12 @@ class _FavouritesPageState extends State<FavouritesPage> {
   }
 
   Widget _buildBody() {
+    final isDark = Theme.of(context).colorScheme.brightness == Brightness.dark;
+
     if (_isLoading && _visibleFavourites.isEmpty) {
       return const Center(child: CircularProgressIndicator());
     }
-    
+
     if (_error != null) {
       return Center(
         child: Padding(
@@ -249,7 +356,7 @@ class _FavouritesPageState extends State<FavouritesPage> {
         ),
       );
     }
-    
+
     if (_visibleFavourites.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(OmadaTokens.space32),
@@ -263,10 +370,7 @@ class _FavouritesPageState extends State<FavouritesPage> {
                 gradient: LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [
-                    Colors.orange[300]!,
-                    Colors.pink[300]!,
-                  ],
+                  colors: [Colors.orange[300]!, Colors.pink[300]!],
                 ),
                 borderRadius: BorderRadius.circular(60),
               ),
@@ -277,228 +381,44 @@ class _FavouritesPageState extends State<FavouritesPage> {
               ),
             ),
             const SizedBox(height: OmadaTokens.space24),
-            const Text(
+            Text(
               'No favourites yet',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                color: isDark ? Colors.white : Colors.black87,
               ),
             ),
             const SizedBox(height: OmadaTokens.space8),
             Text(
               'Tap the star icon on contacts to add them here',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 16,
-              ),
+              style: TextStyle(color: Colors.grey[600], fontSize: 16),
               textAlign: TextAlign.center,
             ),
           ],
         ),
       );
     }
-    
+
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: OmadaTokens.space16),
+      padding: const EdgeInsets.symmetric(horizontal: OmadaTokens.space2),
       itemCount: _visibleFavourites.length,
       itemBuilder: (context, index) {
         final contact = _visibleFavourites[index];
-        return _buildContactCard(contact);
+        return ContactCard(
+          contact: contact,
+          tags: _tagsByContact[contact.id] ?? const [],
+          channels: _channelsByContact[contact.id] ?? const [],
+          isFavourite: _favouritesController.isFavourite(contact.id),
+          onFavouriteToggle: () => _toggleFavourite(contact.id),
+          onTagTap: (tag) {
+            // Tag tap handler - could navigate to filtered view if needed
+          },
+          onLongPress: () => _onEditContact(contact),
+          onEdit: () => _onEditContact(contact),
+          onDelete: () => _onDeleteContact(contact),
+        );
       },
     );
   }
-
-  Widget _buildContactCard(ContactModel contact) {
-    return GestureDetector(
-      onTap: () => _onEditContact(contact),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: OmadaTokens.space12),
-        decoration: BoxDecoration(
-          color: Colors.grey[50],
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(OmadaTokens.space16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  // Avatar
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          Colors.purple[400]!,
-                          Colors.blue[400]!,
-                        ],
-                      ),
-                      borderRadius: BorderRadius.circular(25),
-                    ),
-                    child: Center(
-                      child: Text(
-                        contact.initials,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 18,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: OmadaTokens.space12),
-                  // Contact info
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                contact.displayName,
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
-                                ),
-                              ),
-                            ),
-                            IconButton(
-                              onPressed: () => _toggleFavourite(contact.id),
-                              icon: Icon(
-                                Icons.star,
-                                color: Colors.amber[600],
-                                size: 24,
-                              ),
-                            ),
-                          ],
-                        ),
-                        if (contact.primaryMobile != null) ...[
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Icon(Icons.phone, size: 16, color: Colors.grey[600]),
-                              const SizedBox(width: 8),
-                              Text(
-                                contact.primaryMobile!,
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                        if (contact.primaryEmail != null) ...[
-                          const SizedBox(height: 4),
-                          Row(
-                            children: [
-                              Icon(Icons.email, size: 16, color: Colors.grey[600]),
-                              const SizedBox(width: 8),
-                              Text(
-                                contact.primaryEmail!,
-                                style: TextStyle(
-                                  color: Colors.grey[600],
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: OmadaTokens.space12),
-              // Action buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: _buildActionButton(
-                      icon: Icons.phone,
-                      label: 'Call',
-                      onTap: () {
-                        // TODO: Implement call functionality
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: OmadaTokens.space8),
-                  Expanded(
-                    child: _buildActionButton(
-                      icon: Icons.message,
-                      label: 'Message',
-                      onTap: () {
-                        // TODO: Implement message functionality
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: OmadaTokens.space8),
-                  Expanded(
-                    child: _buildActionButton(
-                      icon: Icons.email,
-                      label: 'Email',
-                      onTap: () {
-                        // TODO: Implement email functionality
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActionButton({
-    required IconData icon,
-    required String label,
-    required VoidCallback onTap,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(8),
-      child: Container(
-        padding: const EdgeInsets.symmetric(
-          vertical: OmadaTokens.space8,
-          horizontal: OmadaTokens.space12,
-        ),
-        decoration: BoxDecoration(
-          color: Colors.grey[100],
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icon, size: 16, color: Colors.grey[700]),
-            const SizedBox(width: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: Colors.grey[700],
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 }
-
