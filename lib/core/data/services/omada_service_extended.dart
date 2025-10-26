@@ -25,7 +25,7 @@ class OmadaServiceExtended {
           .from('omadas_with_counts')
           .select()
           .or(
-            'owner_id.eq.$_userId,id.in.(select omada_id from omada_memberships where user_id=$_userId)',
+            'owner_id.eq.$_userId,id.in.(select omada_id from omada_members where user_id=$_userId)',
           );
 
       if (!includeDeleted) {
@@ -43,7 +43,7 @@ class OmadaServiceExtended {
             .from('omadas')
             .select()
             .or(
-              'owner_id.eq.$_userId,id.in.(select omada_id from omada_memberships where user_id=$_userId)',
+              'owner_id.eq.$_userId,id.in.(select omada_id from omada_members where user_id=$_userId)',
             );
 
         if (!includeDeleted) {
@@ -93,7 +93,7 @@ class OmadaServiceExtended {
               'id',
               'in',
               // Use memberships (user-based) to exclude groups I'm already in
-              '(select omada_id from omada_memberships where user_id=$_userId)',
+              '(select omada_id from omada_members where user_id=$_userId)',
             )
             .order('member_count', ascending: false)
             .limit(limit);
@@ -132,7 +132,7 @@ class OmadaServiceExtended {
                 'id',
                 'in',
                 // Use memberships (user-based) to exclude groups I'm already in
-                '(select omada_id from omada_memberships where user_id=$_userId)',
+                '(select omada_id from omada_members where user_id=$_userId)',
               )
               .order('name')
               .limit(limit);
@@ -452,14 +452,33 @@ class OmadaServiceExtended {
   Future<List<OmadaMembershipModel>> getOmadaMemberships(String omadaId) async {
     try {
       final response = await _client
-          .from('omada_memberships')
-          .select('*, profiles(name, avatar_url)')
+          .from('omada_members')
+          .select('*, profiles(name, avatar_url), omada_roles!role_id(key)')
           .eq('omada_id', omadaId)
+          .eq('status', 'active')
           .order('joined_at');
 
-      final memberships = (response as List)
-          .map((json) => OmadaMembershipModel.fromJson(json))
-          .toList();
+      final memberships = (response as List).map((json) {
+        // Extract role key from the joined omada_roles table
+        final roleData = json['omada_roles'] as Map<String, dynamic>?;
+        final roleKey = roleData?['key'] as String? ?? 'member';
+
+        // Add role_name to json for the model to parse
+        final modifiedJson = Map<String, dynamic>.from(json);
+        modifiedJson['role_name'] = roleKey;
+
+        // Generate an id if not present (since omada_members doesn't have id column)
+        if (!modifiedJson.containsKey('id')) {
+          modifiedJson['id'] = '${json['omada_id']}-${json['user_id']}';
+        }
+
+        // Add joined_at as updated_at if updated_at is missing
+        if (!modifiedJson.containsKey('updated_at')) {
+          modifiedJson['updated_at'] = json['joined_at'];
+        }
+
+        return OmadaMembershipModel.fromJson(modifiedJson);
+      }).toList();
 
       // Check if owner is already in the memberships
       final hasOwner = memberships.any((m) => m.role == OmadaRole.owner);
@@ -577,15 +596,21 @@ class OmadaServiceExtended {
       // Check membership role
       try {
         final response = await _client
-            .from('omada_memberships')
-            .select('role_name')
+            .from('omada_members')
+            .select('omada_roles!role_id(key)')
             .eq('omada_id', omadaId)
             .eq('user_id', targetUserId)
+            .eq('status', 'active')
             .maybeSingle();
 
         if (response == null) return null;
 
-        return OmadaRole.fromString(response['role_name'] as String);
+        final roleData = response['omada_roles'] as Map<String, dynamic>?;
+        final roleKey = roleData?['key'] as String?;
+
+        if (roleKey == null) return null;
+
+        return OmadaRole.fromString(roleKey);
       } catch (_) {
         // Advanced memberships table missing; cannot infer role
         return null;
@@ -617,17 +642,41 @@ class OmadaServiceExtended {
     OmadaRole role = OmadaRole.member,
   }) async {
     try {
+      // Get role_id from role key
+      final roleData = await _client
+          .from('omada_roles')
+          .select('id')
+          .eq('key', role.toDbString())
+          .maybeSingle();
+
+      if (roleData == null) {
+        throw Exception(
+          'Role ${role.toDbString()} not found in omada_roles table',
+        );
+      }
+
       final response = await _client
-          .from('omada_memberships')
+          .from('omada_members')
           .insert({
             'omada_id': omadaId,
             'user_id': userId,
-            'role_name': role.toDbString(),
+            'role_id': roleData['id'],
+            'invited_by': _userId,
+            'status': 'active',
           })
-          .select()
+          .select('*, profiles(name, avatar_url), omada_roles!role_id(key)')
           .single();
 
-      return OmadaMembershipModel.fromJson(response);
+      // Transform response to match model expectations
+      final modifiedResponse = Map<String, dynamic>.from(response);
+      final roleInfo = response['omada_roles'] as Map<String, dynamic>?;
+      modifiedResponse['role_name'] = roleInfo?['key'] ?? role.toDbString();
+      modifiedResponse['id'] = '${response['omada_id']}-${response['user_id']}';
+      if (!modifiedResponse.containsKey('updated_at')) {
+        modifiedResponse['updated_at'] = response['joined_at'];
+      }
+
+      return OmadaMembershipModel.fromJson(modifiedResponse);
     } catch (e) {
       throw Exception('Error adding member: $e');
     }
@@ -640,15 +689,37 @@ class OmadaServiceExtended {
     OmadaRole newRole,
   ) async {
     try {
+      // Get role_id from role key
+      final roleData = await _client
+          .from('omada_roles')
+          .select('id')
+          .eq('key', newRole.toDbString())
+          .maybeSingle();
+
+      if (roleData == null) {
+        throw Exception(
+          'Role ${newRole.toDbString()} not found in omada_roles table',
+        );
+      }
+
       final response = await _client
-          .from('omada_memberships')
-          .update({'role_name': newRole.toDbString()})
+          .from('omada_members')
+          .update({'role_id': roleData['id']})
           .eq('omada_id', omadaId)
           .eq('user_id', userId)
-          .select()
+          .select('*, profiles(name, avatar_url), omada_roles!role_id(key)')
           .single();
 
-      return OmadaMembershipModel.fromJson(response);
+      // Transform response to match model expectations
+      final modifiedResponse = Map<String, dynamic>.from(response);
+      final roleInfo = response['omada_roles'] as Map<String, dynamic>?;
+      modifiedResponse['role_name'] = roleInfo?['key'] ?? newRole.toDbString();
+      modifiedResponse['id'] = '${response['omada_id']}-${response['user_id']}';
+      if (!modifiedResponse.containsKey('updated_at')) {
+        modifiedResponse['updated_at'] = response['joined_at'];
+      }
+
+      return OmadaMembershipModel.fromJson(modifiedResponse);
     } catch (e) {
       throw Exception('Error updating member role: $e');
     }
@@ -658,7 +729,7 @@ class OmadaServiceExtended {
   Future<void> removeMember(String omadaId, String userId) async {
     try {
       await _client
-          .from('omada_memberships')
+          .from('omada_members')
           .delete()
           .eq('omada_id', omadaId)
           .eq('user_id', userId);
@@ -891,23 +962,12 @@ class OmadaServiceExtended {
   Future<int> _getMemberCountSafe(String omadaId) async {
     try {
       final res = await _client
-          .from('omada_memberships')
-          .select('id')
-          .eq('omada_id', omadaId);
-
-      // Always add 1 for the owner (if owner not already in memberships)
-      final membershipCount = (res as List).length;
-
-      // Check if owner is already in memberships
-      final ownerInMemberships = await _client
-          .from('omada_memberships')
-          .select('id')
+          .from('omada_members')
+          .select('user_id')
           .eq('omada_id', omadaId)
-          .eq('role_name', 'owner')
-          .maybeSingle();
+          .eq('status', 'active');
 
-      // If owner not in memberships, add 1 to count
-      return ownerInMemberships == null ? membershipCount + 1 : membershipCount;
+      return (res as List).length;
     } catch (_) {
       try {
         final resLegacy = await _client
