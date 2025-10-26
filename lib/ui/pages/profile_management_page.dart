@@ -26,6 +26,8 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
   final Set<String> _selectedChannelIds = <String>{};
   final ChannelLauncher _launcher = const ChannelLauncher();
   bool _defaultPrimaryEnsured = false;
+  String _quickActionValue = 'Call';
+  IconData _quickActionIcon = Icons.call;
 
   @override
   void initState() {
@@ -39,6 +41,115 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
     });
   }
 
+  ContactChannelModel? _findQuickTarget(ProfileData data) {
+    // Prefer primary with value/url
+    final primary = data.channels.where((c) => c.isPrimary).firstWhere(
+      (c) => (c.value?.isNotEmpty == true) || (c.url?.isNotEmpty == true),
+      orElse: () => ContactChannelModel(
+        id: '',
+        ownerId: data.contact.ownerId,
+        contactId: data.contact.id,
+        kind: '',
+        label: null,
+        value: null,
+        url: null,
+        extra: null,
+        isPrimary: false,
+        updatedAt: DateTime.now(),
+      ),
+    );
+    if (primary.id.isNotEmpty) return primary;
+
+    // Fallback: phone/mobile
+    final phone = data.channels.firstWhere(
+      (c) => (c.kind.toLowerCase() == 'phone' || c.kind.toLowerCase() == 'mobile') && (c.value?.isNotEmpty == true),
+      orElse: () => ContactChannelModel(
+        id: '',
+        ownerId: data.contact.ownerId,
+        contactId: data.contact.id,
+        kind: '',
+        label: null,
+        value: null,
+        url: null,
+        extra: null,
+        isPrimary: false,
+        updatedAt: DateTime.now(),
+      ),
+    );
+    if (phone.id.isNotEmpty) return phone;
+
+    // Any with value/url
+    final any = data.channels.firstWhere(
+      (c) => (c.value?.isNotEmpty == true) || (c.url?.isNotEmpty == true),
+      orElse: () => ContactChannelModel(
+        id: '',
+        ownerId: data.contact.ownerId,
+        contactId: data.contact.id,
+        kind: '',
+        label: null,
+        value: null,
+        url: null,
+        extra: null,
+        isPrimary: false,
+        updatedAt: DateTime.now(),
+      ),
+    );
+    return any.id.isNotEmpty ? any : null;
+  }
+
+  void _updateQuickLabel(ProfileData data) {
+    final target = _findQuickTarget(data);
+    String action;
+    IconData icon;
+    switch (target?.kind.toLowerCase() ?? '') {
+      case 'mobile':
+      case 'phone':
+        action = 'Call';
+        icon = Icons.call;
+        break;
+      case 'sms':
+        action = 'SMS';
+        icon = Icons.sms;
+        break;
+      case 'email':
+        action = 'Email';
+        icon = Icons.email_outlined;
+        break;
+      case 'whatsapp':
+        action = 'Message';
+        icon = Icons.chat;
+        break;
+      case 'telegram':
+        action = 'Telegram';
+        icon = Icons.send;
+        break;
+      case 'instagram':
+        action = 'DM';
+        icon = Icons.send;
+        break;
+      case 'linkedin':
+        action = 'Message';
+        icon = Icons.message;
+        break;
+      case 'website':
+        action = 'Open';
+        icon = Icons.public;
+        break;
+      default:
+        action = 'Open';
+        icon = Icons.open_in_new;
+    }
+    if (mounted) {
+      setState(() {
+        _quickActionValue = action;
+        _quickActionIcon = icon;
+      });
+    } else {
+      _quickActionValue = action;
+      _quickActionIcon = icon;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     const double topHeaderHeight = 315; // Gradient visible down to just below username
@@ -48,24 +159,21 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
       backgroundColor: Colors.white,
       body: Stack(
         children: [
-          // Top blue ombre section (same palette and size as Contacts)
+          // Top ombre section with new palette
           Container(
             height: topHeaderHeight,
             width: double.infinity,
             decoration: const BoxDecoration(
               gradient: RadialGradient(
                 center: Alignment(0, -1.1),
-                radius: 1.2,
+                radius: 1.25,
                 colors: [
-                  Color(0xFF7de3f8), // Light Cyan-Blue
-                  Color(0xFF64bdfb), // Sky Blue
-                  Color(0xFF5194fa), // Bright Blue
-                  Color(0xFF6a7af7), // Periwinkle
-                  Color(0xFF8765f3), // Soft Violet
-                  Color(0xFFa257e8), // Medium Purple
-                  Color(0xFFc44adf), // Magenta-Purple
+                  Color(0xFFF15A29), // Warm Coral-Orange (top left)
+                  Color(0xFFE03C8A), // Magenta-Pink (mid)
+                  Color(0xFF7B3FE4), // Violet-Purple (bottom right)
+                  Color(0xFF5E2CCF), // Deep Purple (lower section)
                 ],
-                stops: [0.0, 0.2, 0.4, 0.6, 0.78, 0.9, 1.0],
+                stops: [0.0, 0.45, 0.8, 1.0],
               ),
             ),
           ),
@@ -148,6 +256,7 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                         // Ensure there's a default primary (prefer Mobile) once after load
                         WidgetsBinding.instance.addPostFrameCallback((_) {
                           _ensureDefaultPrimaryIfNeeded(data);
+                          _updateQuickLabel(data);
                         });
 
                         // Top section (on gradient): Avatar + name (+ optional notes)
@@ -158,14 +267,9 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                           ),
                           child: Column(
                             children: [
-                              _Breathing(
-                                minScale: 0.98,
-                                maxScale: 1.04,
-                                duration: const Duration(milliseconds: 2800),
-                                child: Avatar(
-                                  displayName: displayName,
-                                  colorText: Colors.white,
-                                ),
+                              Avatar(
+                                displayName: displayName,
+                                colorText: Colors.white,
                               ),
                               const SizedBox(height: OmadaTokens.space4),
                               if (notes?.isNotEmpty == true)
@@ -262,20 +366,18 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
           ),
           child: Builder(
             builder: (context) {
-              // Gradient palette per request
+              // New palette for Share (Request) button
               const palette = <Color>[
-                Color(0xFF7de3f8),
-                Color(0xFF64bdfb),
-                Color(0xFF5194fa),
-                Color(0xFF6a7af7),
-                Color(0xFF8765f3),
-                Color(0xFFa257e8),
-                Color(0xFFc44adf),
+                Color(0xFFF15A29), // Warm Coral-Orange
+                Color(0xFFE03C8A), // Magenta-Pink
+                Color(0xFF7B3FE4), // Violet-Purple
+                Color(0xFF5E2CCF), // Deep Purple
               ];
               final callButtonGradient = const RadialGradient(
                 center: Alignment(0, -0.4),
                 radius: 1.0,
                 colors: palette,
+                stops: [0.0, 0.5, 0.8, 1.0],
               );
 
               return CtaPanel(
@@ -299,6 +401,9 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                 },
                 backgroundColor: Colors.white,
                 callButtonGradient: callButtonGradient,
+                quickTitleOverride: 'Quick',
+                quickValueOverride: _quickActionValue,
+                quickIconOverride: _quickActionIcon,
               );
             },
           ),
@@ -566,26 +671,36 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
   }
 
   Future<void> _quickCall(BuildContext context, ProfileData data) async {
-    String? number = data.contact.primaryMobile;
-    if (number == null || number.isEmpty) {
-      final primaryPhone = data.channels.firstWhere(
-        (c) =>
-            (c.kind.toLowerCase() == 'phone' ||
-                c.kind.toLowerCase() == 'mobile') &&
-            c.isPrimary &&
-            (c.value?.isNotEmpty == true),
+    // Prefer explicit primary channel
+    ContactChannelModel? target = data.channels.firstWhere(
+      (c) => c.isPrimary && ((c.value?.isNotEmpty == true) || (c.url?.isNotEmpty == true)),
+      orElse: () => ContactChannelModel(
+        id: '',
+        ownerId: data.contact.ownerId,
+        contactId: data.contact.id,
+        kind: '',
+        label: null,
+        value: null,
+        url: null,
+        extra: null,
+        isPrimary: false,
+        updatedAt: DateTime.now(),
+      ),
+    );
+
+    if (target.id.isEmpty) {
+      // Fallbacks: prefer phone/mobile with value, then any channel with value/url
+      target = data.channels.firstWhere(
+        (c) => (c.kind.toLowerCase() == 'phone' || c.kind.toLowerCase() == 'mobile') && (c.value?.isNotEmpty == true),
         orElse: () => data.channels.firstWhere(
-          (c) =>
-              (c.kind.toLowerCase() == 'phone' ||
-                  c.kind.toLowerCase() == 'mobile') &&
-              (c.value?.isNotEmpty == true),
+          (c) => (c.value?.isNotEmpty == true) || (c.url?.isNotEmpty == true),
           orElse: () => ContactChannelModel(
-            id: '_',
+            id: '',
             ownerId: data.contact.ownerId,
             contactId: data.contact.id,
-            kind: 'phone',
+            kind: '',
             label: null,
-            value: '',
+            value: null,
             url: null,
             extra: null,
             isPrimary: false,
@@ -593,24 +708,17 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
           ),
         ),
       );
-      number = primaryPhone.value;
     }
 
-    if (number == null || number.isEmpty) {
+    if (target.id.isEmpty) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('No number available')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No channel available to open')),
+      );
       return;
     }
 
-    final telUri = Uri.parse('tel:$number');
-    if (!await launchUrl(telUri)) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Unable to open dialer')));
-    }
+    await _launcher.openChannel(context, target);
   }
 
   Future<void> _openAddChannel(BuildContext context, ProfileData data) async {
@@ -873,69 +981,5 @@ class _ChannelList extends StatelessWidget {
 }
 
 // Subtle breathing animation wrapper for the avatar
-class _Breathing extends StatefulWidget {
-  final Widget child;
-  final double minScale;
-  final double maxScale;
-  final Duration duration;
-
-  const _Breathing({
-    required this.child,
-    this.minScale = 0.98,
-    this.maxScale = 1.04,
-    this.duration = const Duration(milliseconds: 2800),
-  });
-
-  @override
-  State<_Breathing> createState() => _BreathingState();
-}
-
-class _BreathingState extends State<_Breathing>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _scale;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: widget.duration,
-    );
-    final curved = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-      reverseCurve: Curves.easeInOut,
-    );
-    _scale = Tween<double>(begin: widget.minScale, end: widget.maxScale)
-        .animate(curved);
-
-    // Respect reduced motion if available
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final mq = context.mounted ? MediaQuery.maybeOf(context) : null;
-      final disable = mq?.disableAnimations ?? false;
-      if (!disable && mounted) {
-        _controller.repeat(reverse: true);
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final mq = MediaQuery.maybeOf(context);
-    final disable = mq?.disableAnimations ?? false;
-    if (disable) return widget.child;
-
-    return ScaleTransition(
-      scale: _scale,
-      child: widget.child,
-    );
-  }
-}
+// Breathing effect moved inside the Avatar so only the circle animates, not the username text.
 

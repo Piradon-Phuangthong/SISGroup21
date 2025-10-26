@@ -8,6 +8,9 @@ class CtaPanel extends StatelessWidget {
   final Gradient? backgroundGradient;
   final Gradient? callButtonGradient;
   final Color? backgroundColor;
+  final String? quickTitleOverride;
+  final String? quickValueOverride;
+  final IconData? quickIconOverride;
   const CtaPanel({
     super.key,
     required this.centerValue,
@@ -17,6 +20,9 @@ class CtaPanel extends StatelessWidget {
     this.backgroundGradient,
     this.callButtonGradient,
     this.backgroundColor,
+    this.quickTitleOverride,
+    this.quickValueOverride,
+    this.quickIconOverride,
   });
 
   @override
@@ -81,9 +87,9 @@ class CtaPanel extends StatelessWidget {
           ),
           // Right: Quick Call moved from center
           _CtaItem(
-            icon: Icons.call,
-            title: 'Call',
-            value: 'Quick',
+            icon: quickIconOverride ?? Icons.call,
+            title: (quickTitleOverride ?? 'Quick').toUpperCase(),
+            value: quickValueOverride ?? 'Call',
             onTap: onQuickCall,
             titleColor: secondaryTextOnPanel,
             valueColor: primaryTextOnPanel,
