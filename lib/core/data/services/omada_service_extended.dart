@@ -125,27 +125,43 @@ class OmadaServiceExtended {
     }
   }
 
-  /// Helper: Add creator as owner-member in omada_memberships (if table exists)
+  /// Helper: Add creator as owner-member in omada_members (schema with roles table)
   Future<void> _addCreatorAsOwnerMember(String omadaId) async {
     try {
-      // Check if owner is already in memberships
+      // 1) Check if the owner is already a member (idempotent)
       final existing = await _client
-          .from('omada_memberships')
-          .select('id')
+          .from('omada_members')
+          .select('omada_id')
           .eq('omada_id', omadaId)
           .eq('user_id', _userId)
           .maybeSingle();
 
-      if (existing == null) {
-        // Only add if not already present
-        await _client.from('omada_memberships').insert({
-          'omada_id': omadaId,
-          'user_id': _userId,
-          'role_name': 'owner',
-        });
+      if (existing != null) {
+        return; // already a member
       }
+
+      // 2) Find the role_id for key 'owner'
+      final ownerRole = await _client
+          .from('omada_roles')
+          .select('id')
+          .eq('key', 'owner')
+          .maybeSingle();
+
+      if (ownerRole == null || ownerRole['id'] == null) {
+        // If roles table or owner role doesn't exist, let DB trigger (if any) handle it, else skip silently
+        return;
+      }
+
+      // 3) Insert membership row as owner
+      await _client.from('omada_members').insert({
+        'omada_id': omadaId,
+        'user_id': _userId,
+        'role_id': ownerRole['id'],
+        'invited_by': _userId,
+        'status': 'active',
+      });
     } catch (_) {
-      // Table may not exist in legacy schema; ignore
+      // Table or columns may not exist in a legacy schema; ignore to keep create flow working
     }
   }
 
@@ -159,46 +175,56 @@ class OmadaServiceExtended {
     JoinPolicy joinPolicy = JoinPolicy.approval,
     bool isPublic = true,
   }) async {
+    // Strategy: insert minimal supported columns first (more portable), then best-effort update extras.
     try {
-      // Try with all advanced columns first
-      final response = await _client
+      final baseResponse = await _client
           .from('omadas')
           .insert({
             'owner_id': _userId,
             'name': name,
-            'description': description,
-            'color': color,
-            'icon': icon,
-            'avatar_url': avatarUrl,
-            'join_policy': joinPolicy.dbValue,
-            'is_public': isPublic,
+            if (description != null) 'description': description,
+            if (avatarUrl != null) 'avatar_url': avatarUrl,
           })
           .select()
           .single();
 
-      final omada = OmadaModel.fromJson(response);
+      var omada = OmadaModel.fromJson(baseResponse);
+
+      // Best-effort update for advanced columns (ignore if columns not present)
+      final advanced = <String, dynamic>{};
+      if (color != null) advanced['color'] = color;
+      if (icon != null) advanced['icon'] = icon;
+      if (joinPolicy != JoinPolicy.approval) {
+        // only set if different from default to reduce failures on legacy schema
+        advanced['join_policy'] = joinPolicy.dbValue;
+      }
+      // Some schemas use visibility instead of is_public; we'll try both, ignoring failures
+      if (isPublic != true) {
+        // if explicitly set to false, try to set appropriate fields
+        advanced['is_public'] = isPublic;
+      }
+
+      if (advanced.isNotEmpty) {
+        try {
+          final updateRes = await _client
+              .from('omadas')
+              .update(advanced)
+              .eq('id', omada.id)
+              .select()
+              .maybeSingle();
+          if (updateRes != null) {
+            omada = OmadaModel.fromJson(updateRes);
+          }
+        } catch (_) {
+          // Ignore if columns don't exist or RLS prevents update; base insert already succeeded
+        }
+      }
+
+      // Ensure membership as owner
       await _addCreatorAsOwnerMember(omada.id);
       return omada;
     } catch (e) {
-      // Fallback: base schema only supports basic columns (no color)
-      try {
-        final response = await _client
-            .from('omadas')
-            .insert({
-              'owner_id': _userId,
-              'name': name,
-              'description': description,
-              // 'icon': icon,
-            })
-            .select()
-            .single();
-
-        final omada = OmadaModel.fromJson(response);
-        await _addCreatorAsOwnerMember(omada.id);
-        return omada;
-      } catch (fallbackError) {
-        throw Exception('Error creating omada: $fallbackError');
-      }
+      throw Exception('Error creating omada: $e');
     }
   }
 
