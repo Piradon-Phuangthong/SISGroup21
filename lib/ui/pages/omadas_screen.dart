@@ -196,7 +196,7 @@ class _OmadasScreenState extends State<OmadasScreen> {
   // ───────────────────── UI (Sliver with custom headers) ─────────────────────
   @override
   Widget build(BuildContext context) {
-    const double expandedHeight = 220;
+    const double expandedHeight = 256;
     const double collapsedHeight = 96;
 
     return Scaffold(
@@ -222,16 +222,16 @@ class _OmadasScreenState extends State<OmadasScreen> {
                     onRequests: _openRequestsSheet,
                     onCreate: _showCreateOmadaSheet,
                     // tweak gradient here if you like:
-                    gradientStart: const Color(0xFF07A3B2),
-                    gradientEnd:   const Color(0xFFD9ECC7),
+                    gradientStart: const Color(0xFF64bdfb),
+                    gradientEnd:   const Color(0xFFa257e8),
                   );
                 } else {
                   return CollapsedOmadaHeader(
                     searchController: _searchController,
                     onSearchChanged: _onSearchChanged,
                     onCreate: _showCreateOmadaSheet,
-                    gradientStart: const Color(0xFF07A3B2),
-                    gradientEnd:   const Color(0xFFD9ECC7),
+                    gradientStart: const Color(0xFF64bdfb),
+                    gradientEnd:   const Color(0xFFa257e8),
                   );
                 }
               },

@@ -206,6 +206,31 @@ class _ContactScreenState extends State<ContactScreen> {
   }
 
   Future<void> _onDeleteContact(ContactModel contact) async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Contact?'),
+        content: Text(
+          'Are you sure you want to delete "${contact.displayName}"?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    // If user cancelled, return early
+    if (confirmed != true) return;
+
     final removedContact = contact;
     setState(() {
       _contacts = _contacts.where((c) => c.id != removedContact.id).toList();
@@ -279,6 +304,8 @@ class _ContactScreenState extends State<ContactScreen> {
               forceMaterialTransparency: true,
               flexibleSpace: LayoutBuilder(
                 builder: (context, constraints) {
+                  const double collapseThreshold = 0.99;
+
                   final double currentHeight = constraints.biggest.height;
 
                   final double t =
@@ -286,7 +313,8 @@ class _ContactScreenState extends State<ContactScreen> {
                               (expandedHeight - collapsedHeight))
                           .clamp(0.0, 1.0);
 
-                  if (currentHeight > (expandedHeight + collapsedHeight) / 2) {
+                  // if (currentHeight > (expandedHeight + collapsedHeight) / 2)
+                  if (t > collapseThreshold) {
                     return ExpandedContactHeader(
                       onDiscoverUsers: _openUserDiscoverySheet,
                       onGetDeleted: _openDeletedContacts,
@@ -296,6 +324,7 @@ class _ContactScreenState extends State<ContactScreen> {
                       onGetAccountPage: _openAccountPage,
                       onSearchChanged: _onSearchChanged,
                       searchController: _searchController,
+                      contactCount: _visibleContacts.length,
                     );
                   } else {
                     return CollapsedContactHeader(

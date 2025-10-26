@@ -56,126 +56,205 @@ class ContactCardState extends State<ContactCard>
     return _colorPalette[colorIndex];
   }
 
+  String _getInitials() {
+    final name = widget.contact.displayName;
+    if (name.isEmpty) return '?';
+    final parts = name.split(' ');
+    if (parts.length >= 2) {
+      return '${parts[0][0]}${parts[1][0]}'.toUpperCase();
+    }
+    return name[0].toUpperCase();
+  }
+
+  Color _getAvatarColor() {
+    final hash = widget.contact.id.hashCode;
+    final colors = [
+      const Color(0xFF8A2BE2), // Purple
+      const Color(0xFF00CED1), // Dark Turquoise
+      const Color(0xFFFF8C00), // Dark Orange
+      const Color(0xFF20B2AA), // Light Sea Green
+      const Color(0xFFFF1493), // Deep Pink
+    ];
+    return colors[hash.abs() % colors.length];
+  }
+
   @override
   Widget build(BuildContext context) {
-    final appPalette = Theme.of(context).extension<AppPaletteTheme>();
     final ChannelLauncher _launcher = const ChannelLauncher();
-    // final lastContactFormatted = DateFormat(
-    //   "MMM d, hh:mm a",
-    // ).format(widget.lastContact);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final Color defaultButtonColor = Color.fromARGB(255, 29, 26, 33);
 
-    return AnimatedSize(
-      duration: const Duration(milliseconds: 300),
-
-      child: Container(
-        // height: 150,
-        padding: EdgeInsets.only(top: 10, bottom: 10),
-        margin: EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          border: BoxBorder.all(
-            color: Color.fromARGB(50, 109, 88, 186),
-            style: BorderStyle.solid,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      decoration: BoxDecoration(
+        color: isDark ? defaultButtonColor : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
           ),
-        ),
-        child: InkWell(
-          onLongPress: widget.onLongPress,
-          onTap: () {
-            setState(() {
-              isExpanded = !isExpanded;
-            });
-          },
+        ],
+      ),
+      child: InkWell(
+        onLongPress: widget.onLongPress,
+        onTap: () {
+          print("on tap ${widget.contact.fullName}");
+          setState(() {
+            isExpanded = !isExpanded;
+          });
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.all(12.0),
           child: Column(
             children: [
               Row(
-                spacing: 10,
                 children: [
-                  //avatar photo
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Icon(Icons.person, size: 30),
+                  // Avatar
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: _getAvatarColor(),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Center(
+                      child: Text(
+                        _getInitials(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
                   ),
+                  const SizedBox(width: 12),
 
-                  //contact information
+                  // Contact info
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
                           widget.contact.displayName,
-                          textAlign: TextAlign.left,
-                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
+                        const SizedBox(height: 2),
                         Text(
                           widget.contact.primaryMobile ??
                               (widget.contact.primaryEmail?.isNotEmpty == true
                                   ? widget.contact.primaryEmail!
-                                  : ''),
-                          textAlign: TextAlign.left,
-                          overflow: TextOverflow.ellipsis,
+                                  : 'No contact details'),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
                         ),
-                        SizedBox(
-                          height: 30,
-                          width: 200,
-                          child: ListView(
-                            scrollDirection: Axis.horizontal,
+                        if (widget.tags.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 4,
+                            runSpacing: 4,
                             children: widget.tags.map((tag) {
-                              return DashboardTag(
-                                label: tag.name,
-                                color: getTagColor(tag),
+                              final tagColor = getTagColor(tag);
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? tagColor
+                                      : tagColor.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  tag.name,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDark ? Colors.white : tagColor,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
                               );
                             }).toList(),
                           ),
-                        ),
-
-                        //last seen information
-                        // Text(
-                        //   "Last contact: $lastContactFormatted",
-                        //   style: TextStyle(fontSize: 10),
-                        //   overflow: TextOverflow.ellipsis,
-                        // ),
+                        ],
                       ],
                     ),
                   ),
 
-                  // message/phone
-                  Row(
+                  // Action icons
+                  Column(
                     children: [
+                      IconButton(
+                        onPressed: widget.onLongPress,
+                        icon: Icon(Icons.edit, color: Colors.grey),
+                      ),
                       IconButton(
                         icon: Icon(
                           widget.isFavourite ? Icons.star : Icons.star_border,
-                          color: widget.isFavourite ? Colors.amber : null,
+                          color: widget.isFavourite
+                              ? Colors.amber
+                              : Colors.grey,
                         ),
                         onPressed: widget.onFavouriteToggle,
                         tooltip: widget.isFavourite
                             ? 'Remove from favourites'
                             : 'Add to favourites',
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
                       ),
                       if (widget.onDelete != null)
                         IconButton(
+                          icon: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.grey,
+                          ),
                           onPressed: widget.onDelete,
-                          icon: Icon(Icons.delete),
+                          tooltip: 'Delete contact',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
                         ),
                     ],
                   ),
                 ],
               ),
-              if (isExpanded)
+              if (isExpanded && widget.channels.isNotEmpty)
                 Padding(
                   padding: EdgeInsetsGeometry.only(top: 8),
                   child: Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
                     children: widget.channels
                         .map(
-                          (channel) => IconButton(
+                          (channel) => ElevatedButton.icon(
                             onPressed: () {
                               // Handle channel action
                               _launcher.openChannel(context, channel);
                             },
-                            icon: channel
-                                .getIcon(), // Use the getIconData method we created
-                            tooltip:
-                                channel.kind, // Show channel type as tooltip
+                            icon: channel.getIcon(
+                              color: isDark ? Colors.white : Colors.black54,
+                            ),
+                            label: Text(
+                              channel.value ?? channel.kind,
+                              style: TextStyle(
+                                color: isDark ? Colors.white : Colors.black54,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              // backgroundColor: Color(0xFF8B5CF6),
+                              backgroundColor: isDark
+                                  ? const Color.fromARGB(255, 50, 51, 68)
+                                  : const Color.fromARGB(255, 234, 234, 240),
+                              elevation: isDark ? null : 0,
+                            ),
                           ),
                         )
                         .toList(),

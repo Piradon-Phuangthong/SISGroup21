@@ -4,13 +4,13 @@ import 'package:omada/ui/pages/contact_screen/contact_screen.dart';
 import 'test_db/epics/epic_home_entry.dart';
 import 'package:omada/core/theme/app_theme.dart';
 import 'package:omada/core/theme/app_theme_controller.dart';
-import 'package:omada/ui/pages/contacts_screen.dart';
 import 'package:omada/ui/pages/favourites_page.dart';
 import 'package:omada/ui/pages/profile_management_page.dart';
 import 'package:omada/ui/pages/splash_page.dart';
 import 'package:omada/ui/pages/login_page.dart';
 import 'package:omada/ui/pages/account_page.dart';
 import 'package:omada/ui/pages/omadas_screen.dart';
+import 'package:omada/ui/pages/email_verification_page.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -37,7 +37,6 @@ class OmadaRootApp extends StatelessWidget {
           routes: {
             '/': (_) => const SplashPage(),
             '/login': (_) => const LoginPage(),
-            // '/app': (_) => const ContactsScreen(),
             '/app': (_) => const ContactScreen(),
             '/account': (_) => const AccountPage(),
             '/profile': (_) => const ProfileManagementPage(),
@@ -45,6 +44,12 @@ class OmadaRootApp extends StatelessWidget {
             '/omadas': (_) => const OmadasScreen(),
             '/debug': (_) => const EpicHomeEntry(),
             '/dev-selector': (_) => const _RouteSelectorPage(),
+            '/email-verification': (context) {
+              final args =
+                  ModalRoute.of(context)?.settings.arguments
+                      as Map<String, dynamic>?;
+              return EmailVerificationPage(email: args?['email'] ?? '');
+            },
           },
           initialRoute: '/',
         );
