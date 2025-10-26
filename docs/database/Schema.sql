@@ -66,6 +66,7 @@ CREATE TABLE public.omada_members (
   invited_by uuid,
   joined_at timestamp with time zone NOT NULL DEFAULT now(),
   status text NOT NULL DEFAULT 'active'::text,
+  contact_id uuid,
   CONSTRAINT omada_members_pkey PRIMARY KEY (omada_id, user_id),
   CONSTRAINT omada_members_omada_id_fkey FOREIGN KEY (omada_id) REFERENCES public.omadas(id),
   CONSTRAINT omada_members_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
