@@ -24,8 +24,8 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
   bool _isLoading = true;
   String? _error;
 
-  static const Color _gradStart = Color(0xFF07A3B2);
-  static const Color _gradEnd   = Color(0xFFD9ECC7);
+  static const Color _gradStart = Color(0xFFa257e8);
+  static const Color _gradEnd   = Color(0xFF64bdfb);
 
   @override
   void initState() {
