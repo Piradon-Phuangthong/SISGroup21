@@ -48,13 +48,30 @@ class OmadaModel {
       joinPolicy: json['join_policy'] != null
           ? JoinPolicy.fromString(json['join_policy'] as String)
           : JoinPolicy.approval,
-      isPublic: json['is_public'] as bool? ?? true,
+      isPublic: _parseIsPublic(json),
       isDeleted: json['is_deleted'] as bool? ?? false,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
       memberCount: json['member_count'] as int?,
       pendingRequestsCount: json['pending_requests_count'] as int?,
     );
+  }
+
+  /// Parse isPublic from either 'is_public' boolean field or 'visibility' text field
+  static bool _parseIsPublic(Map<String, dynamic> json) {
+    // First try the is_public boolean field (newer schema)
+    if (json.containsKey('is_public')) {
+      return json['is_public'] as bool? ?? true;
+    }
+    
+    // Fall back to visibility text field (older schema)
+    final visibility = json['visibility'] as String?;
+    if (visibility != null) {
+      return visibility.toLowerCase() == 'public';
+    }
+    
+    // Default to true if neither field is present
+    return true;
   }
 
   Map<String, dynamic> toJson() {

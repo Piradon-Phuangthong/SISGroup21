@@ -198,11 +198,11 @@ class OmadaServiceExtended {
         // only set if different from default to reduce failures on legacy schema
         advanced['join_policy'] = joinPolicy.dbValue;
       }
-      // Some schemas use visibility instead of is_public; we'll try both, ignoring failures
-      if (isPublic != true) {
-        // if explicitly set to false, try to set appropriate fields
-        advanced['is_public'] = isPublic;
-      }
+      // Handle both is_public and visibility fields for different schema versions
+      // Set is_public field for newer schemas
+      advanced['is_public'] = isPublic;
+      // Set visibility field for schemas that use this field instead
+      advanced['visibility'] = isPublic ? 'public' : 'private';
 
       if (advanced.isNotEmpty) {
         try {
@@ -247,7 +247,10 @@ class OmadaServiceExtended {
       if (icon != null) updates['icon'] = icon;
       if (avatarUrl != null) updates['avatar_url'] = avatarUrl;
       if (joinPolicy != null) updates['join_policy'] = joinPolicy.dbValue;
-      if (isPublic != null) updates['is_public'] = isPublic;
+      if (isPublic != null) {
+        updates['is_public'] = isPublic;
+        updates['visibility'] = isPublic ? 'public' : 'private';
+      }
 
       if (updates.isEmpty) {
         throw Exception('No updates provided');
