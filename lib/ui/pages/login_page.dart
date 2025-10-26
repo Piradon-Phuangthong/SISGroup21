@@ -36,7 +36,7 @@ class _LoginState extends State<LoginPage> {
         Navigator.of(context).pushReplacementNamed('/app');
       }
     });
-    
+
     // Add listener for password validation
     _passwordController.addListener(() {
       if (mounted) setState(() {});
@@ -183,7 +183,10 @@ class _LoginState extends State<LoginPage> {
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: IconButton(
-                            icon: const Icon(Icons.arrow_back, color: Colors.white),
+                            icon: const Icon(
+                              Icons.arrow_back,
+                              color: Colors.white,
+                            ),
                             onPressed: () {
                               if (_isSignUp) {
                                 // If in sign up mode, switch back to sign in
@@ -217,20 +220,21 @@ class _LoginState extends State<LoginPage> {
                       ],
                     ),
                     const SizedBox(height: OmadaTokens.space32),
-                    
+
                     // Title and subtitle
                     Text(
                       _isSignUp ? 'Create Account' : 'Welcome Back',
-                      style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        fontSize: 32,
-                      ),
+                      style: Theme.of(context).textTheme.headlineLarge
+                          ?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontSize: 32,
+                          ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: OmadaTokens.space8),
                     Text(
-                      _isSignUp 
+                      _isSignUp
                           ? 'Join Omada and start connecting'
                           : 'Sign in to continue connecting',
                       style: Theme.of(context).textTheme.bodyLarge?.copyWith(
@@ -242,7 +246,7 @@ class _LoginState extends State<LoginPage> {
                   ],
                 ),
               ),
-              
+
               // Form card
               Expanded(
                 child: Container(
@@ -262,7 +266,7 @@ class _LoginState extends State<LoginPage> {
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           const SizedBox(height: OmadaTokens.space16),
-                          
+
                           // Email field
                           _buildInputField(
                             label: 'Email Address',
@@ -290,7 +294,7 @@ class _LoginState extends State<LoginPage> {
                             label: 'Password',
                             controller: _passwordController,
                             prefixIcon: Icons.lock_outline,
-                            placeholder: _isSignUp 
+                            placeholder: _isSignUp
                                 ? 'Create a strong password'
                                 : 'Enter your password',
                             obscureText: _obscurePassword,
@@ -301,7 +305,9 @@ class _LoginState extends State<LoginPage> {
                                     : Icons.visibility_off_outlined,
                                 color: Colors.grey[600],
                               ),
-                              onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                              onPressed: () => setState(
+                                () => _obscurePassword = !_obscurePassword,
+                              ),
                             ),
                             validator: _validatePassword,
                           ),
@@ -359,7 +365,10 @@ class _LoginState extends State<LoginPage> {
                                       width: 20,
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,
-                                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                        valueColor:
+                                            AlwaysStoppedAnimation<Color>(
+                                              Colors.white,
+                                            ),
                                       ),
                                     )
                                   : Text(
@@ -433,6 +442,7 @@ class _LoginState extends State<LoginPage> {
     bool obscureText = false,
     String? Function(String?)? validator,
   }) {
+    final isDark = Theme.of(context).colorScheme.brightness == Brightness.dark;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -452,10 +462,13 @@ class _LoginState extends State<LoginPage> {
           textInputAction: TextInputAction.next,
           validator: validator,
           enabled: !_isLoading,
+          style: TextStyle(color: isDark ? Colors.black : null),
           decoration: InputDecoration(
             hintText: placeholder,
             hintStyle: TextStyle(color: Colors.grey[400]),
-            prefixIcon: prefixIcon != null ? Icon(prefixIcon, color: Colors.grey[600]) : null,
+            prefixIcon: prefixIcon != null
+                ? Icon(prefixIcon, color: Colors.grey[600])
+                : null,
             suffixIcon: suffixIcon,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
@@ -467,11 +480,17 @@ class _LoginState extends State<LoginPage> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(12),
-              borderSide: BorderSide(color: Theme.of(context).primaryColor, width: 2),
+              borderSide: BorderSide(
+                color: Theme.of(context).primaryColor,
+                width: 2,
+              ),
             ),
             filled: true,
             fillColor: Colors.grey[50],
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
           ),
         ),
       ],
