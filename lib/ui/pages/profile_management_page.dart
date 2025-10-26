@@ -11,6 +11,8 @@ import 'package:omada/core/controllers/profile_controller.dart';
 import 'profile/cta_panel.dart';
 import 'profile/avatar.dart';
 import 'package:omada/core/theme/design_tokens.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:omada/core/data/utils/channel_presets.dart';
 
 class ProfileManagementPage extends StatefulWidget {
   const ProfileManagementPage({super.key});
@@ -222,6 +224,8 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                                   },
                                   onLongPress: (id) => _onChannelLongPress(context, data, id),
                                   onTogglePrimary: (id) => _setPrimaryChannel(context, data, id),
+                                  onEdit: (id) => _editChannel(context, data, id),
+                                  onDelete: (id) => _deleteChannel(context, data, id),
                                 ),
                                 // extra space so list isn't hidden behind bottom sheet CTA
                                 const SizedBox(height: 120),
@@ -268,11 +272,6 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                 Color(0xFFa257e8),
                 Color(0xFFc44adf),
               ];
-              final panelGradient = const LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: palette,
-              );
               final callButtonGradient = const RadialGradient(
                 center: Alignment(0, -0.4),
                 radius: 1.0,
@@ -298,7 +297,7 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                   if (!mounted) return;
                   await _quickCall(context, snapshot);
                 },
-                backgroundGradient: panelGradient,
+                backgroundColor: Colors.white,
                 callButtonGradient: callButtonGradient,
               );
             },
@@ -448,6 +447,124 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
     }
   }
 
+  Future<void> _editChannel(
+    BuildContext context,
+    ProfileData data,
+    String id,
+  ) async {
+    final ch = data.channels.firstWhere((c) => c.id == id);
+    final labelCtrl = TextEditingController(text: ch.label ?? _labelForChannel(ch));
+    final valueCtrl = TextEditingController(text: ch.value ?? '');
+    String _computeUrl(String kind, String value) => ChannelPresets.computeUrl(kind, value);
+    String previewUrl = _computeUrl(ch.kind, valueCtrl.text);
+
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+            left: 16,
+            right: 16,
+            top: 16,
+          ),
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('Edit Channel', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 12),
+                  Text('Kind: ${ch.kind}', style: const TextStyle(color: Colors.black54)),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: labelCtrl,
+                    decoration: const InputDecoration(labelText: 'Label'),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: valueCtrl,
+                    decoration: const InputDecoration(labelText: 'Value'),
+                    onChanged: (v) => setState(() => previewUrl = _computeUrl(ch.kind, v)),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    readOnly: true,
+                    controller: TextEditingController(text: previewUrl),
+                    decoration: const InputDecoration(labelText: 'URL (auto)'),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: const Text('Cancel'),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: const Text('Save'),
+                      ),
+                    ],
+                  )
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      final repo = ContactChannelRepository(Supabase.instance.client);
+      final newLabel = labelCtrl.text.trim();
+      final newValue = valueCtrl.text.trim();
+      final newUrl = _computeUrl(ch.kind, newValue);
+      await repo.updateChannel(
+        ch.id,
+        label: newLabel.isEmpty ? null : newLabel,
+        value: newValue.isEmpty ? null : newValue,
+        url: newUrl.isEmpty ? null : newUrl,
+      );
+      if (!mounted) return;
+      _refresh();
+    }
+  }
+
+  Future<void> _deleteChannel(
+    BuildContext context,
+    ProfileData data,
+    String id,
+  ) async {
+    final ch = data.channels.firstWhere((c) => c.id == id);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Channel?'),
+        content: Text('Delete "${_labelForChannel(ch)}"? This action cannot be undone.'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final repo = ContactChannelRepository(Supabase.instance.client);
+      await repo.deleteChannel(id);
+      if (!mounted) return;
+      _refresh();
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Channel deleted')));
+    }
+  }
+
   Future<void> _quickCall(BuildContext context, ProfileData data) async {
     String? number = data.contact.primaryMobile;
     if (number == null || number.isEmpty) {
@@ -591,6 +708,8 @@ class _ChannelList extends StatelessWidget {
   final void Function(String id) onOpen;
   final void Function(String id)? onLongPress;
   final void Function(String id) onTogglePrimary;
+  final void Function(String id) onEdit;
+  final void Function(String id) onDelete;
 
   const _ChannelList({
     required this.channels,
@@ -598,6 +717,8 @@ class _ChannelList extends StatelessWidget {
     required this.onOpen,
     this.onLongPress,
     required this.onTogglePrimary,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   Color _colorForKind(String kind) {
@@ -626,6 +747,33 @@ class _ChannelList extends StatelessWidget {
     }
   }
 
+  IconData _faIconForKind(String kind) {
+    switch (kind.toLowerCase()) {
+      case 'mobile':
+      case 'phone':
+      case 'call':
+        return FontAwesomeIcons.phone;
+      case 'sms':
+        return FontAwesomeIcons.message;
+      case 'email':
+        return FontAwesomeIcons.envelope;
+      case 'whatsapp':
+        return FontAwesomeIcons.whatsapp;
+      case 'telegram':
+        return FontAwesomeIcons.telegram;
+      case 'instagram':
+        return FontAwesomeIcons.instagram;
+      case 'linkedin':
+        return FontAwesomeIcons.linkedin;
+      case 'website':
+        return FontAwesomeIcons.globe;
+      case 'address':
+        return FontAwesomeIcons.locationDot;
+      default:
+        return FontAwesomeIcons.link;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
@@ -636,9 +784,12 @@ class _ChannelList extends StatelessWidget {
       itemBuilder: (context, index) {
         final c = channels[index];
         final isSelected = selectedIds.contains(c.id);
-        final iconData = ChannelKind.getIcon(c.kind).icon ?? Icons.link;
+        final iconData = _faIconForKind(c.kind);
         final iconColor = _colorForKind(c.kind);
         final label = _labelForChannel(c);
+        final valueText = (c.value?.isNotEmpty == true)
+            ? c.value!
+            : (c.url?.isNotEmpty == true ? c.url! : '');
 
         return InkWell(
           onTap: () => onOpen(c.id),
@@ -661,18 +812,43 @@ class _ChannelList extends StatelessWidget {
               children: [
                 SizedBox(
                   width: 44,
-                  child: Icon(iconData, color: iconColor, size: 24),
+                  child: FaIcon(iconData, color: iconColor, size: 22),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
-                  child: Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        label,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          color: Colors.black87,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      if (valueText.isNotEmpty)
+                        const SizedBox(height: 2),
+                      if (valueText.isNotEmpty)
+                        Text(
+                          valueText,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Colors.black54,
+                            fontWeight: FontWeight.w400,
+                          ),
+                        ),
+                    ],
                   ),
+                ),
+                // Action buttons: edit, star (primary), delete
+                IconButton(
+                  tooltip: 'Edit',
+                  icon: const Icon(Icons.edit, color: Colors.black54),
+                  onPressed: () => onEdit(c.id),
                 ),
                 IconButton(
                   tooltip: c.isPrimary ? 'Primary' : 'Set as primary',
@@ -681,6 +857,11 @@ class _ChannelList extends StatelessWidget {
                     color: c.isPrimary ? Colors.amber.shade600 : Colors.black38,
                   ),
                   onPressed: () => onTogglePrimary(c.id),
+                ),
+                IconButton(
+                  tooltip: 'Delete',
+                  icon: const Icon(Icons.delete, color: Colors.redAccent),
+                  onPressed: () => onDelete(c.id),
                 ),
               ],
             ),
