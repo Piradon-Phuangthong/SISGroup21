@@ -18,6 +18,9 @@ class ChannelLauncher {
         case 'messenger':
           await _openMessenger(context, ch.value);
           break;
+        case 'telegram':
+          await _openTelegram(context, ch.value);
+          break;
         case 'linkedin':
           await _openLinkedIn(context, ch.value);
           break;
@@ -71,6 +74,18 @@ class ChannelLauncher {
     }
     final appUri = Uri.parse('fb-messenger://user-thread/$idOrUser');
     final webUri = Uri.parse('https://m.me/$idOrUser');
+    await _tryAppThenWeb(context, appUri, webUri);
+  }
+
+  Future<void> _openTelegram(BuildContext context, String? username) async {
+    if (username == null || username.isEmpty) {
+      _showError(context, 'Missing Telegram username');
+      return;
+    }
+    // Remove @ if present
+    final cleanUsername = username.replaceAll('@', '');
+    final appUri = Uri.parse('tg://resolve?domain=$cleanUsername');
+    final webUri = Uri.parse('https://t.me/$cleanUsername');
     await _tryAppThenWeb(context, appUri, webUri);
   }
 

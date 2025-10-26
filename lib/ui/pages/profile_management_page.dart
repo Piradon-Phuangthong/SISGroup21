@@ -280,6 +280,11 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                   title: const Text('Unset primary'),
                   onTap: () => Navigator.pop(ctx, 'unprimary'),
                 ),
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: const Text('Delete', style: TextStyle(color: Colors.red)),
+                onTap: () => Navigator.pop(ctx, 'delete'),
+              ),
               const SizedBox(height: 4),
             ],
           ),
@@ -309,8 +314,56 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
         final smsUri = Uri.parse('sms:$num');
         await launchUrl(smsUri);
         break;
+      case 'delete':
+        await _deleteChannel(context, ch);
+        break;
       default:
         break;
+    }
+  }
+
+  Future<void> _deleteChannel(BuildContext context, ContactChannelModel channel) async {
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Channel'),
+        content: Text('Are you sure you want to delete this ${channel.kind} channel?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        final repo = ContactChannelRepository(Supabase.instance.client);
+        await repo.deleteChannel(channel.id);
+        
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('${channel.kind} channel deleted')),
+        );
+        
+        // Refresh the profile data
+        _refresh();
+      } catch (e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to delete channel: $e')),
+        );
+      }
     }
   }
 

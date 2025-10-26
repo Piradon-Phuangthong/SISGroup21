@@ -132,6 +132,7 @@ class ChannelKind {
   static const String email = 'email';
   static const String whatsapp = 'whatsapp';
   static const String telegram = 'telegram';
+  static const String messenger = 'messenger';
   static const String instagram = 'instagram';
   static const String facebook = 'facebook';
   static const String linkedin = 'linkedin';
@@ -149,6 +150,7 @@ class ChannelKind {
     email,
     whatsapp,
     telegram,
+    messenger,
     instagram,
     facebook,
     linkedin,
