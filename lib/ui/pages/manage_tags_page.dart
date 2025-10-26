@@ -227,6 +227,7 @@ class _ManageTagsPageState extends State<ManageTagsPage> {
                           onSubmitted: (_) => _createTag(),
                         ),
                         const SizedBox(height: OmadaTokens.space16),
+
                         const SizedBox(height: OmadaTokens.space20),
                         
                         // Create Tag Button

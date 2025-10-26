@@ -615,7 +615,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
               backgroundColor: const Color(0xFF25D366),
               onTap: () => _openSocialMediaProfile(channel),
             );
-          case ChannelKind.telegram:
+          case ChannelKind.messenger:
             return _buildSocialMediaButton(
               icon: Icons.message,
               label: 'Messenger',
@@ -707,7 +707,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
         platformIcon = Icons.chat;
         platformColor = const Color(0xFF25D366);
         break;
-      case ChannelKind.telegram:
+      case ChannelKind.messenger:
         platformName = 'Messenger';
         platformIcon = Icons.message;
         platformColor = const Color(0xFF0088CC);
@@ -1149,7 +1149,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
         return Icons.camera_alt;
       case ChannelKind.whatsapp:
         return Icons.chat;
-      case ChannelKind.telegram:
+      case ChannelKind.messenger:
         return Icons.message;
       default:
         return Icons.link;
@@ -1164,7 +1164,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
         return 'e.g., @johndoe or instagram.com/johndoe';
       case ChannelKind.whatsapp:
         return 'e.g., +1234567890 or phone number';
-      case ChannelKind.telegram:
+      case ChannelKind.messenger:
         return 'e.g., username or Facebook profile link';
       default:
         return 'Enter username or URL';
@@ -1177,7 +1177,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
       ChannelKind.linkedin,
       ChannelKind.instagram,
       ChannelKind.whatsapp,
-      ChannelKind.telegram, // Using telegram as messenger since there's no specific messenger channel
+      ChannelKind.messenger, // Using telegram as messenger since there's no specific messenger channel
     ].contains(platform);
   }
 
@@ -1187,7 +1187,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
       ChannelKind.linkedin,
       ChannelKind.instagram,
       ChannelKind.whatsapp,
-      ChannelKind.telegram, // Using telegram as messenger since there's no specific messenger channel
+      ChannelKind.messenger, // Using telegram as messenger since there's no specific messenger channel
     ];
   }
 
@@ -1200,7 +1200,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
         return 'Instagram';
       case ChannelKind.whatsapp:
         return 'WhatsApp';
-      case ChannelKind.telegram:
+      case ChannelKind.messenger:
         return 'Messenger';
       default:
         return platform;
@@ -1259,7 +1259,7 @@ class _ContactFormPageState extends State<ContactFormPage> {
           }
           break;
           
-        case ChannelKind.telegram:
+        case ChannelKind.messenger:
           // Handle Facebook Messenger URLs
           if (value.startsWith('http')) {
             url = value;
