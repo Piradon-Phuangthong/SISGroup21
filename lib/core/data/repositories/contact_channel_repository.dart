@@ -118,27 +118,4 @@ class ContactChannelRepository extends BaseRepository {
           .eq('id', channelId);
     });
   }
-
-  /// Set a single global primary channel for a contact (unsets all others)
-  Future<void> setPrimarySingle({
-    required String contactId,
-    required String channelId,
-  }) async {
-    final userId = authenticatedUserId;
-
-    await handleSupabaseExceptionAsync(() async {
-      // Unset all existing primaries for this contact
-      await client
-          .from('contact_channels')
-          .update({'is_primary': false})
-          .eq('owner_id', userId)
-          .eq('contact_id', contactId);
-
-      // Set selected as primary
-      await client
-          .from('contact_channels')
-          .update({'is_primary': true})
-          .eq('id', channelId);
-    });
-  }
 }

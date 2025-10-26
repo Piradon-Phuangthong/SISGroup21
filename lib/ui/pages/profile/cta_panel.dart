@@ -26,6 +26,13 @@ class CtaPanel extends StatelessWidget {
             : null,
         gradient: backgroundGradient,
         borderRadius: BorderRadius.circular(22),
+        boxShadow: const [
+          BoxShadow(
+            color: Color.fromARGB(96, 15, 85, 117),
+            blurRadius: 24,
+            offset: Offset(0, 10),
+          ),
+        ],
       ),
       padding: const EdgeInsets.all(14),
       child: Row(
