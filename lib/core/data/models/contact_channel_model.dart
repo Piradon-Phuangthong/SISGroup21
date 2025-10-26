@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 /// Represents a communication channel for a contact
-/// Maps to the 'contact_channels' table in Supabase
 class ContactChannelModel {
   final String id;
   final String ownerId;
@@ -27,7 +27,6 @@ class ContactChannelModel {
     required this.updatedAt,
   });
 
-  /// Creates a ContactChannelModel from a JSON map (from Supabase)
   factory ContactChannelModel.fromJson(Map<String, dynamic> json) {
     return ContactChannelModel(
       id: json['id'] as String,
@@ -43,31 +42,26 @@ class ContactChannelModel {
     );
   }
 
-  /// Converts the ContactChannelModel to a JSON map (for Supabase)
-  Map<String, dynamic> toJson() {
-    return {
-      'id': id,
-      'owner_id': ownerId,
-      'contact_id': contactId,
-      'kind': kind,
-      'label': label,
-      'value': value,
-      'url': url,
-      'extra': extra,
-      'is_primary': isPrimary,
-      'updated_at': updatedAt.toIso8601String(),
-    };
-  }
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'owner_id': ownerId,
+    'contact_id': contactId,
+    'kind': kind,
+    'label': label,
+    'value': value,
+    'url': url,
+    'extra': extra,
+    'is_primary': isPrimary,
+    'updated_at': updatedAt.toIso8601String(),
+  };
 
-  /// Converts to JSON for insertion (excludes read-only fields)
   Map<String, dynamic> toInsertJson() {
     final json = toJson();
-    json.remove('id'); // Let Supabase generate the ID
+    json.remove('id');
     json.remove('updated_at');
     return json;
   }
 
-  /// Converts to JSON for updates (excludes read-only fields)
   Map<String, dynamic> toUpdateJson() {
     final json = toJson();
     json.remove('id');
@@ -77,7 +71,6 @@ class ContactChannelModel {
     return json;
   }
 
-  /// Gets the display text for this channel
   String get displayText {
     if (label?.isNotEmpty == true) {
       return value?.isNotEmpty == true ? '$label: $value' : label!;
@@ -85,7 +78,6 @@ class ContactChannelModel {
     return value ?? url ?? kind;
   }
 
-  /// Creates a copy of this ContactChannelModel with optionally updated fields
   ContactChannelModel copyWith({
     String? id,
     String? ownerId,
@@ -123,19 +115,25 @@ class ContactChannelModel {
   int get hashCode => id.hashCode;
 
   @override
-  String toString() {
-    return 'ContactChannelModel(id: $id, kind: $kind, value: $value, isPrimary: $isPrimary)';
-  }
+  String toString() =>
+      'ContactChannelModel(id: $id, kind: $kind, value: $value, isPrimary: $isPrimary)';
 
-  Icon getIcon() {
-    return ChannelKind.getIcon(kind);
+  /// Get an icon for the channel, with optional style.
+  Icon getIcon({Color? color, double? size, String? semanticLabel}) {
+    return ChannelKind.getIcon(
+      kind,
+      color: color,
+      size: size,
+      semanticLabel: semanticLabel,
+    );
   }
 }
 
-/// Common channel kinds
+/// Common channel kinds and icons
 class ChannelKind {
   static const String mobile = 'mobile';
   static const String email = 'email';
+  static const String messenger = 'messenger';
   static const String whatsapp = 'whatsapp';
   static const String telegram = 'telegram';
   static const String instagram = 'instagram';
@@ -153,6 +151,7 @@ class ChannelKind {
   static const List<String> all = [
     mobile,
     email,
+    messenger,
     whatsapp,
     telegram,
     instagram,
@@ -168,40 +167,133 @@ class ChannelKind {
     other,
   ];
 
-  static Icon getIcon(String kind) {
+  /// Returns an icon for the given channel kind with optional styling
+  static Icon getIcon(
+    String kind, {
+    Color? color,
+    double? size,
+    String? semanticLabel,
+  }) {
     switch (kind) {
       case mobile:
-        return Icon(Icons.phone);
+        return Icon(
+          Icons.phone,
+          color: color,
+          size: size,
+          semanticLabel: semanticLabel,
+        );
       case email:
-        return Icon(Icons.email);
+        return Icon(
+          Icons.email,
+          color: color,
+          size: size,
+          semanticLabel: semanticLabel,
+        );
+      case messenger:
+        return FaIcon(
+          FontAwesomeIcons.facebookMessenger,
+          color: color,
+          size: size,
+          semanticLabel: semanticLabel,
+        );
       case whatsapp:
-        return Icon(Icons.chat);
+        return FaIcon(
+          FontAwesomeIcons.whatsapp,
+          color: color,
+          size: size,
+          semanticLabel: semanticLabel,
+        );
       case telegram:
-        return Icon(Icons.send);
+        return FaIcon(
+          FontAwesomeIcons.telegram,
+          color: color,
+          size: size,
+          semanticLabel: semanticLabel,
+        );
       case instagram:
-        return Icon(Icons.photo_camera);
+        return FaIcon(
+          FontAwesomeIcons.instagram,
+          color: color,
+          size: size,
+          semanticLabel: semanticLabel,
+        );
       case facebook:
-        return Icon(Icons.thumb_up);
+        return FaIcon(
+          FontAwesomeIcons.facebook,
+          color: color,
+          size: size,
+          semanticLabel: semanticLabel,
+        );
       case linkedin:
-        return Icon(Icons.work);
+        return FaIcon(
+          FontAwesomeIcons.linkedin,
+          color: color,
+          size: size,
+          semanticLabel: semanticLabel,
+        );
       case twitter:
-        return Icon(Icons.chat_bubble);
+        return FaIcon(
+          FontAwesomeIcons.twitter,
+          color: color,
+          size: size,
+          semanticLabel: semanticLabel,
+        );
       case github:
-        return Icon(Icons.code);
+        return FaIcon(
+          FontAwesomeIcons.github,
+          color: color,
+          size: size,
+          semanticLabel: semanticLabel,
+        );
       case website:
-        return Icon(Icons.language);
+        return FaIcon(
+          FontAwesomeIcons.link,
+          color: color,
+          size: size,
+          semanticLabel: semanticLabel,
+        );
       case address:
-        return Icon(Icons.location_on);
+        return FaIcon(
+          FontAwesomeIcons.locationDot,
+          color: color,
+          size: size,
+          semanticLabel: semanticLabel,
+        );
       case paypal:
-        return Icon(Icons.payments);
+        return FaIcon(
+          FontAwesomeIcons.paypal,
+          color: color,
+          size: size,
+          semanticLabel: semanticLabel,
+        );
       case venmo:
-        return Icon(Icons.account_balance_wallet);
+        return Icon(
+          Icons.account_balance_wallet,
+          color: color,
+          size: size,
+          semanticLabel: semanticLabel,
+        );
       case cashapp:
-        return Icon(Icons.attach_money);
+        return FaIcon(
+          FontAwesomeIcons.cashApp,
+          color: color,
+          size: size,
+          semanticLabel: semanticLabel,
+        );
       case other:
-        return Icon(Icons.more_horiz);
+        return Icon(
+          Icons.more_horiz,
+          color: color,
+          size: size,
+          semanticLabel: semanticLabel,
+        );
       default:
-        return Icon(Icons.help_outline); // Question mark icon
+        return Icon(
+          Icons.help_outline,
+          color: color,
+          size: size,
+          semanticLabel: semanticLabel,
+        );
     }
   }
 }

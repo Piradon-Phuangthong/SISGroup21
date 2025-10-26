@@ -108,115 +108,158 @@ class ContactCardState extends State<ContactCard>
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(12.0),
-          child: Row(
+          child: Column(
             children: [
-              // Avatar
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: _getAvatarColor(),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Center(
-                  child: Text(
-                    _getInitials(),
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-
-              // Contact info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.contact.displayName,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      widget.contact.primaryMobile ??
-                          (widget.contact.primaryEmail?.isNotEmpty == true
-                              ? widget.contact.primaryEmail!
-                              : 'No contact details'),
-                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                    ),
-                    if (widget.tags.isNotEmpty) ...[
-                      const SizedBox(height: 6),
-                      Wrap(
-                        spacing: 4,
-                        runSpacing: 4,
-                        children: widget.tags.map((tag) {
-                          final tagColor = getTagColor(tag);
-                          return Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? tagColor
-                                  : tagColor.withOpacity(0.15),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              tag.name,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: isDark ? Colors.white : tagColor,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-
-              // Action icons
-              Column(
+              Row(
                 children: [
-                  IconButton(
-                    onPressed: widget.onLongPress,
-                    icon: Icon(Icons.edit, color: Colors.grey),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      widget.isFavourite ? Icons.star : Icons.star_border,
-                      color: widget.isFavourite ? Colors.amber : Colors.grey,
+                  // Avatar
+                  Container(
+                    width: 50,
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: _getAvatarColor(),
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    onPressed: widget.onFavouriteToggle,
-                    tooltip: widget.isFavourite
-                        ? 'Remove from favourites'
-                        : 'Add to favourites',
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  if (widget.onDelete != null)
-                    IconButton(
-                      icon: const Icon(
-                        Icons.delete_outline,
-                        color: Colors.grey,
+                    child: Center(
+                      child: Text(
+                        _getInitials(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
                       ),
-                      onPressed: widget.onDelete,
-                      tooltip: 'Delete contact',
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
                     ),
+                  ),
+                  const SizedBox(width: 12),
+
+                  // Contact info
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.contact.displayName,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          widget.contact.primaryMobile ??
+                              (widget.contact.primaryEmail?.isNotEmpty == true
+                                  ? widget.contact.primaryEmail!
+                                  : 'No contact details'),
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        if (widget.tags.isNotEmpty) ...[
+                          const SizedBox(height: 6),
+                          Wrap(
+                            spacing: 4,
+                            runSpacing: 4,
+                            children: widget.tags.map((tag) {
+                              final tagColor = getTagColor(tag);
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 2,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isDark
+                                      ? tagColor
+                                      : tagColor.withOpacity(0.15),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  tag.name,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: isDark ? Colors.white : tagColor,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+
+                  // Action icons
+                  Column(
+                    children: [
+                      IconButton(
+                        onPressed: widget.onLongPress,
+                        icon: Icon(Icons.edit, color: Colors.grey),
+                      ),
+                      IconButton(
+                        icon: Icon(
+                          widget.isFavourite ? Icons.star : Icons.star_border,
+                          color: widget.isFavourite
+                              ? Colors.amber
+                              : Colors.grey,
+                        ),
+                        onPressed: widget.onFavouriteToggle,
+                        tooltip: widget.isFavourite
+                            ? 'Remove from favourites'
+                            : 'Add to favourites',
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(),
+                      ),
+                      if (widget.onDelete != null)
+                        IconButton(
+                          icon: const Icon(
+                            Icons.delete_outline,
+                            color: Colors.grey,
+                          ),
+                          onPressed: widget.onDelete,
+                          tooltip: 'Delete contact',
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                    ],
+                  ),
                 ],
               ),
+              if (isExpanded && widget.channels.isNotEmpty)
+                Padding(
+                  padding: EdgeInsetsGeometry.only(top: 8),
+                  child: Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: widget.channels
+                        .map(
+                          (channel) => ElevatedButton.icon(
+                            onPressed: () {
+                              // Handle channel action
+                              _launcher.openChannel(context, channel);
+                            },
+                            icon: channel.getIcon(
+                              color: isDark ? Colors.white : Colors.black54,
+                            ),
+                            label: Text(
+                              channel.value ?? channel.kind,
+                              style: TextStyle(
+                                color: isDark ? Colors.white : Colors.black54,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              // backgroundColor: Color(0xFF8B5CF6),
+                              backgroundColor: isDark
+                                  ? const Color.fromARGB(255, 50, 51, 68)
+                                  : const Color.fromARGB(255, 234, 234, 240),
+                              elevation: isDark ? null : 0,
+                            ),
+                          ),
+                        )
+                        .toList(),
+                  ),
+                ),
             ],
           ),
         ),
