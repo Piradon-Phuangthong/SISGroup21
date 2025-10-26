@@ -110,6 +110,12 @@ class _ContactFormPageState extends State<ContactFormPage> {
       }
 
       if (!mounted) return;
+      
+      // Reload channels to show newly created mobile/email channels
+      if (widget.contact != null) {
+        await _loadChannels(contactId: widget.contact!.id);
+      }
+      
       Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
@@ -622,6 +628,20 @@ class _ContactFormPageState extends State<ContactFormPage> {
               backgroundColor: const Color(0xFF0088CC),
               onTap: () => _openSocialMediaProfile(channel),
             );
+          case 'mobile':
+            return _buildSocialMediaButton(
+              icon: Icons.phone,
+              label: 'Call',
+              backgroundColor: const Color(0xFF4CAF50),
+              onTap: () => _openSocialMediaProfile(channel),
+            );
+          case 'email':
+            return _buildSocialMediaButton(
+              icon: Icons.email,
+              label: 'Email',
+              backgroundColor: const Color(0xFF2196F3),
+              onTap: () => _openSocialMediaProfile(channel),
+            );
           default:
             return const SizedBox.shrink();
         }
@@ -711,6 +731,16 @@ class _ContactFormPageState extends State<ContactFormPage> {
         platformName = 'Messenger';
         platformIcon = Icons.message;
         platformColor = const Color(0xFF0088CC);
+        break;
+      case 'mobile':
+        platformName = 'Mobile';
+        platformIcon = Icons.phone;
+        platformColor = const Color(0xFF4CAF50);
+        break;
+      case 'email':
+        platformName = 'Email';
+        platformIcon = Icons.email;
+        platformColor = const Color(0xFF2196F3);
         break;
       default:
         platformName = channel.kind;
@@ -1177,7 +1207,9 @@ class _ContactFormPageState extends State<ContactFormPage> {
       ChannelKind.linkedin,
       ChannelKind.instagram,
       ChannelKind.whatsapp,
-      ChannelKind.messenger, // Using telegram as messenger since there's no specific messenger channel
+      ChannelKind.messenger,
+      'mobile',
+      'email',
     ].contains(platform);
   }
 
@@ -1269,6 +1301,24 @@ class _ContactFormPageState extends State<ContactFormPage> {
             // Try to open Facebook Messenger with the contact
             // For Messenger, we can try to open the app or web version
             url = 'https://m.me/$value';
+          }
+          break;
+          
+        case 'mobile':
+          // Handle mobile phone calls
+          if (value.startsWith('tel:')) {
+            url = value;
+          } else {
+            url = 'tel:$value';
+          }
+          break;
+          
+        case 'email':
+          // Handle email
+          if (value.startsWith('mailto:')) {
+            url = value;
+          } else {
+            url = 'mailto:$value';
           }
           break;
           

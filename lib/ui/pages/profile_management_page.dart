@@ -495,8 +495,8 @@ String _labelForChannel(ContactChannelModel c) {
       return 'WhatsApp';
     case 'website':
       return 'Website';
-    case 'telegram':
-      return 'Telegram';
+    case 'messenger':
+      return 'Messenger';
     case 'address':
       return 'Address';
     default:
