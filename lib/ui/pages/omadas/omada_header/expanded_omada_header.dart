@@ -66,53 +66,102 @@ class ExpandedOmadaHeader extends StatelessWidget {
                       controller: searchController,
                       onChanged: (_) => onSearchChanged(),
                       textInputAction: TextInputAction.search,
-                      style: const TextStyle(color: Colors.white), // typing color
+                      style: const TextStyle(
+                        color: Colors.white,
+                      ), // typing color
                       decoration: InputDecoration(
                         hintText: 'Search Omadas...',
-                        hintStyle: const TextStyle(color: Colors.white70), // hint color
-                        prefixIcon: const Icon(Icons.search, color: Colors.white70),
+                        hintStyle: const TextStyle(
+                          color: Colors.white70,
+                        ), // hint color
+                        prefixIcon: const Icon(
+                          Icons.search,
+                          color: Colors.white70,
+                        ),
                         filled: true,
                         fillColor: Colors.white.withOpacity(0.18),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 16,
+                        ),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(28),
+                          borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
                         ),
                       ),
                     ),
-
                   ),
                 ),
               ),
 
-              const SizedBox(height: 18), // buttons sit a bit lower
-
+              const SizedBox(height: 28), // buttons sit a bit lower
               // Action row (Discover • Requests • Add)
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: const [
-                  _HeaderActionTile(
+                children: [
+                  _buildActionButton(
                     icon: Icons.travel_explore,
                     label: 'Discover',
-                    keyId: 'discover',
+                    color: Colors.white,
+                    onTap: onDiscover,
                   ),
-                  SizedBox(width: 12),
-                  _HeaderActionTile(
+                  SizedBox(width: 14),
+                  _buildActionButton(
                     icon: Icons.inbox_outlined,
                     label: 'Requests',
-                    keyId: 'requests',
+                    color: Colors.white,
+                    onTap: onRequests,
                   ),
-                  SizedBox(width: 12),
-                  _HeaderActionTile(
+                  SizedBox(width: 14),
+                  _buildActionButton(
                     icon: Icons.add,
                     label: 'Add',
-                    keyId: 'create',
+                    color: Colors.white,
+                    onTap: onCreate,
                   ),
                 ],
               ),
               const SizedBox(height: 6),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 75,
+        height: 75,
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color.fromARGB(50, 255, 255, 255),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, color: color, size: 28),
+            const SizedBox(height: 2),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w500,
+                color: Colors.white,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
         ),
       ),
     );
@@ -133,8 +182,7 @@ class _HeaderActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     VoidCallback? onTap;
-    final parent =
-        context.findAncestorWidgetOfExactType<ExpandedOmadaHeader>();
+    final parent = context.findAncestorWidgetOfExactType<ExpandedOmadaHeader>();
     if (parent != null) {
       if (keyId == 'discover') onTap = parent.onDiscover;
       if (keyId == 'requests') onTap = parent.onRequests;
