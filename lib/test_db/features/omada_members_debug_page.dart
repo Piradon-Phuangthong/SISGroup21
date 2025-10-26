@@ -14,7 +14,7 @@ class OmadaMembersDebugPage extends StatefulWidget {
 
 class _OmadaMembersDebugPageState extends State<OmadaMembersDebugPage> {
   late final OmadaServiceExtended _service;
-  
+
   List<OmadaModel> _omadas = [];
   OmadaModel? _selectedOmada;
   List<OmadaMembershipModel> _members = [];
@@ -100,9 +100,7 @@ class _OmadaMembersDebugPageState extends State<OmadaMembersDebugPage> {
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(12),
-            color: _error != null
-                ? Colors.red.shade100
-                : Colors.blue.shade50,
+            color: _error != null ? Colors.red.shade100 : Colors.blue.shade50,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -110,17 +108,16 @@ class _OmadaMembersDebugPageState extends State<OmadaMembersDebugPage> {
                   _status,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: _error != null ? Colors.red.shade900 : Colors.blue.shade900,
+                    color: _error != null
+                        ? Colors.red.shade900
+                        : Colors.blue.shade900,
                   ),
                 ),
                 if (_error != null) ...[
                   const SizedBox(height: 4),
                   Text(
                     'Error: $_error',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.red.shade700,
-                    ),
+                    style: TextStyle(fontSize: 12, color: Colors.red.shade700),
                   ),
                 ],
               ],
@@ -135,15 +132,11 @@ class _OmadaMembersDebugPageState extends State<OmadaMembersDebugPage> {
 
           // Omadas list
           if (!_isLoading && _selectedOmada == null)
-            Expanded(
-              child: _buildOmadasList(),
-            ),
+            Expanded(child: _buildOmadasList()),
 
           // Members list
           if (!_isLoading && _selectedOmada != null)
-            Expanded(
-              child: _buildMembersList(),
-            ),
+            Expanded(child: _buildMembersList()),
         ],
       ),
     );
@@ -187,10 +180,7 @@ class _OmadaMembersDebugPageState extends State<OmadaMembersDebugPage> {
                 const SizedBox(height: 4),
                 Text(
                   '${omada.memberCount ?? 0} members • ${omada.isPublic ? 'Public' : 'Private'}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.grey.shade700,
-                  ),
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade700),
                 ),
               ],
             ),
@@ -250,9 +240,7 @@ class _OmadaMembersDebugPageState extends State<OmadaMembersDebugPage> {
         // Members list
         Expanded(
           child: _members.isEmpty
-              ? const Center(
-                  child: Text('No members found in this omada.'),
-                )
+              ? const Center(child: Text('No members found in this omada.'))
               : ListView.builder(
                   padding: const EdgeInsets.all(16),
                   itemCount: _members.length,
@@ -304,9 +292,7 @@ class _OmadaMembersDebugPageState extends State<OmadaMembersDebugPage> {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.grey.shade900,
-            border: Border(
-              top: BorderSide(color: Colors.grey.shade300),
-            ),
+            border: Border(top: BorderSide(color: Colors.grey.shade300)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -345,16 +331,15 @@ class _OmadaMembersDebugPageState extends State<OmadaMembersDebugPage> {
                   color: Colors.white,
                 ),
               ),
-              ..._getRoleStats().entries.map((entry) => Padding(
-                    padding: const EdgeInsets.only(left: 8, top: 4),
-                    child: Text(
-                      '${entry.key}: ${entry.value}',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.white70,
-                      ),
-                    ),
-                  )),
+              ..._getRoleStats().entries.map(
+                (entry) => Padding(
+                  padding: const EdgeInsets.only(left: 8, top: 4),
+                  child: Text(
+                    '${entry.key}: ${entry.value}',
+                    style: const TextStyle(fontSize: 12, color: Colors.white70),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -420,7 +405,9 @@ class _OmadaMembersDebugPageState extends State<OmadaMembersDebugPage> {
   Color _parseColor(String colorString) {
     try {
       if (colorString.startsWith('#')) {
-        return Color(int.parse(colorString.substring(1), radix: 16) + 0xFF000000);
+        return Color(
+          int.parse(colorString.substring(1), radix: 16) + 0xFF000000,
+        );
       }
       return Colors.purple;
     } catch (_) {

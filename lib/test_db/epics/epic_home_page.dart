@@ -88,7 +88,10 @@ class EpicHomePage extends StatelessWidget {
             title: 'E9 — Omadas (Groups)',
             items: [
               _EpicNav('US-E9: Omadas CRUD & Members', OmadasTestPage()),
-              _EpicNav('US-E9: Debug Omada Members & Roles', OmadaMembersDebugPage()),
+              _EpicNav(
+                'US-E9: Debug Omada Members & Roles',
+                OmadaMembersDebugPage(),
+              ),
             ],
           ),
         ],
