@@ -184,6 +184,8 @@ class OmadaServiceExtended {
             'name': name,
             if (description != null) 'description': description,
             if (avatarUrl != null) 'avatar_url': avatarUrl,
+            // Include visibility in initial insert to avoid database defaults
+            'visibility': isPublic ? 'public' : 'private',
           })
           .select()
           .single();
@@ -199,10 +201,8 @@ class OmadaServiceExtended {
         advanced['join_policy'] = joinPolicy.dbValue;
       }
       // Handle both is_public and visibility fields for different schema versions
-      // Set is_public field for newer schemas
+      // Set is_public field for newer schemas (visibility already set in initial insert)
       advanced['is_public'] = isPublic;
-      // Set visibility field for schemas that use this field instead
-      advanced['visibility'] = isPublic ? 'public' : 'private';
 
       if (advanced.isNotEmpty) {
         try {
@@ -215,7 +215,9 @@ class OmadaServiceExtended {
           if (updateRes != null) {
             omada = OmadaModel.fromJson(updateRes);
           }
-        } catch (_) {
+        } catch (e) {
+          // Log the error for debugging but don't fail the creation
+          print('Warning: Could not update advanced omada fields: $e');
           // Ignore if columns don't exist or RLS prevents update; base insert already succeeded
         }
       }
