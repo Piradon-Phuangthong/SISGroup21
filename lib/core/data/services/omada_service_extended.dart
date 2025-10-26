@@ -723,12 +723,18 @@ class OmadaServiceExtended {
         );
       }
 
-      // Create pending request
+      // Create pending request (new schema: public.omada_requests)
+      // For join requests, we set:
+      // - requester_id: the current user
+      // - target_user_id: the omada owner
+      // - type: 'join'
       final response = await _client
-          .from('omada_join_requests')
+          .from('omada_requests')
           .insert({
             'omada_id': omadaId,
-            'user_id': _userId,
+            'requester_id': _userId,
+            'target_user_id': omada.ownerId,
+            'type': 'join',
             'message': message,
             'status': 'pending',
           })
@@ -744,12 +750,13 @@ class OmadaServiceExtended {
   /// Get pending join requests for an omada (moderator+)
   Future<List<JoinRequestModel>> getPendingRequests(String omadaId) async {
     try {
-      final response = await _client
-          .from('omada_join_requests')
-          .select('*, profiles(name, avatar_url)')
-          .eq('omada_id', omadaId)
-          .eq('status', 'pending')
-          .order('created_at');
+    final response = await _client
+      .from('omada_requests')
+      .select('*')
+      .eq('omada_id', omadaId)
+      .eq('status', 'pending')
+      .eq('type', 'join')
+      .order('created_at');
 
       return (response as List)
           .map((json) => JoinRequestModel.fromJson(json))
@@ -763,11 +770,12 @@ class OmadaServiceExtended {
   /// Get user's join requests (pending, approved, rejected)
   Future<List<JoinRequestModel>> getMyJoinRequests() async {
     try {
-      final response = await _client
-          .from('omada_join_requests')
-          .select('*, omadas(name, avatar_url)')
-          .eq('user_id', _userId)
-          .order('created_at', ascending: false);
+    final response = await _client
+      .from('omada_requests')
+      .select('*')
+      .eq('requester_id', _userId)
+      .eq('type', 'join')
+      .order('created_at', ascending: false);
 
       return (response as List)
           .map((json) => JoinRequestModel.fromJson(json))
@@ -785,14 +793,15 @@ class OmadaServiceExtended {
   }) async {
     try {
       final response = await _client
-          .from('omada_join_requests')
+          .from('omada_requests')
           .update({
             'status': 'approved',
-            'response_message': responseMessage,
-            'reviewed_by': _userId,
-            'reviewed_at': DateTime.now().toIso8601String(),
+            // No separate response_message in new schema
+            'decided_by': _userId,
+            'decided_at': DateTime.now().toIso8601String(),
           })
           .eq('id', requestId)
+          .eq('type', 'join')
           .select()
           .single();
 
@@ -809,14 +818,15 @@ class OmadaServiceExtended {
   }) async {
     try {
       final response = await _client
-          .from('omada_join_requests')
+          .from('omada_requests')
           .update({
             'status': 'rejected',
-            'response_message': responseMessage,
-            'reviewed_by': _userId,
-            'reviewed_at': DateTime.now().toIso8601String(),
+            // No separate response_message in new schema
+            'decided_by': _userId,
+            'decided_at': DateTime.now().toIso8601String(),
           })
           .eq('id', requestId)
+          .eq('type', 'join')
           .select()
           .single();
 
@@ -829,12 +839,13 @@ class OmadaServiceExtended {
   /// Cancel own pending join request
   Future<void> cancelJoinRequest(String omadaId) async {
     try {
-      await _client
-          .from('omada_join_requests')
-          .delete()
-          .eq('omada_id', omadaId)
-          .eq('user_id', _userId)
-          .eq('status', 'pending');
+    await _client
+      .from('omada_requests')
+      .delete()
+      .eq('omada_id', omadaId)
+      .eq('requester_id', _userId)
+      .eq('status', 'pending')
+      .eq('type', 'join');
     } catch (e) {
       // If table missing, nothing to cancel – ignore
       return;
@@ -914,15 +925,26 @@ class OmadaServiceExtended {
 
   /// Compute pending requests count; if table missing, return 0
   Future<int> _getPendingRequestsCountSafe(String omadaId) async {
+    // Prefer new schema table; fall back to legacy if present
     try {
       final res = await _client
-          .from('omada_join_requests')
+          .from('omada_requests')
           .select('id')
           .eq('omada_id', omadaId)
-          .eq('status', 'pending');
+          .eq('status', 'pending')
+          .eq('type', 'join');
       return (res as List).length;
     } catch (_) {
-      return 0;
+      try {
+        final resLegacy = await _client
+            .from('omada_join_requests')
+            .select('id')
+            .eq('omada_id', omadaId)
+            .eq('status', 'pending');
+        return (resLegacy as List).length;
+      } catch (_) {
+        return 0;
+      }
     }
   }
 
