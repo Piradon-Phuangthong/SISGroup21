@@ -9,7 +9,6 @@ import 'package:omada/ui/widgets/add_channel_sheet.dart';
 import 'package:omada/core/data/utils/channel_launcher.dart';
 import 'package:omada/core/controllers/profile_controller.dart';
 import 'profile/cta_panel.dart';
-import 'profile/about_section.dart';
 import 'profile/avatar.dart';
 import 'package:omada/core/theme/design_tokens.dart';
 
@@ -24,6 +23,7 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
   late Future<ProfileData> _future;
   final Set<String> _selectedChannelIds = <String>{};
   final ChannelLauncher _launcher = const ChannelLauncher();
+  bool _defaultPrimaryEnsured = false;
 
   @override
   void initState() {
@@ -141,7 +141,12 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                         final displayName =
                             data.profile?.username ?? data.contact.displayName;
                         final notes = data.contact.notes;
-                        final about = _aboutText(data);
+                        
+
+                        // Ensure there's a default primary (prefer Mobile) once after load
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          _ensureDefaultPrimaryIfNeeded(data);
+                        });
 
                         // Top section (on gradient): Avatar + name (+ optional notes)
                         final headerOnGradient = Padding(
@@ -151,9 +156,14 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                           ),
                           child: Column(
                             children: [
-                              Avatar(
-                                displayName: displayName,
-                                colorText: Colors.white,
+                              _Breathing(
+                                minScale: 0.98,
+                                maxScale: 1.04,
+                                duration: const Duration(milliseconds: 2800),
+                                child: Avatar(
+                                  displayName: displayName,
+                                  colorText: Colors.white,
+                                ),
                               ),
                               const SizedBox(height: OmadaTokens.space4),
                               if (notes?.isNotEmpty == true)
@@ -174,25 +184,44 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                             borderRadius: BorderRadius.zero,
                           ),
                           child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: OmadaTokens.space16,
-                              vertical: OmadaTokens.space16,
+                            padding: const EdgeInsets.fromLTRB(
+                              OmadaTokens.space16,
+                              OmadaTokens.space32,
+                              OmadaTokens.space16,
+                              OmadaTokens.space16,
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.stretch,
                               children: [
-                                AboutSection(title: about, textColor: Colors.black87),
-                                const SizedBox(height: OmadaTokens.space16),
-                                _ChannelCirclesGrid(
+                                Text(
+                                  'Your Channels',
+                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontSize: OmadaTokens.fontXl,
+                                        fontWeight: OmadaTokens.weightBold,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withValues(alpha: 0.92),
+                                      ) ??
+                                      TextStyle(
+                fontSize: OmadaTokens.fontXl,
+                                        fontWeight: OmadaTokens.weightBold,
+                                        color: Theme.of(context)
+                                            .colorScheme
+                                            .onSurface
+                                            .withValues(alpha: 0.92),
+                                      ),
+                                ),
+                                const SizedBox(height: OmadaTokens.space12),
+                                _ChannelList(
                                   channels: data.channels,
                                   selectedIds: _selectedChannelIds,
                                   onOpen: (id) {
-                                    final ch =
-                                        data.channels.firstWhere((c) => c.id == id);
+                                    final ch = data.channels.firstWhere((c) => c.id == id);
                                     _launcher.openChannel(context, ch);
                                   },
-                                  onLongPress: (id) =>
-                                      _onChannelLongPress(context, data, id),
+                                  onLongPress: (id) => _onChannelLongPress(context, data, id),
+                                  onTogglePrimary: (id) => _setPrimaryChannel(context, data, id),
                                 ),
                                 // extra space so list isn't hidden behind bottom sheet CTA
                                 const SizedBox(height: 120),
@@ -225,7 +254,7 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
             OmadaTokens.space16,
             0,
             OmadaTokens.space16,
-            OmadaTokens.space8,
+              OmadaTokens.space20,
           ),
           child: Builder(
             builder: (context) {
@@ -287,6 +316,52 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
         _selectedChannelIds.add(id);
       }
     });
+  }
+
+  Future<void> _setPrimaryChannel(
+    BuildContext context,
+    ProfileData data,
+    String id,
+  ) async {
+    final repo = ContactChannelRepository(Supabase.instance.client);
+    // Ensure only one primary across all channels: set selected to true, others false
+    for (final ch in data.channels) {
+      final shouldBePrimary = ch.id == id;
+      if (ch.isPrimary != shouldBePrimary) {
+        await repo.updateChannel(ch.id, isPrimary: shouldBePrimary);
+      }
+    }
+    _refresh();
+  }
+
+  Future<void> _ensureDefaultPrimaryIfNeeded(ProfileData data) async {
+    if (_defaultPrimaryEnsured) return;
+    _defaultPrimaryEnsured = true;
+    final hasPrimary = data.channels.any((c) => c.isPrimary);
+    if (hasPrimary) return;
+
+    // Prefer Mobile/Phone with a value; else any first channel
+    ContactChannelModel? target;
+    for (final ch in data.channels) {
+      final k = ch.kind.toLowerCase();
+      if ((k == 'mobile' || k == 'phone') && (ch.value?.isNotEmpty == true)) {
+        target = ch;
+        break;
+      }
+    }
+    target ??= data.channels.isNotEmpty ? data.channels.first : null;
+    if (target == null) return;
+
+    final repo = ContactChannelRepository(Supabase.instance.client);
+    // Set target as primary and unset others to be explicit
+    for (final ch in data.channels) {
+      final shouldBePrimary = ch.id == target.id;
+      if (ch.isPrimary != shouldBePrimary) {
+        await repo.updateChannel(ch.id, isPrimary: shouldBePrimary);
+      }
+    }
+    if (!mounted) return;
+    _refresh();
   }
 
   Future<void> _onChannelLongPress(
@@ -508,73 +583,177 @@ String _labelForChannel(ContactChannelModel c) {
 
 // _iconForKind moved into ChannelGrid; removed here
 
-String _aboutText(ProfileData data) {
-  if (data.contact.notes?.isNotEmpty == true) return data.contact.notes!;
-  if (data.channels.isNotEmpty) {
-    final kinds = data.channels
-        .map((c) => _labelForChannel(c))
-        .toSet()
-        .join(' · ');
-    return 'Channels: $kinds';
-  }
-  return 'Set up your preferred contact channels and profile details.';
-}
-
 // Local compact grid of white circular channel icons
-class _ChannelCirclesGrid extends StatelessWidget {
+// Vertical list of channels with colored icons and label
+class _ChannelList extends StatelessWidget {
   final List<ContactChannelModel> channels;
   final Set<String> selectedIds;
   final void Function(String id) onOpen;
   final void Function(String id)? onLongPress;
+  final void Function(String id) onTogglePrimary;
 
-  const _ChannelCirclesGrid({
+  const _ChannelList({
     required this.channels,
     required this.selectedIds,
     required this.onOpen,
     this.onLongPress,
+    required this.onTogglePrimary,
   });
+
+  Color _colorForKind(String kind) {
+    switch (kind.toLowerCase()) {
+      case 'mobile':
+      case 'phone':
+      case 'call':
+      case 'sms':
+        return Colors.green.shade600;
+      case 'email':
+        return Colors.red.shade600;
+      case 'whatsapp':
+        return Colors.green.shade500;
+      case 'telegram':
+        return Colors.blue.shade400;
+      case 'instagram':
+        return Colors.purple.shade400;
+      case 'linkedin':
+        return Colors.blue.shade700;
+      case 'website':
+        return Colors.indigo.shade500;
+      case 'address':
+        return Colors.orange.shade600;
+      default:
+        return Colors.black87;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    return GridView.builder(
+    return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1,
-      ),
       itemCount: channels.length,
+      separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.7),
       itemBuilder: (context, index) {
-  final c = channels[index];
-  final isSelected = selectedIds.contains(c.id);
-  // Use the same icon mapping used across the app (Contacts, Contact Card)
-  final iconData = ChannelKind.getIcon(c.kind).icon ?? Icons.link;
+        final c = channels[index];
+        final isSelected = selectedIds.contains(c.id);
+        final iconData = ChannelKind.getIcon(c.kind).icon ?? Icons.link;
+        final iconColor = _colorForKind(c.kind);
+        final label = _labelForChannel(c);
+
         return InkWell(
-          customBorder: const CircleBorder(),
           onTap: () => onOpen(c.id),
           onLongPress: onLongPress == null ? null : () => onLongPress!(c.id),
-          child: Container(
+          child: Container
+          (
+            padding: const EdgeInsets.symmetric(vertical: 10),
             decoration: BoxDecoration(
-              shape: BoxShape.circle,
               color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
-                ),
-              ],
               border: isSelected
-                  ? Border.all(color: Theme.of(context).colorScheme.primary, width: 2)
+                  ? Border(
+                      left: BorderSide(
+                        color: Theme.of(context).colorScheme.primary,
+                        width: 3,
+                      ),
+                    )
                   : null,
             ),
-            alignment: Alignment.center,
-            child: Icon(iconData, color: Colors.black87, size: 22),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 44,
+                  child: Icon(iconData, color: iconColor, size: 24),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.black87,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  tooltip: c.isPrimary ? 'Primary' : 'Set as primary',
+                  icon: Icon(
+                    c.isPrimary ? Icons.star : Icons.star_border,
+                    color: c.isPrimary ? Colors.amber.shade600 : Colors.black38,
+                  ),
+                  onPressed: () => onTogglePrimary(c.id),
+                ),
+              ],
+            ),
           ),
         );
       },
+    );
+  }
+}
+
+// Subtle breathing animation wrapper for the avatar
+class _Breathing extends StatefulWidget {
+  final Widget child;
+  final double minScale;
+  final double maxScale;
+  final Duration duration;
+
+  const _Breathing({
+    required this.child,
+    this.minScale = 0.98,
+    this.maxScale = 1.04,
+    this.duration = const Duration(milliseconds: 2800),
+  });
+
+  @override
+  State<_Breathing> createState() => _BreathingState();
+}
+
+class _BreathingState extends State<_Breathing>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  late final Animation<double> _scale;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: widget.duration,
+    );
+    final curved = CurvedAnimation(
+      parent: _controller,
+      curve: Curves.easeInOut,
+      reverseCurve: Curves.easeInOut,
+    );
+    _scale = Tween<double>(begin: widget.minScale, end: widget.maxScale)
+        .animate(curved);
+
+    // Respect reduced motion if available
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final mq = context.mounted ? MediaQuery.maybeOf(context) : null;
+      final disable = mq?.disableAnimations ?? false;
+      if (!disable && mounted) {
+        _controller.repeat(reverse: true);
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final mq = MediaQuery.maybeOf(context);
+    final disable = mq?.disableAnimations ?? false;
+    if (disable) return widget.child;
+
+    return ScaleTransition(
+      scale: _scale,
+      child: widget.child,
     );
   }
 }
