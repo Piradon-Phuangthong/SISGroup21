@@ -750,13 +750,13 @@ class OmadaServiceExtended {
   /// Get pending join requests for an omada (moderator+)
   Future<List<JoinRequestModel>> getPendingRequests(String omadaId) async {
     try {
-    final response = await _client
-      .from('omada_requests')
-      .select('*')
-      .eq('omada_id', omadaId)
-      .eq('status', 'pending')
-      .eq('type', 'join')
-      .order('created_at');
+      final response = await _client
+          .from('omada_requests')
+          .select('*')
+          .eq('omada_id', omadaId)
+          .eq('status', 'pending')
+          .eq('type', 'join')
+          .order('created_at');
 
       return (response as List)
           .map((json) => JoinRequestModel.fromJson(json))
@@ -770,12 +770,12 @@ class OmadaServiceExtended {
   /// Get user's join requests (pending, approved, rejected)
   Future<List<JoinRequestModel>> getMyJoinRequests() async {
     try {
-    final response = await _client
-      .from('omada_requests')
-      .select('*')
-      .eq('requester_id', _userId)
-      .eq('type', 'join')
-      .order('created_at', ascending: false);
+      final response = await _client
+          .from('omada_requests')
+          .select('*')
+          .eq('requester_id', _userId)
+          .eq('type', 'join')
+          .order('created_at', ascending: false);
 
       return (response as List)
           .map((json) => JoinRequestModel.fromJson(json))
@@ -839,13 +839,13 @@ class OmadaServiceExtended {
   /// Cancel own pending join request
   Future<void> cancelJoinRequest(String omadaId) async {
     try {
-    await _client
-      .from('omada_requests')
-      .delete()
-      .eq('omada_id', omadaId)
-      .eq('requester_id', _userId)
-      .eq('status', 'pending')
-      .eq('type', 'join');
+      await _client
+          .from('omada_requests')
+          .delete()
+          .eq('omada_id', omadaId)
+          .eq('requester_id', _userId)
+          .eq('status', 'pending')
+          .eq('type', 'join');
     } catch (e) {
       // If table missing, nothing to cancel – ignore
       return;

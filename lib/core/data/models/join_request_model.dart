@@ -77,7 +77,9 @@ class JoinRequestModel {
         : null;
 
     // updated_at may not exist in new schema; fallback to decided_at or created_at
-    final updatedAtRaw = (json['updated_at'] ?? json['decided_at'] ?? json['created_at']) as String;
+    final updatedAtRaw =
+        (json['updated_at'] ?? json['decided_at'] ?? json['created_at'])
+            as String;
 
     return JoinRequestModel(
       id: json['id'] as String,
