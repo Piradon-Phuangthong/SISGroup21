@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:omada/core/data/services/omada_service.dart';
+import 'package:omada/core/data/services/omada_service_extended.dart';
 import 'package:omada/core/data/services/contact_service.dart';
 import 'package:omada/core/data/models/models.dart';
 
@@ -13,9 +14,12 @@ class OmadasTestPage extends StatefulWidget {
 
 class _OmadasTestPageState extends State<OmadasTestPage> {
   late final OmadaService _omadaService;
+  late final OmadaServiceExtended _omadaServiceExtended;
   late final ContactService _contactService;
 
   List<OmadaModel> _omadas = [];
+  List<OmadaModel> _publicOmadas = [];
+  List<OmadaModel> _debugAllPublic = [];
   List<ContactModel> _contacts = [];
   OmadaModel? _selectedOmada;
   List<String> _selectedOmadaMembers = [];
@@ -31,6 +35,7 @@ class _OmadasTestPageState extends State<OmadasTestPage> {
     super.initState();
     final client = Supabase.instance.client;
     _omadaService = OmadaService(client);
+    _omadaServiceExtended = OmadaServiceExtended(client);
     _contactService = ContactService(client);
     _loadData();
   }
@@ -209,6 +214,72 @@ class _OmadasTestPageState extends State<OmadasTestPage> {
     }
   }
 
+  Future<void> _testDiscovery() async {
+    // Ensure services are initialized (in case of hot reload issues)
+    if (!mounted) return;
+
+    setState(() {
+      _status = 'Testing discovery...';
+      _publicOmadas = [];
+    });
+
+    try {
+      print('🔍 Starting discovery test...');
+
+      // Reinitialize service if needed (hot reload safety)
+      final service = _omadaServiceExtended;
+
+      final discoverable = await service.getPublicOmadas();
+      print('✅ Discovery returned ${discoverable.length} omadas');
+
+      if (!mounted) return;
+      setState(() {
+        _publicOmadas = discoverable;
+        _status =
+            'Discovery: Found ${discoverable.length} public omadas from other users';
+      });
+    } catch (e, stackTrace) {
+      print('❌ Discovery failed: $e');
+      print('Stack trace: $stackTrace');
+      if (!mounted) return;
+      setState(() => _status = 'Discovery error: $e');
+    }
+  }
+
+  Future<void> _debugLoadAllPublic() async {
+    final service = _omadaServiceExtended;
+    setState(() {
+      _debugAllPublic = [];
+    });
+    try {
+      final allPublic = await service.getDebugPublicOmadasAll();
+      if (!mounted) return;
+      setState(() {
+        _debugAllPublic = allPublic;
+      });
+      // ignore: avoid_print
+      print(
+        '🧪 Debug: Loaded ${allPublic.length} public omadas (including my own)',
+      );
+      if (allPublic.isEmpty && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Debug: No public omadas exist at all.'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Debug fetch failed: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
+
   void _clearInputs() {
     _nameCtrl.clear();
     _descCtrl.clear();
@@ -268,6 +339,34 @@ class _OmadasTestPageState extends State<OmadasTestPage> {
                 ),
               ),
 
+            if (_debugAllPublic.isNotEmpty) ...[
+              const Divider(height: 24),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Text(
+                  'Debug: ALL public omadas (including your own) — ${_debugAllPublic.length} found',
+                  style: Theme.of(context).textTheme.titleSmall,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ..._debugAllPublic.map(
+                      (o) => ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        title: Text(o.name),
+                        subtitle: Text(
+                          'Owner: ${o.ownerId.substring(0, 8)}… • Members: ${o.memberCount ?? 0} • ${o.isPublic ? 'Public' : 'Private'}',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
 
             // Statistics
@@ -357,6 +456,133 @@ class _OmadasTestPageState extends State<OmadasTestPage> {
                         ),
                       ],
                     ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Discovery Test Section
+            Card(
+              color: Colors.blue.shade50,
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Icons.explore, color: Colors.blue),
+                        const SizedBox(width: 8),
+                        const Text(
+                          'Discovery Test (Public Omadas from Other Users)',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    ElevatedButton.icon(
+                      onPressed: _testDiscovery,
+                      icon: const Icon(Icons.search),
+                      label: const Text('Test Discovery'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Tip: Discovery excludes your own groups and ones you\'re a member of. Use Debug to see if any public omadas exist at all.',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        OutlinedButton(
+                          onPressed: _debugLoadAllPublic,
+                          child: const Text('Debug: All Public'),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    if (_publicOmadas.isEmpty)
+                      const Text(
+                        'No results yet. Click "Test Discovery" to find public omadas.',
+                        style: TextStyle(color: Colors.grey),
+                      )
+                    else
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Found ${_publicOmadas.length} public omadas:',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 8),
+                          ..._publicOmadas.map(
+                            (omada) => ListTile(
+                              dense: true,
+                              leading: CircleAvatar(
+                                radius: 16,
+                                backgroundColor: omada.color != null
+                                    ? _parseColor(omada.color!)
+                                    : Colors.grey,
+                                child: const Icon(
+                                  Icons.group,
+                                  size: 16,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              title: Text(omada.name),
+                              subtitle: Text(
+                                omada.description ?? 'No description',
+                              ),
+                              trailing: Text(
+                                '${omada.memberCount ?? 0} members',
+                                style: const TextStyle(fontSize: 12),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    if (_debugAllPublic.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      const Divider(),
+                      Text(
+                        'Debug: ALL public omadas (including yours) — ${_debugAllPublic.length}',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      ..._debugAllPublic.map(
+                        (omada) => ListTile(
+                          dense: true,
+                          leading: CircleAvatar(
+                            radius: 16,
+                            backgroundColor: omada.color != null
+                                ? _parseColor(omada.color!)
+                                : Colors.grey,
+                            child: const Icon(
+                              Icons.group,
+                              size: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                          title: Text(omada.name),
+                          subtitle: Text(omada.description ?? 'No description'),
+                          trailing: Text(
+                            'Owner: ${omada.ownerId.substring(0, 8)}…',
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

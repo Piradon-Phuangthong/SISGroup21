@@ -66,19 +66,32 @@ class JoinRequestModel {
     final profiles = json['profiles'] as Map<String, dynamic>?;
     final reviewer = json['reviewer'] as Map<String, dynamic>?;
 
+    // Support both legacy 'omada_join_requests' and new 'omada_requests' schemas
+    final userId = (json['user_id'] ?? json['requester_id']) as String;
+    final reviewedBy = (json['reviewed_by'] ?? json['decided_by']) as String?;
+
+    // reviewed/decided timestamp mapping
+    final reviewedAtRaw = (json['reviewed_at'] ?? json['decided_at']);
+    final reviewedAt = reviewedAtRaw != null
+        ? DateTime.parse(reviewedAtRaw as String)
+        : null;
+
+    // updated_at may not exist in new schema; fallback to decided_at or created_at
+    final updatedAtRaw =
+        (json['updated_at'] ?? json['decided_at'] ?? json['created_at'])
+            as String;
+
     return JoinRequestModel(
       id: json['id'] as String,
       omadaId: json['omada_id'] as String,
-      userId: json['user_id'] as String,
+      userId: userId,
       status: JoinRequestStatus.fromString(json['status'] as String),
       message: json['message'] as String?,
       responseMessage: json['response_message'] as String?,
-      reviewedBy: json['reviewed_by'] as String?,
-      reviewedAt: json['reviewed_at'] != null
-          ? DateTime.parse(json['reviewed_at'] as String)
-          : null,
+      reviewedBy: reviewedBy,
+      reviewedAt: reviewedAt,
       createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      updatedAt: DateTime.parse(updatedAtRaw),
       omadaName: omadas?['name'] as String?,
       userName: profiles?['name'] as String?,
       userAvatar: profiles?['avatar_url'] as String?,

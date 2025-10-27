@@ -118,4 +118,45 @@ class ContactChannelRepository extends BaseRepository {
           .eq('id', channelId);
     });
   }
+
+  /// Gets channels for a shared contact, filtered by share permissions
+  /// Only returns channels that are included in the field_mask of the share
+  Future<List<ContactChannelModel>> getSharedChannelsForContact({
+    required String contactId,
+    required ContactShareModel share,
+  }) async {
+    return await handleSupabaseExceptionAsync(() async {
+      // Get all channels for the contact (owner's perspective)
+      final response = await client
+          .from('contact_channels')
+          .select()
+          .eq('contact_id', contactId)
+          .eq('owner_id', share.ownerId)
+          .order('updated_at', ascending: false);
+
+      final allChannels = response
+          .map<ContactChannelModel>(
+            (row) =>
+                ContactChannelModel.fromJson(Map<String, dynamic>.from(row)),
+          )
+          .toList();
+
+      // Filter channels based on field_mask
+      // Include only channels whose IDs appear in field_mask with "channel:" prefix
+      final sharedChannelIds = share.fieldMask
+          .where((field) => field.startsWith('channel:'))
+          .map((field) => field.substring(8)) // Remove "channel:" prefix
+          .toSet();
+
+      // If field_mask contains generic "channels" without prefix, share all channels
+      if (share.fieldMask.contains('channels')) {
+        return allChannels;
+      }
+
+      // Otherwise filter to only shared channels
+      return allChannels
+          .where((channel) => sharedChannelIds.contains(channel.id))
+          .toList();
+    });
+  }
 }

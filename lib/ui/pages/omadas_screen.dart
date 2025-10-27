@@ -150,7 +150,20 @@ class _OmadasScreenState extends State<OmadasScreen> {
   Future<void> _openDiscoverSheet() async {
     try {
       _publicOmadas = await _omadaService.getPublicOmadas();
-    } catch (_) {}
+      print('✅ Loaded ${_publicOmadas.length} public omadas for discovery');
+    } catch (e, stackTrace) {
+      print('❌ Error loading public omadas: $e');
+      print('Stack trace: $stackTrace');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to load public omadas: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      }
+    }
     if (!mounted) return;
 
     await showModalBottomSheet(
@@ -249,36 +262,33 @@ class _OmadasScreenState extends State<OmadasScreen> {
             ),
           ),
 
-          SliverPadding(
-            padding: const EdgeInsets.only(top: 16),
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate((context, index) {
-                if (_isLoading && _visibleOmadas.isEmpty) {
-                  return const Padding(
-                    padding: EdgeInsets.only(top: 48),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-                if (_error != null && _visibleOmadas.isEmpty) {
-                  return _buildError();
-                }
-                if (_visibleOmadas.isEmpty) {
-                  return _buildEmpty();
-                }
-
-                final omada = _visibleOmadas[index];
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: OmadaTokens.space16,
-                    vertical: OmadaTokens.space2,
-                  ),
-                  child: OmadaCard(
-                    omada: omada,
-                    onTap: () => _navigateToOmada(omada),
-                  ),
+          SliverList(
+            delegate: SliverChildBuilderDelegate((context, index) {
+              if (_isLoading && _visibleOmadas.isEmpty) {
+                return const Padding(
+                  padding: EdgeInsets.only(top: 48),
+                  child: Center(child: CircularProgressIndicator()),
                 );
-              }, childCount: _childCount()),
-            ),
+              }
+              if (_error != null && _visibleOmadas.isEmpty) {
+                return _buildError();
+              }
+              if (_visibleOmadas.isEmpty) {
+                return _buildEmpty();
+              }
+
+              final omada = _visibleOmadas[index];
+              return Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: OmadaTokens.space16,
+                  vertical: OmadaTokens.space8,
+                ),
+                child: OmadaCard(
+                  omada: omada,
+                  onTap: () => _navigateToOmada(omada),
+                ),
+              );
+            }, childCount: _childCount()),
           ),
         ],
       ),

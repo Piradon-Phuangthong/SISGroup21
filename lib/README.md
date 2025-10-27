@@ -45,3 +45,28 @@ The presentation layer consists of:
 - Pages - Full screens
 - Screens - Functional areas
 - Widgets - Reusable components
+
+## Omadas: Added vs Not Added and Requests
+
+- In an Omada's details page, a new "Add" tab lists users who are not yet members of the Omada.
+- You can search by username and tap the Request button to invite a user to join.
+- The Members tab shows who you've already added.
+- The Requests tab lists incoming join requests for the Omada (moderator+ can approve/reject).
+
+Technical notes:
+- Service methods live in `core/data/services/omada_service_extended.dart`:
+  - `getOmadaMemberships(omadaId)` — current members
+  - `getNonMembers(omadaId, {search, limit})` — profiles not yet in the Omada
+  - `inviteUserToOmada(omadaId, targetUserId, {message})` — creates an invite via `omada_requests` (type='invite')
+  - Existing `requestToJoin()` continues to support user-initiated join requests (type='join').
+
+## Channel-level Sharing (Field Mask Spec)
+
+- Field mask lives in `contact_shares.field_mask` as a JSON array of strings.
+- Standard fields: `full_name`, `given_name`, `family_name`, `primary_email`, `primary_mobile`, etc.
+- Channel-level entries use the form: `channel:{channel-uuid}`.
+- Backward compatibility: If the array contains `"channels"` (without a UUID), treat it as "all channels" are shared.
+- Enforcement:
+  - Builders: `SharingService.acceptShareRequestWithChannels()` writes `channel:{uuid}` entries.
+  - Model: `ContactShareModel` exposes `sharedChannelIds`, `includesChannel()`, and `sharesAllChannels`.
+  - Repo: `ContactChannelRepository.getSharedChannelsForContact()` filters channels based on the mask.

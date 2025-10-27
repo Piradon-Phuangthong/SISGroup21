@@ -10,6 +10,7 @@ import '../features/my_channels_page.dart';
 import 'package:omada/ui/pages/profile_management_page.dart';
 import '../features/tag_assignment_test_page.dart';
 import '../features/omadas_test_page.dart';
+import '../features/omada_members_debug_page.dart';
 
 class EpicHomePage extends StatelessWidget {
   const EpicHomePage({super.key});
@@ -85,7 +86,13 @@ class EpicHomePage extends StatelessWidget {
           ),
           _EpicCard(
             title: 'E9 — Omadas (Groups)',
-            items: [_EpicNav('US-E9: Omadas CRUD & Members', OmadasTestPage())],
+            items: [
+              _EpicNav('US-E9: Omadas CRUD & Members', OmadasTestPage()),
+              _EpicNav(
+                'US-E9: Debug Omada Members & Roles',
+                OmadaMembersDebugPage(),
+              ),
+            ],
           ),
         ],
       ),

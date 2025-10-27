@@ -130,6 +130,47 @@ class SharingService {
     }
   }
 
+  /// Accepts a share request with channel-specific sharing
+  Future<void> acceptShareRequestWithChannels(
+    String requestId, {
+    required String contactId,
+    required List<String> channelIds,
+  }) async {
+    if (channelIds.isEmpty) {
+      throw ValidationException('At least one channel must be selected');
+    }
+
+    final request = await _sharingRepository.getShareRequest(requestId);
+    if (request == null) {
+      throw ExceptionFactory.shareRequestNotFound(requestId);
+    }
+
+    // Validate request status
+    if (request.status != ShareRequestStatus.pending) {
+      throw ValidationException(
+        'This request has already been ${request.status.value}',
+      );
+    }
+
+    // Build field mask with channel-specific entries
+    // Always include basic name fields
+    final List<String> fieldMask = [
+      ContactFields.fullName,
+      ContactFields.givenName,
+      ContactFields.familyName,
+      // Add channel references using "channel:" prefix
+      ...channelIds.map((id) => 'channel:$id'),
+    ];
+
+    // Accept the request with channel-specific sharing
+    await acceptShareRequest(
+      requestId,
+      shareConfigs: [
+        ContactShareConfig(contactId: contactId, fieldMask: fieldMask),
+      ],
+    );
+  }
+
   /// Declines a share request
   Future<void> declineShareRequest(String requestId) async {
     await _sharingRepository.respondToShareRequest(
@@ -149,6 +190,12 @@ class SharingService {
   /// Cancels a share request (by requester)
   Future<void> cancelShareRequest(String requestId) async {
     await _sharingRepository.cancelShareRequest(requestId);
+  }
+
+  /// Checks whether the current user has an active share with the specified user
+  /// This serves as a simple "friend" check (true if any contact is actively shared)
+  Future<bool> hasActiveShareWithUser(String toUserId) async {
+    return await _sharingRepository.hasActiveShareWithUser(toUserId);
   }
 
   /// Gets contacts shared by me

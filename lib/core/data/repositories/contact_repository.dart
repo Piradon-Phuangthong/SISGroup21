@@ -114,58 +114,67 @@ class ContactRepository extends BaseRepository {
     return contact;
   }
 
+  /// Gets the user's own contact (profile contact)
+  /// This is the contact where owner_id = current user's ID and represents their profile
+  Future<ContactModel?> getMyOwnContact() async {
+    final userId = authenticatedUserId;
 
+    return await handleSupabaseExceptionAsync(() async {
+      final response = await client
+          .from('contacts')
+          .select()
+          .eq('owner_id', userId)
+          .eq('is_deleted', false)
+          .limit(1);
 
+      if (response.isEmpty) return null;
 
+      return ContactModel.fromJson(response.first);
+    });
+  }
 
   /// Gets only soft-deleted contacts (is_deleted = true)
-Future<List<ContactModel>> getDeletedContacts({
-  String? searchTerm,
-  int? limit,
-  int? offset,
-  String orderBy = 'updated_at',
-  bool ascending = false,
-}) async {
-  final userId = authenticatedUserId;
+  Future<List<ContactModel>> getDeletedContacts({
+    String? searchTerm,
+    int? limit,
+    int? offset,
+    String orderBy = 'updated_at',
+    bool ascending = false,
+  }) async {
+    final userId = authenticatedUserId;
 
-  return await handleSupabaseExceptionAsync(() async {
-    dynamic query = client
-        .from('contacts')
-        .select()
-        .eq('owner_id', userId)
-        .eq('is_deleted', true); // only deleted
+    return await handleSupabaseExceptionAsync(() async {
+      dynamic query = client
+          .from('contacts')
+          .select()
+          .eq('owner_id', userId)
+          .eq('is_deleted', true); // only deleted
 
-    if (searchTerm?.isNotEmpty == true) {
-      final cleanTerm = searchTerm!.replaceAll("'", "''");
-      query = query.or(
-        'full_name.ilike.%$cleanTerm%,given_name.ilike.%$cleanTerm%,family_name.ilike.%$cleanTerm%,primary_email.ilike.%$cleanTerm%,primary_mobile.ilike.%$cleanTerm%',
-      );
-    }
-
-    query = query.order(orderBy, ascending: ascending);
-
-    if (limit != null) {
-      if (offset != null) {
-        query = query.range(offset, offset + limit - 1);
-      } else {
-        query = query.limit(limit);
+      if (searchTerm?.isNotEmpty == true) {
+        final cleanTerm = searchTerm!.replaceAll("'", "''");
+        query = query.or(
+          'full_name.ilike.%$cleanTerm%,given_name.ilike.%$cleanTerm%,family_name.ilike.%$cleanTerm%,primary_email.ilike.%$cleanTerm%,primary_mobile.ilike.%$cleanTerm%',
+        );
       }
-    }
 
-    final response = await query;
-    return response
-        .map<ContactModel>(
-          (data) => ContactModel.fromJson(data as Map<String, dynamic>),
-        )
-        .toList();
-  });
-}
+      query = query.order(orderBy, ascending: ascending);
 
+      if (limit != null) {
+        if (offset != null) {
+          query = query.range(offset, offset + limit - 1);
+        } else {
+          query = query.limit(limit);
+        }
+      }
 
-
-
-
-
+      final response = await query;
+      return response
+          .map<ContactModel>(
+            (data) => ContactModel.fromJson(data as Map<String, dynamic>),
+          )
+          .toList();
+    });
+  }
 
   /// Creates a new contact
   Future<ContactModel> createContact({
@@ -210,7 +219,9 @@ Future<List<ContactModel>> getDeletedContacts({
       'prefix': prefix?.trim(),
       'suffix': suffix?.trim(),
       'primary_mobile': primaryMobile?.trim(),
-      'primary_email': primaryEmail?.trim().isNotEmpty == true ? primaryEmail?.trim() : null,
+      'primary_email': primaryEmail?.trim().isNotEmpty == true
+          ? primaryEmail?.trim()
+          : null,
       'avatar_url': avatarUrl?.trim(),
       'notes': notes?.trim(),
       'custom_fields': customFields ?? {},
@@ -272,7 +283,9 @@ Future<List<ContactModel>> getDeletedContacts({
     if (primaryMobile != null)
       updateData['primary_mobile'] = primaryMobile.trim();
     if (primaryEmail != null) {
-      updateData['primary_email'] = primaryEmail.trim().isNotEmpty ? primaryEmail.trim() : null;
+      updateData['primary_email'] = primaryEmail.trim().isNotEmpty
+          ? primaryEmail.trim()
+          : null;
     }
     if (avatarUrl != null) updateData['avatar_url'] = avatarUrl.trim();
     if (notes != null) updateData['notes'] = notes.trim();
@@ -351,7 +364,7 @@ Future<List<ContactModel>> getDeletedContacts({
   /// Cleans up contacts with empty string emails (sets them to null)
   Future<void> cleanupEmptyEmails() async {
     final userId = authenticatedUserId;
-    
+
     await handleSupabaseExceptionAsync(() async {
       // Clean up empty string emails
       await client
@@ -359,7 +372,7 @@ Future<List<ContactModel>> getDeletedContacts({
           .update({'primary_email': null})
           .eq('owner_id', userId)
           .eq('primary_email', '');
-      
+
       // Also clean up any contacts that might have the user's email incorrectly assigned
       // Get the current user's email from auth
       final user = client.auth.currentUser;
@@ -369,7 +382,10 @@ Future<List<ContactModel>> getDeletedContacts({
             .update({'primary_email': null})
             .eq('owner_id', userId)
             .eq('primary_email', user!.email!)
-            .neq('full_name', user.email!.split('@')[0]) // Don't clean up if contact name matches email prefix
+            .neq(
+              'full_name',
+              user.email!.split('@')[0],
+            ) // Don't clean up if contact name matches email prefix
             .neq('given_name', user.email!.split('@')[0]);
       }
     });
@@ -450,6 +466,49 @@ Future<List<ContactModel>> getDeletedContacts({
         'deleted': deletedContacts.length,
         'total': totalContacts.length,
       };
+    });
+  }
+
+  /// Gets contacts that have been shared with the current user
+  /// Returns a list of SharedContactData containing the contact, share permissions, and owner profile
+  Future<List<SharedContactData>> getSharedContacts({
+    bool includeRevoked = false,
+  }) async {
+    final userId = authenticatedUserId;
+
+    return await handleSupabaseExceptionAsync(() async {
+      dynamic query = client
+          .from('contact_shares')
+          .select('''
+            *,
+            contact:contacts(*),
+            owner_profile:profiles!contact_shares_owner_id_fkey(*)
+          ''')
+          .eq('to_user_id', userId);
+
+      if (!includeRevoked) {
+        query = query.is_('revoked_at', null);
+      }
+
+      query = query.order('created_at', ascending: false);
+
+      final response = await query;
+
+      return response.map<SharedContactData>((row) {
+        final shareData = Map<String, dynamic>.from(row);
+        final contactData = shareData['contact'] as Map<String, dynamic>;
+        final profileData = shareData['owner_profile'] as Map<String, dynamic>;
+
+        // Remove nested objects before parsing share
+        shareData.remove('contact');
+        shareData.remove('owner_profile');
+
+        return SharedContactData(
+          contact: ContactModel.fromJson(contactData),
+          share: ContactShareModel.fromJson(shareData),
+          ownerProfile: ProfileModel.fromJson(profileData),
+        );
+      }).toList();
     });
   }
 }
