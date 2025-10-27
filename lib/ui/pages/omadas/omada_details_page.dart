@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:omada/core/data/models/models.dart';
 import 'package:omada/core/data/services/omada_service_extended.dart';
+import 'package:omada/core/data/services/sharing_service.dart';
+import 'package:omada/core/data/repositories/repositories.dart';
 import 'package:omada/core/utils/color_utils.dart';
 
 class OmadaDetailsPage extends StatefulWidget {
@@ -21,6 +23,16 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
   OmadaRole? _myRole;
   List<OmadaMembershipModel> _members = [];
   List<JoinRequestModel> _pendingRequests = [];
+  List<ProfileModel> _nonMembers = [];
+  final TextEditingController _userSearchController = TextEditingController();
+  bool _loadingNonMembers = false;
+  // Friend/share state
+  late final SharingService _sharingService;
+  late final ProfileRepository _profileRepo;
+  Map<String, String> _memberUsernames = {};
+  Map<String, bool> _isFriend = {};
+  bool _loadingFriendStatus = false;
+
   bool _isLoading = true;
   String? _error;
 
@@ -31,13 +43,18 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
   void initState() {
     super.initState();
     _service = OmadaServiceExtended(Supabase.instance.client);
-    _tabController = TabController(length: 2, vsync: this);
+    _sharingService = SharingService(Supabase.instance.client);
+    _profileRepo = ProfileRepository(Supabase.instance.client);
+    _tabController = TabController(length: 3, vsync: this);
+    _userSearchController.addListener(_onUserSearchChanged);
     _loadData();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _userSearchController.removeListener(_onUserSearchChanged);
+    _userSearchController.dispose();
     super.dispose();
   }
 
@@ -57,9 +74,97 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
         _pendingRequests = results[3] as List<JoinRequestModel>;
         _isLoading = false;
       });
+      // Load discoverable non-members once base data is ready
+      await _loadNonMembers();
+      // Load member profile usernames and friendship (active shares) status
+      await _loadMemberProfilesAndFriendStatus();
     } catch (e) {
       setState(() { _error = e.toString(); _isLoading = false; });
     }
+  }
+
+  Future<void> _loadMemberProfilesAndFriendStatus() async {
+    try {
+      setState(() => _loadingFriendStatus = true);
+
+      final userIds = _members.map((m) => m.userId).toSet().toList();
+      if (userIds.isEmpty) {
+        setState(() {
+          _memberUsernames = {};
+          _isFriend = {};
+        });
+        return;
+      }
+
+      // Fetch profiles in bulk to get usernames
+      final profiles = await _profileRepo.getProfilesByIds(userIds);
+      final usernameMap = {for (final p in profiles) p.id: p.username};
+
+      // Fill any missing from membership userName
+      for (final m in _members) {
+        usernameMap.putIfAbsent(m.userId, () => m.userName ?? '');
+      }
+
+      // Check active shares (friendship proxy) in parallel
+      final futures = userIds.map((id) => _sharingService.hasActiveShareWithUser(id)).toList();
+      final results = await Future.wait(futures);
+
+      final friendMap = <String, bool>{};
+      for (var i = 0; i < userIds.length; i++) {
+        friendMap[userIds[i]] = results[i];
+      }
+
+      if (mounted) setState(() {
+        _memberUsernames = usernameMap;
+        _isFriend = friendMap;
+      });
+    } catch (_) {
+      if (mounted) setState(() { _memberUsernames = {}; _isFriend = {}; });
+    } finally {
+      if (mounted) setState(() => _loadingFriendStatus = false);
+    }
+  }
+
+  Future<void> _sendShareRequestToMember(String userId, String username) async {
+    try {
+      if (username.isEmpty) throw Exception('Recipient username unknown');
+      await _sharingService.sendShareRequest(recipientUsername: username);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Share request sent to $username')));
+      // No active share yet; refresh outgoing requests or friend status if desired
+      await _loadMemberProfilesAndFriendStatus();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+    }
+  }
+
+  Future<void> _loadNonMembers() async {
+    try {
+      setState(() => _loadingNonMembers = true);
+      final list = await _service.getNonMembers(
+        widget.omadaId,
+        search: _userSearchController.text,
+        limit: 50,
+      );
+      if (mounted) setState(() => _nonMembers = list);
+    } catch (_) {
+      if (mounted) setState(() => _nonMembers = []);
+    } finally {
+      if (mounted) setState(() => _loadingNonMembers = false);
+    }
+  }
+
+  DateTime? _lastUserSearchChangeAt;
+  void _onUserSearchChanged() {
+    _lastUserSearchChangeAt = DateTime.now();
+    Future.delayed(const Duration(milliseconds: 300)).then((_) async {
+      final last = _lastUserSearchChangeAt;
+      if (last == null) return;
+      if (DateTime.now().difference(last) >= const Duration(milliseconds: 290)) {
+        await _loadNonMembers();
+      }
+    });
   }
 
   Future<void> _leaveOmada() async {
@@ -263,6 +368,10 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
                           child: const Icon(Icons.pending),
                         ),
                       ),
+                          const Tab(
+                            text: 'Add',
+                            icon: Icon(Icons.person_add_alt_1),
+                          ),
                     ],
                   ),
                 ),
@@ -276,6 +385,7 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
           children: [
             _buildMembersTab(),
             _buildRequestsTab(),
+            _buildAddPeopleTab(),
           ],
         ),
       ),
@@ -291,12 +401,35 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
       itemBuilder: (context, index) {
         final m = _members[index];
         final canManage = _myRole != null && _myRole!.canManage(m.role);
+        final username = _memberUsernames[m.userId] ?? m.userName ?? '';
+        final isFriend = _isFriend[m.userId] ?? false;
         return ListTile(
-          leading: CircleAvatar(child: Text((m.userName ?? 'U')[0].toUpperCase())),
-          title: Text(m.userName ?? 'Unknown User'),
-          subtitle: Text(m.role.displayName),
-          trailing: canManage
-              ? PopupMenuButton(
+          leading: CircleAvatar(child: Text((username.isNotEmpty ? username[0] : 'U').toUpperCase())),
+          title: Text(username.isNotEmpty ? username : (m.userName ?? 'Unknown User')),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(m.role.displayName),
+              const SizedBox(height: 4),
+              if (_loadingFriendStatus)
+                const Text('Checking friendship...', style: TextStyle(fontSize: 12))
+              else if (isFriend)
+                const Text('Friend', style: TextStyle(fontSize: 12, color: Colors.green))
+              else
+                const Text('Not friends', style: TextStyle(fontSize: 12, color: Colors.grey)),
+            ],
+          ),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (!isFriend && !_loadingFriendStatus)
+                IconButton(
+                  icon: const Icon(Icons.person_add_alt_1),
+                  tooltip: 'Send share request',
+                  onPressed: () => _sendShareRequestToMember(m.userId, username),
+                ),
+              if (canManage)
+                PopupMenuButton(
                   itemBuilder: (context) => [
                     if (m.role != OmadaRole.admin)
                       const PopupMenuItem(value: 'promote', child: Text('Promote to Admin')),
@@ -305,8 +438,9 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
                     const PopupMenuItem(value: 'remove', child: Text('Remove')),
                   ],
                   onSelected: (value) => _handleMemberAction(value, m),
-                )
-              : null,
+                ),
+            ],
+          ),
         );
       },
     );
@@ -341,6 +475,67 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
     );
   }
 
+  Widget _buildAddPeopleTab() {
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+          child: TextField(
+            controller: _userSearchController,
+            decoration: InputDecoration(
+              prefixIcon: const Icon(Icons.search),
+              hintText: 'Search users by username',
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              isDense: true,
+            ),
+          ),
+        ),
+        if (_loadingNonMembers)
+          const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: LinearProgressIndicator(),
+          ),
+        Expanded(
+          child: _nonMembers.isEmpty
+              ? const Center(child: Text('No users to add'))
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  itemCount: _nonMembers.length,
+                  itemBuilder: (context, index) {
+                    final p = _nonMembers[index];
+                    return ListTile(
+                      leading: CircleAvatar(child: Text(p.username[0].toUpperCase())),
+                      title: Text(p.username),
+                      subtitle: const Text('Not added'),
+                      trailing: IconButton(
+                        icon: const Icon(Icons.person_add),
+                        onPressed: () => _inviteUser(p.id, p.username),
+                        tooltip: 'Request to add',
+                      ),
+                    );
+                  },
+                ),
+        ),
+      ],
+    );
+  }
+
+  Future<void> _inviteUser(String userId, String username) async {
+    try {
+      await _service.inviteUserToOmada(widget.omadaId, userId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Requested $username to join')),
+      );
+      await _loadNonMembers();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
+    }
+  }
+
   // Helpers
   static Widget _chip(IconData icon, String text) {
     return Chip(
@@ -351,16 +546,7 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
     );
   }
 
-  IconData _getRoleIcon(OmadaRole? role) {
-    if (role == null) return Icons.person_outline;
-    switch (role) {
-      case OmadaRole.owner: return Icons.workspace_premium;
-      case OmadaRole.admin: return Icons.admin_panel_settings;
-      case OmadaRole.moderator: return Icons.verified_user;
-      case OmadaRole.member: return Icons.person;
-      case OmadaRole.guest: return Icons.person_outline;
-    }
-  }
+  // Note: role icon helper removed (unused)
 
   String _formatDate(DateTime date) {
     final diff = DateTime.now().difference(date);

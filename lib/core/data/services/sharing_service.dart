@@ -192,6 +192,12 @@ class SharingService {
     await _sharingRepository.cancelShareRequest(requestId);
   }
 
+  /// Checks whether the current user has an active share with the specified user
+  /// This serves as a simple "friend" check (true if any contact is actively shared)
+  Future<bool> hasActiveShareWithUser(String toUserId) async {
+    return await _sharingRepository.hasActiveShareWithUser(toUserId);
+  }
+
   /// Gets contacts shared by me
   Future<List<ContactShareWithDetails>> getMyShares({
     bool includeRevoked = false,

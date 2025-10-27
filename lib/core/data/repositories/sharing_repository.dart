@@ -408,6 +408,23 @@ class SharingRepository extends BaseRepository {
     });
   }
 
+    /// Checks if the current user has any active contact share with the given user
+    Future<bool> hasActiveShareWithUser(String toUserId) async {
+      final userId = authenticatedUserId;
+
+      return await handleSupabaseExceptionAsync(() async {
+        final response = await client
+            .from('contact_shares')
+            .select('id')
+            .eq('owner_id', userId)
+            .eq('to_user_id', toUserId)
+            .filter('revoked_at', 'is', 'null')
+            .maybeSingle();
+
+        return response != null;
+      });
+    }
+
   /// Gets a specific contact share
   Future<ContactShareModel?> getContactShare(String shareId) async {
     final userId = authenticatedUserId;

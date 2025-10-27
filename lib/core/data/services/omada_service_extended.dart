@@ -516,11 +516,11 @@ class OmadaServiceExtended {
         if (omada != null) {
           // Get owner profile info
           try {
-      final ownerProfile = await _client
-        .from('profiles')
-        .select('id, username, avatar_url')
-        .eq('id', omada.ownerId)
-        .maybeSingle();
+            final ownerProfile = await _client
+                .from('profiles')
+                .select('id, username, avatar_url')
+                .eq('id', omada.ownerId)
+                .maybeSingle();
 
             // Create a synthetic membership for the owner
             final ownerMembership = OmadaMembershipModel(
@@ -580,11 +580,11 @@ class OmadaServiceExtended {
           // Try to fetch owner profile (best-effort)
           Map<String, dynamic>? ownerProfile;
           try {
-      ownerProfile = await _client
-        .from('profiles')
-        .select('id, username, avatar_url')
-        .eq('id', omada.ownerId)
-        .maybeSingle();
+            ownerProfile = await _client
+                .from('profiles')
+                .select('id, username, avatar_url')
+                .eq('id', omada.ownerId)
+                .maybeSingle();
           } catch (_) {}
 
           return [
@@ -609,9 +609,7 @@ class OmadaServiceExtended {
         // 2) Build roleId -> key map (best-effort)
         final roleKeyById = <String, String>{};
         try {
-          final rolesRes = await _client
-              .from('omada_roles')
-              .select('id, key');
+          final rolesRes = await _client.from('omada_roles').select('id, key');
           for (final row in (rolesRes as List)) {
             final m = row as Map<String, dynamic>;
             final id = (m['id'] as String?) ?? (m['id']?.toString() ?? '');
@@ -633,10 +631,10 @@ class OmadaServiceExtended {
         final profilesById = <String, Map<String, dynamic>>{};
         if (userIds.isNotEmpty) {
           try {
-      final profRes = await _client
-        .from('profiles')
-        .select('id, username, avatar_url')
-        .filter('id', 'in', '(${userIds.join(',')})');
+            final profRes = await _client
+                .from('profiles')
+                .select('id, username, avatar_url')
+                .filter('id', 'in', '(${userIds.join(',')})');
             for (final row in (profRes as List)) {
               final m = row as Map<String, dynamic>;
               final id = m['id'] as String?;
@@ -684,11 +682,11 @@ class OmadaServiceExtended {
             !memberships.any((m) => m.userId == omada.ownerId)) {
           Map<String, dynamic>? ownerProfile;
           try {
-      ownerProfile = await _client
-        .from('profiles')
-        .select('id, username, avatar_url')
-        .eq('id', omada.ownerId)
-        .maybeSingle();
+            ownerProfile = await _client
+                .from('profiles')
+                .select('id, username, avatar_url')
+                .eq('id', omada.ownerId)
+                .maybeSingle();
           } catch (_) {}
 
           memberships.insert(
@@ -702,8 +700,8 @@ class OmadaServiceExtended {
               updatedAt: omada.createdAt,
               userName:
                   (ownerProfile?['name'] as String?)?.trim().isNotEmpty == true
-                      ? (ownerProfile?['name'] as String)
-                      : 'Owner',
+                  ? (ownerProfile?['name'] as String)
+                  : 'Owner',
               userAvatar: ownerProfile?['avatar_url'] as String?,
             ),
           );
@@ -981,6 +979,156 @@ class OmadaServiceExtended {
       return JoinRequestModel.fromJson(response);
     } catch (e) {
       throw Exception('Error requesting to join: $e');
+    }
+  }
+
+  /// Invite another user to join an omada (owner/admin flows)
+  /// Creates an entry in public.omada_requests with type = 'invite'.
+  Future<JoinRequestModel> inviteUserToOmada(
+    String omadaId,
+    String targetUserId, {
+    String? message,
+  }) async {
+    try {
+      // Don't invite yourself
+      if (targetUserId == _userId) {
+        throw Exception('Cannot invite yourself');
+      }
+
+      // Skip if already a member
+      try {
+        final existingMembership = await _client
+            .from('omada_members')
+            .select('user_id')
+            .eq('omada_id', omadaId)
+            .eq('user_id', targetUserId)
+            .eq('status', 'active')
+            .maybeSingle();
+        if (existingMembership != null) {
+          throw Exception('User is already a member');
+        }
+      } catch (_) {
+        // If membership table is not available due to RLS/schema, continue best effort
+      }
+
+      // Avoid duplicate pending invite
+      try {
+        final existingInvite = await _client
+            .from('omada_requests')
+            .select('id, status')
+            .eq('omada_id', omadaId)
+            .eq('requester_id', _userId)
+            .eq('target_user_id', targetUserId)
+            .eq('type', 'invite')
+            .eq('status', 'pending')
+            .maybeSingle();
+        if (existingInvite != null) {
+          // Return existing as a model
+          return JoinRequestModel.fromJson(
+            Map<String, dynamic>.from(existingInvite as Map),
+          );
+        }
+      } catch (_) {}
+
+      final response = await _client
+          .from('omada_requests')
+          .insert({
+            'omada_id': omadaId,
+            'requester_id': _userId,
+            'target_user_id': targetUserId,
+            'type': 'invite',
+            'message': message,
+            'status': 'pending',
+          })
+          .select()
+          .single();
+
+      return JoinRequestModel.fromJson(response);
+    } catch (e) {
+      throw Exception('Error inviting user: $e');
+    }
+  }
+
+  /// List users (profiles) that are NOT members of the given omada.
+  /// Optional search by username and result limiting.
+  Future<List<ProfileModel>> getNonMembers(
+    String omadaId, {
+    String? search,
+    int limit = 50,
+  }) async {
+    try {
+      // Try efficient server-side exclusion using subquery
+      try {
+        var query = _client
+            .from('profiles')
+            .select()
+            .neq('id', _userId)
+            // Exclude users already in this omada
+            .not(
+              'id',
+              'in',
+              '(select user_id from omada_members where omada_id=$omadaId and status=\'active\')',
+            );
+
+        // Also exclude owner if visible
+        try {
+          final omada = await getOmadaById(omadaId);
+          if (omada != null) {
+            query = query.neq('id', omada.ownerId);
+          }
+        } catch (_) {}
+
+        if (search != null && search.trim().isNotEmpty) {
+          query = query.ilike('username', '%${search.trim()}%');
+        }
+
+        final res = await query.order('created_at', ascending: false).limit(limit);
+        return (res as List)
+            .map((json) => ProfileModel.fromJson(Map<String, dynamic>.from(json)))
+            .toList();
+      } catch (_) {
+        // Fallback: fetch current members, then filter client-side
+        final members = await getOmadaMemberships(omadaId);
+        final memberIds = members.map((m) => m.userId).toSet();
+        final omada = await getOmadaById(omadaId);
+        if (omada != null) memberIds.add(omada.ownerId);
+        memberIds.add(_userId);
+
+        // Build a profiles query and exclude memberIds in a batched way
+        var query = _client.from('profiles').select();
+        if (search != null && search.trim().isNotEmpty) {
+          query = query.ilike('username', '%${search.trim()}%');
+        }
+
+        final res = await query.order('created_at', ascending: false).limit(200);
+        final all = (res as List)
+            .map((j) => ProfileModel.fromJson(Map<String, dynamic>.from(j)))
+            .where((p) => !memberIds.contains(p.id))
+            .toList();
+        return all.take(limit).toList();
+      }
+    } catch (e) {
+      // In case of any RLS/schema issues, return empty rather than fail UI
+      return [];
+    }
+  }
+
+  /// Get pending invites (type='invite') for moderation or tracking
+  Future<List<JoinRequestModel>> getPendingInvites(String omadaId) async {
+    try {
+      final response = await _client
+          .from('omada_requests')
+          .select('*')
+          .eq('omada_id', omadaId)
+          .eq('status', 'pending')
+          .eq('type', 'invite')
+          .order('created_at');
+
+      return (response as List)
+          .map((json) => JoinRequestModel.fromJson(json))
+          .toList();
+    } catch (_) {
+      return [];
     }
   }
 
