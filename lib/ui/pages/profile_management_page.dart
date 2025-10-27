@@ -769,12 +769,33 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
   }
 
   Future<void> _openAddChannel(BuildContext context, ProfileData data) async {
+    // Verify that we're using the correct profile contact
+    final controller = ProfileController(Supabase.instance.client);
+    final isCorrectContact = await controller.isProfileContact(data.contact.id);
+    
+    if (!isCorrectContact) {
+      print('WARNING: Not using profile contact! Contact ID: ${data.contact.id}');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Error: Not using the correct profile contact. Please refresh the page.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    print('Adding channel to profile contact: ${data.contact.fullName} (ID: ${data.contact.id})');
     final result = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       builder: (ctx) => AddChannelSheet(contactId: data.contact.id),
     );
-    if (result == true) _refresh();
+    if (result == true) {
+      print('Channel added successfully to profile contact, refreshing profile data...');
+      _refresh();
+    } else {
+      print('Channel addition cancelled or failed');
+    }
   }
 
   Future<void> _openShare(BuildContext context, ProfileData data) async {

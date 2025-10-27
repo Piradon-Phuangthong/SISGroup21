@@ -134,10 +134,15 @@ class _AddChannelSheetState extends State<AddChannelSheet> {
   Future<void> _save() async {
     setState(() => _saving = true);
     try {
+      print('Creating channel for contact: ${widget.contactId}');
+      print('Channel kind: $_selectedKind');
+      print('Channel value: ${_valueCtrl.text.trim()}');
+      
       final repo = ContactChannelRepository(Supabase.instance.client);
       final value = _valueCtrl.text.trim();
       final url = ChannelPresets.computeUrl(_selectedKind, value);
-      await repo.createChannel(
+      
+      final channel = await repo.createChannel(
         contactId: widget.contactId,
         kind: _selectedKind,
         label: _labelCtrl.text.trim().isEmpty
@@ -146,9 +151,12 @@ class _AddChannelSheetState extends State<AddChannelSheet> {
         value: value.isEmpty ? null : value,
         url: url.isEmpty ? null : url,
       );
+      
+      print('Channel created successfully: ${channel.id}');
       if (!mounted) return;
       Navigator.pop(context, true);
     } catch (e) {
+      print('Error creating channel: $e');
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
