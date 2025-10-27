@@ -451,6 +451,33 @@ class OmadaServiceExtended {
   /// Get all memberships for an omada (with user details)
   Future<List<OmadaMembershipModel>> getOmadaMemberships(String omadaId) async {
     try {
+      // Preferred: use consolidated view if available (simpler RLS surface)
+      try {
+        final viewRes = await _client
+            .from('omada_memberships_view')
+            .select()
+            .eq('omada_id', omadaId)
+            .order('joined_at');
+
+        final list = (viewRes as List).map((row) {
+          final json = Map<String, dynamic>.from(row as Map);
+          // Adapt view shape to model expectations
+          json['profiles'] = {
+            'name': json['user_name'],
+            'avatar_url': json['user_avatar'],
+          };
+          // Ensure required fields exist
+          json['id'] = json['id'] ?? '${json['omada_id']}-${json['user_id']}';
+          json['role_name'] = json['role_name'] ?? 'member';
+          json['updated_at'] = json['updated_at'] ?? json['joined_at'];
+          return OmadaMembershipModel.fromJson(json);
+        }).toList();
+
+        return list;
+      } catch (_) {
+        // Fall through to table-based path
+      }
+
       final response = await _client
           .from('omada_members')
           .select('*, profiles(name, avatar_url), omada_roles!role_id(key)')
@@ -489,11 +516,11 @@ class OmadaServiceExtended {
         if (omada != null) {
           // Get owner profile info
           try {
-            final ownerProfile = await _client
-                .from('profiles')
-                .select('name, avatar_url')
-                .eq('id', omada.ownerId)
-                .maybeSingle();
+      final ownerProfile = await _client
+        .from('profiles')
+        .select('id, username, avatar_url')
+        .eq('id', omada.ownerId)
+        .maybeSingle();
 
             // Create a synthetic membership for the owner
             final ownerMembership = OmadaMembershipModel(
@@ -503,10 +530,12 @@ class OmadaServiceExtended {
               role: OmadaRole.owner,
               joinedAt: omada.createdAt, // Use omada creation date
               updatedAt: omada.createdAt,
-              userName:
-                  (ownerProfile?['name'] as String?)?.trim().isNotEmpty == true
-                  ? (ownerProfile?['name'] as String)
-                  : 'Owner',
+              userName: (() {
+                final n = ownerProfile?['name'] as String?; // some schemas
+                final u = ownerProfile?['username'] as String?;
+                final val = (n != null && n.trim().isNotEmpty) ? n : u;
+                return (val != null && val.trim().isNotEmpty) ? val : 'Owner';
+              })(),
               userAvatar: ownerProfile?['avatar_url'] as String?,
             );
 
@@ -531,18 +560,169 @@ class OmadaServiceExtended {
 
       return memberships;
     } catch (e) {
-      // Advanced table may be missing in legacy schema
-      // Still try to return the owner as a member
+      // Joined select may fail due to RLS or missing FK relationships.
+      // Fallback path: fetch memberships first without joins, then enrich.
       try {
-        final omada = await getOmadaById(omadaId);
-        if (omada != null) {
-          // Get owner profile info
+        // 1) Base memberships from omada_members (no joins)
+        final baseRes = await _client
+            .from('omada_members')
+            .select('omada_id, user_id, role_id, joined_at, updated_at, status')
+            .eq('omada_id', omadaId)
+            .eq('status', 'active')
+            .order('joined_at');
+
+        final baseList = (baseRes as List).cast<Map<String, dynamic>>();
+        if (baseList.isEmpty) {
+          // If no rows visible, at least return owner membership as a last resort
+          final omada = await getOmadaById(omadaId);
+          if (omada == null) return [];
+
+          // Try to fetch owner profile (best-effort)
+          Map<String, dynamic>? ownerProfile;
           try {
-            final ownerProfile = await _client
-                .from('profiles')
-                .select('name, avatar_url')
-                .eq('id', omada.ownerId)
-                .maybeSingle();
+      ownerProfile = await _client
+        .from('profiles')
+        .select('id, username, avatar_url')
+        .eq('id', omada.ownerId)
+        .maybeSingle();
+          } catch (_) {}
+
+          return [
+            OmadaMembershipModel(
+              id: 'owner-${omada.ownerId}',
+              omadaId: omadaId,
+              userId: omada.ownerId,
+              role: OmadaRole.owner,
+              joinedAt: omada.createdAt,
+              updatedAt: omada.createdAt,
+              userName: (() {
+                final n = ownerProfile?['name'] as String?;
+                final u = ownerProfile?['username'] as String?;
+                final val = (n != null && n.trim().isNotEmpty) ? n : u;
+                return (val != null && val.trim().isNotEmpty) ? val : 'Owner';
+              })(),
+              userAvatar: ownerProfile?['avatar_url'] as String?,
+            ),
+          ];
+        }
+
+        // 2) Build roleId -> key map (best-effort)
+        final roleKeyById = <String, String>{};
+        try {
+          final rolesRes = await _client
+              .from('omada_roles')
+              .select('id, key');
+          for (final row in (rolesRes as List)) {
+            final m = row as Map<String, dynamic>;
+            final id = (m['id'] as String?) ?? (m['id']?.toString() ?? '');
+            final key = m['key'] as String?;
+            if (id.isNotEmpty && key != null) roleKeyById[id] = key;
+          }
+        } catch (_) {
+          // ignore – we'll default to 'member' later
+        }
+
+        // 3) Collect user IDs and fetch profiles in bulk (best-effort)
+        final userIds = baseList
+            .map((m) => m['user_id'] as String?)
+            .where((id) => id != null)
+            .cast<String>()
+            .toSet()
+            .toList();
+
+        final profilesById = <String, Map<String, dynamic>>{};
+        if (userIds.isNotEmpty) {
+          try {
+      final profRes = await _client
+        .from('profiles')
+        .select('id, username, avatar_url')
+        .filter('id', 'in', '(${userIds.join(',')})');
+            for (final row in (profRes as List)) {
+              final m = row as Map<String, dynamic>;
+              final id = m['id'] as String?;
+              if (id != null) profilesById[id] = m;
+            }
+          } catch (_) {
+            // ignore – profiles remain null
+          }
+        }
+
+        // 4) Map into OmadaMembershipModel instances
+        final memberships = baseList.map((m) {
+          final userId = m['user_id'] as String;
+          final roleIdRaw = m['role_id'];
+          final roleId = roleIdRaw == null ? null : roleIdRaw.toString();
+          final roleKey = roleId != null ? roleKeyById[roleId] : null;
+          final role = roleKey != null
+              ? OmadaRole.fromString(roleKey)
+              : OmadaRole.member;
+
+          final profile = profilesById[userId];
+
+          return OmadaMembershipModel(
+            id: '${m['omada_id']}-${userId}',
+            omadaId: m['omada_id'] as String,
+            userId: userId,
+            role: role,
+            joinedAt: DateTime.parse(m['joined_at'] as String),
+            updatedAt: DateTime.parse(
+              (m['updated_at'] as String?) ?? (m['joined_at'] as String),
+            ),
+            userName: (() {
+              final n = profile?['name'] as String?;
+              final u = profile?['username'] as String?;
+              final val = (n != null && n.trim().isNotEmpty) ? n : u;
+              return val;
+            })(),
+            userAvatar: profile?['avatar_url'] as String?,
+          );
+        }).toList();
+
+        // 5) Ensure owner appears at least once
+        final omada = await getOmadaById(omadaId);
+        if (omada != null &&
+            !memberships.any((m) => m.userId == omada.ownerId)) {
+          Map<String, dynamic>? ownerProfile;
+          try {
+      ownerProfile = await _client
+        .from('profiles')
+        .select('id, username, avatar_url')
+        .eq('id', omada.ownerId)
+        .maybeSingle();
+          } catch (_) {}
+
+          memberships.insert(
+            0,
+            OmadaMembershipModel(
+              id: 'owner-${omada.ownerId}',
+              omadaId: omadaId,
+              userId: omada.ownerId,
+              role: OmadaRole.owner,
+              joinedAt: omada.createdAt,
+              updatedAt: omada.createdAt,
+              userName:
+                  (ownerProfile?['name'] as String?)?.trim().isNotEmpty == true
+                      ? (ownerProfile?['name'] as String)
+                      : 'Owner',
+              userAvatar: ownerProfile?['avatar_url'] as String?,
+            ),
+          );
+        }
+
+        return memberships;
+      } catch (_) {
+        // As a last resort, return only owner membership if possible
+        try {
+          final omada = await getOmadaById(omadaId);
+          if (omada != null) {
+            Map<String, dynamic>? ownerProfile;
+            try {
+              ownerProfile = await _client
+                  .from('profiles')
+                  .select('name, avatar_url')
+                  .eq('id', omada.ownerId)
+                  .maybeSingle();
+            } catch (_) {}
 
             return [
               OmadaMembershipModel(
@@ -552,33 +732,19 @@ class OmadaServiceExtended {
                 role: OmadaRole.owner,
                 joinedAt: omada.createdAt,
                 updatedAt: omada.createdAt,
-                userName:
-                    (ownerProfile?['name'] as String?)?.trim().isNotEmpty ==
-                        true
-                    ? (ownerProfile?['name'] as String)
-                    : 'Owner',
+                userName: (() {
+                  final n = ownerProfile?['name'] as String?;
+                  final u = ownerProfile?['username'] as String?;
+                  final val = (n != null && n.trim().isNotEmpty) ? n : u;
+                  return (val != null && val.trim().isNotEmpty) ? val : 'Owner';
+                })(),
                 userAvatar: ownerProfile?['avatar_url'] as String?,
               ),
             ];
-          } catch (_) {
-            return [
-              OmadaMembershipModel(
-                id: 'owner-${omada.ownerId}',
-                omadaId: omadaId,
-                userId: omada.ownerId,
-                role: OmadaRole.owner,
-                joinedAt: omada.createdAt,
-                updatedAt: omada.createdAt,
-                userName: 'Owner',
-                userAvatar: null,
-              ),
-            ];
           }
-        }
-      } catch (_) {
-        // If everything fails, return empty list
+        } catch (_) {}
+        return [];
       }
-      return [];
     }
   }
 
