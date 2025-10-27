@@ -6,6 +6,7 @@ class ChannelPresets {
     'linkedin': {'label': 'LinkedIn', 'valueHint': 'handle'},
     'whatsapp': {'label': 'WhatsApp', 'valueHint': '+15551234567'},
     'messenger': {'label': 'Messenger', 'valueHint': 'username'},
+    'telegram': {'label': 'Telegram', 'valueHint': 'username'},
   };
 
   static String computeUrl(String kindRaw, String valueRaw) {
@@ -27,6 +28,9 @@ class ChannelPresets {
         return 'https://wa.me/$digits';
       case 'messenger':
         return 'https://m.me/$value';
+      case 'telegram':
+        final username = value.replaceAll('@', '');
+        return 'https://t.me/$username';
       default:
         return '';
     }

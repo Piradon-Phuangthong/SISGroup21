@@ -135,17 +135,11 @@ class ChannelKind {
   static const String email = 'email';
   static const String messenger = 'messenger';
   static const String whatsapp = 'whatsapp';
-  static const String telegram = 'telegram';
   static const String instagram = 'instagram';
   static const String facebook = 'facebook';
   static const String linkedin = 'linkedin';
-  static const String twitter = 'twitter';
-  static const String github = 'github';
   static const String website = 'website';
   static const String address = 'address';
-  static const String paypal = 'paypal';
-  static const String venmo = 'venmo';
-  static const String cashapp = 'cashapp';
   static const String other = 'other';
 
   static const List<String> all = [
@@ -153,17 +147,11 @@ class ChannelKind {
     email,
     messenger,
     whatsapp,
-    telegram,
     instagram,
     facebook,
     linkedin,
-    twitter,
-    github,
     website,
     address,
-    paypal,
-    venmo,
-    cashapp,
     other,
   ];
 
@@ -203,13 +191,7 @@ class ChannelKind {
           size: size,
           semanticLabel: semanticLabel,
         );
-      case telegram:
-        return FaIcon(
-          FontAwesomeIcons.telegram,
-          color: color,
-          size: size,
-          semanticLabel: semanticLabel,
-        );
+
       case instagram:
         return FaIcon(
           FontAwesomeIcons.instagram,
@@ -231,20 +213,7 @@ class ChannelKind {
           size: size,
           semanticLabel: semanticLabel,
         );
-      case twitter:
-        return FaIcon(
-          FontAwesomeIcons.twitter,
-          color: color,
-          size: size,
-          semanticLabel: semanticLabel,
-        );
-      case github:
-        return FaIcon(
-          FontAwesomeIcons.github,
-          color: color,
-          size: size,
-          semanticLabel: semanticLabel,
-        );
+     
       case website:
         return FaIcon(
           FontAwesomeIcons.link,
@@ -259,27 +228,7 @@ class ChannelKind {
           size: size,
           semanticLabel: semanticLabel,
         );
-      case paypal:
-        return FaIcon(
-          FontAwesomeIcons.paypal,
-          color: color,
-          size: size,
-          semanticLabel: semanticLabel,
-        );
-      case venmo:
-        return Icon(
-          Icons.account_balance_wallet,
-          color: color,
-          size: size,
-          semanticLabel: semanticLabel,
-        );
-      case cashapp:
-        return FaIcon(
-          FontAwesomeIcons.cashApp,
-          color: color,
-          size: size,
-          semanticLabel: semanticLabel,
-        );
+
       case other:
         return Icon(
           Icons.more_horiz,
