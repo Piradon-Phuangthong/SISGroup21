@@ -282,7 +282,7 @@ class _ContactScreenState extends State<ContactScreen> {
   @override
   Widget build(BuildContext context) {
     final double expandedHeight = 315;
-    final double collapsedHeight = 120;
+    final double collapsedHeight = 96;
 
     return Scaffold(
       resizeToAvoidBottomInset: true,

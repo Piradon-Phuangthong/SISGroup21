@@ -37,7 +37,7 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
   String? _error;
 
   static const Color _gradStart = Color(0xFFa257e8);
-  static const Color _gradEnd   = Color(0xFF64bdfb);
+  static const Color _gradEnd = Color(0xFF64bdfb);
 
   @override
   void initState() {
@@ -59,13 +59,18 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
   }
 
   Future<void> _loadData() async {
-    setState(() { _isLoading = true; _error = null; });
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
       final results = await Future.wait([
         _service.getOmadaById(widget.omadaId),
         _service.getUserRole(widget.omadaId),
         _service.getOmadaMemberships(widget.omadaId),
-        _service.getPendingRequests(widget.omadaId).catchError((_) => <JoinRequestModel>[]),
+        _service
+            .getPendingRequests(widget.omadaId)
+            .catchError((_) => <JoinRequestModel>[]),
       ]);
       setState(() {
         _omada = results[0] as OmadaModel?;
@@ -79,7 +84,10 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
       // Load member profile usernames and friendship (active shares) status
       await _loadMemberProfilesAndFriendStatus();
     } catch (e) {
-      setState(() { _error = e.toString(); _isLoading = false; });
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
     }
   }
 
@@ -106,7 +114,9 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
       }
 
       // Check active shares (friendship proxy) in parallel
-      final futures = userIds.map((id) => _sharingService.hasActiveShareWithUser(id)).toList();
+      final futures = userIds
+          .map((id) => _sharingService.hasActiveShareWithUser(id))
+          .toList();
       final results = await Future.wait(futures);
 
       final friendMap = <String, bool>{};
@@ -114,12 +124,17 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
         friendMap[userIds[i]] = results[i];
       }
 
-      if (mounted) setState(() {
-        _memberUsernames = usernameMap;
-        _isFriend = friendMap;
-      });
+      if (mounted)
+        setState(() {
+          _memberUsernames = usernameMap;
+          _isFriend = friendMap;
+        });
     } catch (_) {
-      if (mounted) setState(() { _memberUsernames = {}; _isFriend = {}; });
+      if (mounted)
+        setState(() {
+          _memberUsernames = {};
+          _isFriend = {};
+        });
     } finally {
       if (mounted) setState(() => _loadingFriendStatus = false);
     }
@@ -130,12 +145,16 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
       if (username.isEmpty) throw Exception('Recipient username unknown');
       await _sharingService.sendShareRequest(recipientUsername: username);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Share request sent to $username')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Share request sent to $username')),
+      );
       // No active share yet; refresh outgoing requests or friend status if desired
       await _loadMemberProfilesAndFriendStatus();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
     }
   }
 
@@ -161,7 +180,8 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
     Future.delayed(const Duration(milliseconds: 300)).then((_) async {
       final last = _lastUserSearchChangeAt;
       if (last == null) return;
-      if (DateTime.now().difference(last) >= const Duration(milliseconds: 290)) {
+      if (DateTime.now().difference(last) >=
+          const Duration(milliseconds: 290)) {
         await _loadNonMembers();
       }
     });
@@ -174,8 +194,14 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
         title: const Text('Leave Omada?'),
         content: const Text('Are you sure you want to leave this Omada?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text('Leave')),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Leave'),
+          ),
         ],
       ),
     );
@@ -215,8 +241,13 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
     }
 
     final colorValue = _omada!.color != null
-        ? ColorUtils.parseColor(_omada!.color, fallback: ColorUtils.getColorForString(_omada!.name))
+        ? ColorUtils.parseColor(
+            _omada!.color,
+            fallback: ColorUtils.getColorForString(_omada!.name),
+          )
         : ColorUtils.getColorForString(_omada!.name);
+
+    final isDark = Theme.of(context).colorScheme.brightness == Brightness.dark;
 
     return Scaffold(
       body: NestedScrollView(
@@ -225,8 +256,8 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
           SliverAppBar(
             pinned: true,
             expandedHeight: 300,
-            collapsedHeight: 300,    // fixed height ⇒ header never collapses
-            toolbarHeight: 0,        // ⬅ remove reserved toolbar space
+            collapsedHeight: 300, // fixed height ⇒ header never collapses
+            toolbarHeight: 0, // ⬅ remove reserved toolbar space
             automaticallyImplyLeading: false,
             backgroundColor: Colors.transparent,
             elevation: 0,
@@ -250,20 +281,31 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
                       Row(
                         children: [
                           IconButton(
-                            icon: const Icon(Icons.arrow_back, color: Colors.white),
+                            icon: const Icon(
+                              Icons.arrow_back,
+                              color: Colors.white,
+                            ),
                             onPressed: () => Navigator.maybePop(context),
                           ),
                           const Spacer(),
                           if (_myRole != OmadaRole.owner)
                             IconButton(
-                              icon: const Icon(Icons.exit_to_app, color: Colors.white),
+                              icon: const Icon(
+                                Icons.exit_to_app,
+                                color: Colors.white,
+                              ),
                               tooltip: 'Leave Omada',
                               onPressed: _leaveOmada,
                             ),
                           if (_myRole == OmadaRole.owner)
                             IconButton(
-                              icon: const Icon(Icons.settings, color: Colors.white),
-                              onPressed: () {/* TODO */},
+                              icon: const Icon(
+                                Icons.settings,
+                                color: Colors.white,
+                              ),
+                              onPressed: () {
+                                /* TODO */
+                              },
                             ),
                         ],
                       ),
@@ -278,17 +320,19 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
                           style: TextStyle(
                             fontSize: 44,
                             fontWeight: FontWeight.bold,
-                            color: ColorUtils.getContrastingTextColor(colorValue),
+                            color: ColorUtils.getContrastingTextColor(
+                              colorValue,
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 14),
                       Text(
                         _omada!.name,
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleLarge
-                            ?.copyWith(color: Colors.white, fontWeight: FontWeight.w700),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       if (_omada!.description != null) ...[
                         const SizedBox(height: 6),
@@ -296,10 +340,10 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
                           padding: const EdgeInsets.symmetric(horizontal: 12),
                           child: Text(
                             _omada!.description!,
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodyMedium
-                                ?.copyWith(color: Colors.white.withOpacity(0.9)),
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(
+                                  color: Colors.white.withOpacity(0.9),
+                                ),
                             textAlign: TextAlign.center,
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
@@ -312,7 +356,10 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
                         runSpacing: 8,
                         alignment: WrapAlignment.center,
                         children: [
-                          _chip(Icons.verified_user, _myRole?.displayName ?? 'Not a member'),
+                          _chip(
+                            Icons.verified_user,
+                            _myRole?.displayName ?? 'Not a member',
+                          ),
                           _chip(Icons.groups, '${_members.length} members'),
                         ],
                       ),
@@ -368,10 +415,10 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
                           child: const Icon(Icons.pending),
                         ),
                       ),
-                          const Tab(
-                            text: 'Add',
-                            icon: Icon(Icons.person_add_alt_1),
-                          ),
+                      const Tab(
+                        text: 'Add',
+                        icon: Icon(Icons.person_add_alt_1),
+                      ),
                     ],
                   ),
                 ),
@@ -404,19 +451,34 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
         final username = _memberUsernames[m.userId] ?? m.userName ?? '';
         final isFriend = _isFriend[m.userId] ?? false;
         return ListTile(
-          leading: CircleAvatar(child: Text((username.isNotEmpty ? username[0] : 'U').toUpperCase())),
-          title: Text(username.isNotEmpty ? username : (m.userName ?? 'Unknown User')),
+          leading: CircleAvatar(
+            child: Text(
+              (username.isNotEmpty ? username[0] : 'U').toUpperCase(),
+            ),
+          ),
+          title: Text(
+            username.isNotEmpty ? username : (m.userName ?? 'Unknown User'),
+          ),
           subtitle: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(m.role.displayName),
               const SizedBox(height: 4),
               if (_loadingFriendStatus)
-                const Text('Checking friendship...', style: TextStyle(fontSize: 12))
+                const Text(
+                  'Checking friendship...',
+                  style: TextStyle(fontSize: 12),
+                )
               else if (isFriend)
-                const Text('Friend', style: TextStyle(fontSize: 12, color: Colors.green))
+                const Text(
+                  'Friend',
+                  style: TextStyle(fontSize: 12, color: Colors.green),
+                )
               else
-                const Text('Not friends', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                const Text(
+                  'Not friends',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
             ],
           ),
           trailing: Row(
@@ -426,15 +488,22 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
                 IconButton(
                   icon: const Icon(Icons.person_add_alt_1),
                   tooltip: 'Send share request',
-                  onPressed: () => _sendShareRequestToMember(m.userId, username),
+                  onPressed: () =>
+                      _sendShareRequestToMember(m.userId, username),
                 ),
               if (canManage)
                 PopupMenuButton(
                   itemBuilder: (context) => [
                     if (m.role != OmadaRole.admin)
-                      const PopupMenuItem(value: 'promote', child: Text('Promote to Admin')),
+                      const PopupMenuItem(
+                        value: 'promote',
+                        child: Text('Promote to Admin'),
+                      ),
                     if (m.role != OmadaRole.member)
-                      const PopupMenuItem(value: 'demote', child: Text('Demote to Member')),
+                      const PopupMenuItem(
+                        value: 'demote',
+                        child: Text('Demote to Member'),
+                      ),
                     const PopupMenuItem(value: 'remove', child: Text('Remove')),
                   ],
                   onSelected: (value) => _handleMemberAction(value, m),
@@ -448,9 +517,12 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
 
   Widget _buildRequestsTab() {
     if (!(_myRole?.hasPermission(OmadaRole.moderator) ?? false)) {
-      return const Center(child: Text('You do not have permission to view requests'));
+      return const Center(
+        child: Text('You do not have permission to view requests'),
+      );
     }
-    if (_pendingRequests.isEmpty) return const Center(child: Text('No pending requests'));
+    if (_pendingRequests.isEmpty)
+      return const Center(child: Text('No pending requests'));
 
     return ListView.builder(
       padding: const EdgeInsets.all(16),
@@ -459,14 +531,22 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
         final r = _pendingRequests[index];
         return Card(
           child: ListTile(
-            leading: CircleAvatar(child: Text((r.userName ?? 'U')[0].toUpperCase())),
+            leading: CircleAvatar(
+              child: Text((r.userName ?? 'U')[0].toUpperCase()),
+            ),
             title: Text(r.userName ?? 'Unknown User'),
             subtitle: Text('Requested: ${_formatDate(r.createdAt)}'),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                IconButton(icon: const Icon(Icons.check, color: Colors.green), onPressed: () => _approveRequest(r.id)),
-                IconButton(icon: const Icon(Icons.close, color: Colors.red), onPressed: () => _rejectRequest(r.id)),
+                IconButton(
+                  icon: const Icon(Icons.check, color: Colors.green),
+                  onPressed: () => _approveRequest(r.id),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, color: Colors.red),
+                  onPressed: () => _rejectRequest(r.id),
+                ),
               ],
             ),
           ),
@@ -485,7 +565,9 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.search),
               hintText: 'Search users by username',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
               isDense: true,
             ),
           ),
@@ -499,12 +581,17 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
           child: _nonMembers.isEmpty
               ? const Center(child: Text('No users to add'))
               : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 8,
+                  ),
                   itemCount: _nonMembers.length,
                   itemBuilder: (context, index) {
                     final p = _nonMembers[index];
                     return ListTile(
-                      leading: CircleAvatar(child: Text(p.username[0].toUpperCase())),
+                      leading: CircleAvatar(
+                        child: Text(p.username[0].toUpperCase()),
+                      ),
                       title: Text(p.username),
                       subtitle: const Text('Not added'),
                       trailing: IconButton(
@@ -524,9 +611,9 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
     try {
       await _service.inviteUserToOmada(widget.omadaId, userId);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Requested $username to join')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Requested $username to join')));
       await _loadNonMembers();
     } catch (e) {
       if (!mounted) return;
@@ -555,14 +642,25 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
     return '${diff.inMinutes}m ago';
   }
 
-  Future<void> _handleMemberAction(String action, OmadaMembershipModel member) async {
+  Future<void> _handleMemberAction(
+    String action,
+    OmadaMembershipModel member,
+  ) async {
     try {
       switch (action) {
         case 'promote':
-          await _service.updateMemberRole(widget.omadaId, member.userId, OmadaRole.admin);
+          await _service.updateMemberRole(
+            widget.omadaId,
+            member.userId,
+            OmadaRole.admin,
+          );
           break;
         case 'demote':
-          await _service.updateMemberRole(widget.omadaId, member.userId, OmadaRole.member);
+          await _service.updateMemberRole(
+            widget.omadaId,
+            member.userId,
+            OmadaRole.member,
+          );
           break;
         case 'remove':
           await _service.removeMember(widget.omadaId, member.userId);
@@ -581,7 +679,9 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
     try {
       await _service.approveJoinRequest(requestId);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Request approved')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Request approved')));
       _loadData();
     } catch (e) {
       if (!mounted) return;
@@ -595,7 +695,9 @@ class _OmadaDetailsPageState extends State<OmadaDetailsPage>
     try {
       await _service.rejectJoinRequest(requestId);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Request rejected')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Request rejected')));
       _loadData();
     } catch (e) {
       if (!mounted) return;
@@ -617,7 +719,11 @@ class _TabBarHeaderDelegate extends SliverPersistentHeaderDelegate {
   double get maxExtent => height;
 
   @override
-  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) {
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
     return SizedBox(height: height, child: child);
   }
 

@@ -129,7 +129,7 @@ class _ExpandedContactHeaderState extends State<ExpandedContactHeader> {
                   ),
                   const SizedBox(width: 12),
                   _buildActionButton(
-                    icon: Icons.search,
+                    icon: Icons.person_search,
                     label: "Discover",
                     color: Colors.blue,
                     onTap: widget.onDiscoverUsers,

@@ -216,7 +216,7 @@ class _OmadasScreenState extends State<OmadasScreen> {
   // ───────────────────── UI (Sliver with custom headers) ─────────────────────
   @override
   Widget build(BuildContext context) {
-    const double expandedHeight = 256;
+    const double expandedHeight = 300;
     const double collapsedHeight = 96;
 
     return Scaffold(
@@ -231,10 +231,14 @@ class _OmadasScreenState extends State<OmadasScreen> {
             automaticallyImplyLeading: false, // 🚫 remove useless back button
             flexibleSpace: LayoutBuilder(
               builder: (context, constraints) {
-                final h = constraints.biggest.height;
-                final mid = (expandedHeight + collapsedHeight) / 2;
+                const double collpasedThreshold = 0.99;
+                final currentHeight = constraints.biggest.height;
+                final double t =
+                    ((currentHeight - collapsedHeight) /
+                            (expandedHeight - collapsedHeight))
+                        .clamp(0.0, 1.0);
 
-                if (h > mid) {
+                if (t > collpasedThreshold) {
                   return ExpandedOmadaHeader(
                     searchController: _searchController,
                     onSearchChanged: _onSearchChanged,

@@ -11,6 +11,8 @@ import 'package:omada/core/controllers/profile_controller.dart';
 import 'profile/cta_panel.dart';
 import 'profile/avatar.dart';
 import 'package:omada/core/theme/design_tokens.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:omada/core/data/utils/channel_presets.dart';
 
 class ProfileManagementPage extends StatefulWidget {
   const ProfileManagementPage({super.key});
@@ -24,6 +26,8 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
   final Set<String> _selectedChannelIds = <String>{};
   final ChannelLauncher _launcher = const ChannelLauncher();
   bool _defaultPrimaryEnsured = false;
+  String _quickActionValue = 'Call';
+  IconData _quickActionIcon = Icons.call;
 
   @override
   void initState() {
@@ -37,33 +41,148 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
     });
   }
 
+  ContactChannelModel? _findQuickTarget(ProfileData data) {
+    // Prefer primary with value/url
+    final primary = data.channels
+        .where((c) => c.isPrimary)
+        .firstWhere(
+          (c) => (c.value?.isNotEmpty == true) || (c.url?.isNotEmpty == true),
+          orElse: () => ContactChannelModel(
+            id: '',
+            ownerId: data.contact.ownerId,
+            contactId: data.contact.id,
+            kind: '',
+            label: null,
+            value: null,
+            url: null,
+            extra: null,
+            isPrimary: false,
+            updatedAt: DateTime.now(),
+          ),
+        );
+    if (primary.id.isNotEmpty) return primary;
+
+    // Fallback: phone/mobile
+    final phone = data.channels.firstWhere(
+      (c) =>
+          (c.kind.toLowerCase() == 'phone' ||
+              c.kind.toLowerCase() == 'mobile') &&
+          (c.value?.isNotEmpty == true),
+      orElse: () => ContactChannelModel(
+        id: '',
+        ownerId: data.contact.ownerId,
+        contactId: data.contact.id,
+        kind: '',
+        label: null,
+        value: null,
+        url: null,
+        extra: null,
+        isPrimary: false,
+        updatedAt: DateTime.now(),
+      ),
+    );
+    if (phone.id.isNotEmpty) return phone;
+
+    // Any with value/url
+    final any = data.channels.firstWhere(
+      (c) => (c.value?.isNotEmpty == true) || (c.url?.isNotEmpty == true),
+      orElse: () => ContactChannelModel(
+        id: '',
+        ownerId: data.contact.ownerId,
+        contactId: data.contact.id,
+        kind: '',
+        label: null,
+        value: null,
+        url: null,
+        extra: null,
+        isPrimary: false,
+        updatedAt: DateTime.now(),
+      ),
+    );
+    return any.id.isNotEmpty ? any : null;
+  }
+
+  void _updateQuickLabel(ProfileData data) {
+    final target = _findQuickTarget(data);
+    String action;
+    IconData icon;
+    switch (target?.kind.toLowerCase() ?? '') {
+      case 'mobile':
+      case 'phone':
+        action = 'Call';
+        icon = Icons.call;
+        break;
+      case 'sms':
+        action = 'SMS';
+        icon = Icons.sms;
+        break;
+      case 'email':
+        action = 'Email';
+        icon = Icons.email_outlined;
+        break;
+      case 'whatsapp':
+        action = 'Message';
+        icon = Icons.chat;
+        break;
+      case 'telegram':
+        action = 'Telegram';
+        icon = Icons.send;
+        break;
+      case 'instagram':
+        action = 'DM';
+        icon = Icons.send;
+        break;
+      case 'linkedin':
+        action = 'Message';
+        icon = Icons.message;
+        break;
+      case 'website':
+        action = 'Open';
+        icon = Icons.public;
+        break;
+      default:
+        action = 'Open';
+        icon = Icons.open_in_new;
+    }
+    if (mounted) {
+      setState(() {
+        _quickActionValue = action;
+        _quickActionIcon = icon;
+      });
+    } else {
+      _quickActionValue = action;
+      _quickActionIcon = icon;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    const double topHeaderHeight = 315; // Gradient visible down to just below username
+    const double topHeaderHeight =
+        315; // Gradient visible down to just below username
     final colorTextOnHeader = Colors.white;
+    final isDark = Theme.of(context).colorScheme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDark
+          ? Color.fromARGB(255, 29, 26, 33)
+          : Theme.of(context).scaffoldBackgroundColor,
       body: Stack(
         children: [
-          // Top blue ombre section (same palette and size as Contacts)
+          // Top ombre section with new palette
           Container(
             height: topHeaderHeight,
             width: double.infinity,
             decoration: const BoxDecoration(
               gradient: RadialGradient(
                 center: Alignment(0, -1.1),
-                radius: 1.2,
+                radius: 1.25,
                 colors: [
-                  Color(0xFF7de3f8), // Light Cyan-Blue
-                  Color(0xFF64bdfb), // Sky Blue
-                  Color(0xFF5194fa), // Bright Blue
-                  Color(0xFF6a7af7), // Periwinkle
-                  Color(0xFF8765f3), // Soft Violet
-                  Color(0xFFa257e8), // Medium Purple
-                  Color(0xFFc44adf), // Magenta-Purple
+                  Color(0xFFF15A29), // Warm Coral-Orange (top left)
+                  Color(0xFFE03C8A), // Magenta-Pink (mid)
+                  Color(0xFF7B3FE4), // Violet-Purple (bottom right)
+                  Color(0xFF5E2CCF), // Deep Purple (lower section)
                 ],
-                stops: [0.0, 0.2, 0.4, 0.6, 0.78, 0.9, 1.0],
+                stops: [0.0, 0.45, 0.8, 1.0],
               ),
             ),
           ),
@@ -84,7 +203,11 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.circle, size: 22, color: colorTextOnHeader),
+                          Icon(
+                            Icons.circle,
+                            size: 22,
+                            color: colorTextOnHeader,
+                          ),
                           const SizedBox(width: OmadaTokens.space8),
                           Text(
                             'Omada',
@@ -116,6 +239,7 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                 // Body scrollable area on white background
                 Expanded(
                   child: SingleChildScrollView(
+                    padding: EdgeInsets.only(bottom: 120),
                     child: FutureBuilder<ProfileData>(
                       future: _future,
                       builder: (context, snapshot) {
@@ -141,11 +265,11 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                         final displayName =
                             data.profile?.username ?? data.contact.displayName;
                         final notes = data.contact.notes;
-                        
 
                         // Ensure there's a default primary (prefer Mobile) once after load
                         WidgetsBinding.instance.addPostFrameCallback((_) {
                           _ensureDefaultPrimaryIfNeeded(data);
+                          _updateQuickLabel(data);
                         });
 
                         // Top section (on gradient): Avatar + name (+ optional notes)
@@ -156,14 +280,9 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                           ),
                           child: Column(
                             children: [
-                              _Breathing(
-                                minScale: 0.98,
-                                maxScale: 1.04,
-                                duration: const Duration(milliseconds: 2800),
-                                child: Avatar(
-                                  displayName: displayName,
-                                  colorText: Colors.white,
-                                ),
+                              Avatar(
+                                displayName: displayName,
+                                colorText: Colors.white,
                               ),
                               const SizedBox(height: OmadaTokens.space4),
                               if (notes?.isNotEmpty == true)
@@ -179,8 +298,8 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                         // Rest of screen on white background
                         final bodyOnWhite = Container(
                           width: double.infinity,
-                          decoration: const BoxDecoration(
-                            color: Colors.white,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).scaffoldBackgroundColor,
                             borderRadius: BorderRadius.zero,
                           ),
                           child: Padding(
@@ -195,21 +314,28 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                               children: [
                                 Text(
                                   'Your Channels',
-                                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontSize: OmadaTokens.fontXl,
+                                  style:
+                                      Theme.of(
+                                        context,
+                                      ).textTheme.titleLarge?.copyWith(
+                                        fontSize: OmadaTokens.fontXl,
                                         fontWeight: OmadaTokens.weightBold,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withValues(alpha: 0.92),
+                                        color: isDark
+                                            ? Colors.white
+                                            : Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface
+                                                  .withValues(alpha: 0.92),
                                       ) ??
                                       TextStyle(
-                fontSize: OmadaTokens.fontXl,
+                                        fontSize: OmadaTokens.fontXl,
                                         fontWeight: OmadaTokens.weightBold,
-                                        color: Theme.of(context)
-                                            .colorScheme
-                                            .onSurface
-                                            .withValues(alpha: 0.92),
+                                        color: isDark
+                                            ? Colors.black
+                                            : Theme.of(context)
+                                                  .colorScheme
+                                                  .onSurface
+                                                  .withValues(alpha: 0.92),
                                       ),
                                 ),
                                 const SizedBox(height: OmadaTokens.space12),
@@ -217,14 +343,19 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                                   channels: data.channels,
                                   selectedIds: _selectedChannelIds,
                                   onOpen: (id) {
-                                    final ch = data.channels.firstWhere((c) => c.id == id);
-                                    _launcher.openChannel(context, ch);
+                                    _onChannelLongPress(context, data, id);
                                   },
-                                  onLongPress: (id) => _onChannelLongPress(context, data, id),
-                                  onTogglePrimary: (id) => _setPrimaryChannel(context, data, id),
+                                  onLongPress: (id) =>
+                                      _showChannelActions(context, data, id),
+                                  onTogglePrimary: (id) =>
+                                      _setPrimaryChannel(context, data, id),
+                                  onEdit: (id) =>
+                                      _editChannel(context, data, id),
+                                  onDelete: (id) =>
+                                      _deleteChannel(context, data, id),
                                 ),
                                 // extra space so list isn't hidden behind bottom sheet CTA
-                                const SizedBox(height: 120),
+                                const SizedBox(height: 40),
                               ],
                             ),
                           ),
@@ -232,10 +363,7 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
 
                         return Column(
                           crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            headerOnGradient,
-                            bodyOnWhite,
-                          ],
+                          children: [headerOnGradient, bodyOnWhite],
                         );
                       },
                     ),
@@ -254,29 +382,22 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
             OmadaTokens.space16,
             0,
             OmadaTokens.space16,
-              OmadaTokens.space20,
+            OmadaTokens.space20,
           ),
           child: Builder(
             builder: (context) {
-              // Gradient palette per request
+              // New palette for Share (Request) button
               const palette = <Color>[
-                Color(0xFF7de3f8),
-                Color(0xFF64bdfb),
-                Color(0xFF5194fa),
-                Color(0xFF6a7af7),
-                Color(0xFF8765f3),
-                Color(0xFFa257e8),
-                Color(0xFFc44adf),
+                Color(0xFFF15A29), // Warm Coral-Orange
+                Color(0xFFE03C8A), // Magenta-Pink
+                Color(0xFF7B3FE4), // Violet-Purple
+                Color(0xFF5E2CCF), // Deep Purple
               ];
-              final panelGradient = const LinearGradient(
-                begin: Alignment.centerLeft,
-                end: Alignment.centerRight,
-                colors: palette,
-              );
               final callButtonGradient = const RadialGradient(
                 center: Alignment(0, -0.4),
                 radius: 1.0,
                 colors: palette,
+                stops: [0.0, 0.5, 0.8, 1.0],
               );
 
               return CtaPanel(
@@ -298,8 +419,11 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                   if (!mounted) return;
                   await _quickCall(context, snapshot);
                 },
-                backgroundGradient: panelGradient,
+                backgroundColor: isDark ? Colors.deepPurple[800] : Colors.white,
                 callButtonGradient: callButtonGradient,
+                quickTitleOverride: 'Quick',
+                quickValueOverride: _quickActionValue,
+                quickIconOverride: _quickActionIcon,
               );
             },
           ),
@@ -370,7 +494,7 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
     String id,
   ) async {
     _toggleSelection(id);
-    await _showChannelActions(context, data, id);
+    // await _showChannelActions(context, data, id);
   }
 
   Future<void> _showChannelActions(
@@ -406,13 +530,10 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                 ListTile(
                   leading: const Icon(Icons.push_pin_outlined),
                   title: const Text('Set as primary'),
-                  onTap: () => Navigator.pop(ctx, 'primary'),
-                ),
-              if (ch.isPrimary)
-                ListTile(
-                  leading: const Icon(Icons.push_pin),
-                  title: const Text('Unset primary'),
-                  onTap: () => Navigator.pop(ctx, 'unprimary'),
+                  onTap: () => {
+                    Navigator.pop(ctx, 'primary'),
+                    _setPrimaryChannel(context, data, ch.id),
+                  },
                 ),
               const SizedBox(height: 4),
             ],
@@ -448,27 +569,177 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
     }
   }
 
+  Future<void> _editChannel(
+    BuildContext context,
+    ProfileData data,
+    String id,
+  ) async {
+    final ch = data.channels.firstWhere((c) => c.id == id);
+    final labelCtrl = TextEditingController(
+      text: ch.label ?? _labelForChannel(ch),
+    );
+    final valueCtrl = TextEditingController(text: ch.value ?? '');
+    String _computeUrl(String kind, String value) =>
+        ChannelPresets.computeUrl(kind, value);
+    String previewUrl = _computeUrl(ch.kind, valueCtrl.text);
+
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Padding(
+          padding: EdgeInsets.only(
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 16,
+            left: 16,
+            right: 16,
+            top: 16,
+          ),
+          child: StatefulBuilder(
+            builder: (context, setState) {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Edit Channel',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Kind: ${ch.kind}',
+                    style: const TextStyle(color: Colors.black54),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: labelCtrl,
+                    decoration: const InputDecoration(labelText: 'Label'),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: valueCtrl,
+                    decoration: const InputDecoration(labelText: 'Value'),
+                    onChanged: (v) =>
+                        setState(() => previewUrl = _computeUrl(ch.kind, v)),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    readOnly: true,
+                    controller: TextEditingController(text: previewUrl),
+                    decoration: const InputDecoration(labelText: 'URL (auto)'),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(ctx, false),
+                        child: const Text('Cancel'),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: const Text('Save'),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+
+    if (confirmed == true) {
+      final repo = ContactChannelRepository(Supabase.instance.client);
+      final newLabel = labelCtrl.text.trim();
+      final newValue = valueCtrl.text.trim();
+      final newUrl = _computeUrl(ch.kind, newValue);
+      await repo.updateChannel(
+        ch.id,
+        label: newLabel.isEmpty ? null : newLabel,
+        value: newValue.isEmpty ? null : newValue,
+        url: newUrl.isEmpty ? null : newUrl,
+      );
+      if (!mounted) return;
+      _refresh();
+    }
+  }
+
+  Future<void> _deleteChannel(
+    BuildContext context,
+    ProfileData data,
+    String id,
+  ) async {
+    final ch = data.channels.firstWhere((c) => c.id == id);
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Channel?'),
+        content: Text(
+          'Delete "${_labelForChannel(ch)}"? This action cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final repo = ContactChannelRepository(Supabase.instance.client);
+      await repo.deleteChannel(id);
+      if (!mounted) return;
+      _refresh();
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Channel deleted')));
+    }
+  }
+
   Future<void> _quickCall(BuildContext context, ProfileData data) async {
-    String? number = data.contact.primaryMobile;
-    if (number == null || number.isEmpty) {
-      final primaryPhone = data.channels.firstWhere(
+    // Prefer explicit primary channel
+    ContactChannelModel? target = data.channels.firstWhere(
+      (c) =>
+          c.isPrimary &&
+          ((c.value?.isNotEmpty == true) || (c.url?.isNotEmpty == true)),
+      orElse: () => ContactChannelModel(
+        id: '',
+        ownerId: data.contact.ownerId,
+        contactId: data.contact.id,
+        kind: '',
+        label: null,
+        value: null,
+        url: null,
+        extra: null,
+        isPrimary: false,
+        updatedAt: DateTime.now(),
+      ),
+    );
+
+    if (target.id.isEmpty) {
+      // Fallbacks: prefer phone/mobile with value, then any channel with value/url
+      target = data.channels.firstWhere(
         (c) =>
             (c.kind.toLowerCase() == 'phone' ||
                 c.kind.toLowerCase() == 'mobile') &&
-            c.isPrimary &&
             (c.value?.isNotEmpty == true),
         orElse: () => data.channels.firstWhere(
-          (c) =>
-              (c.kind.toLowerCase() == 'phone' ||
-                  c.kind.toLowerCase() == 'mobile') &&
-              (c.value?.isNotEmpty == true),
+          (c) => (c.value?.isNotEmpty == true) || (c.url?.isNotEmpty == true),
           orElse: () => ContactChannelModel(
-            id: '_',
+            id: '',
             ownerId: data.contact.ownerId,
             contactId: data.contact.id,
-            kind: 'phone',
+            kind: '',
             label: null,
-            value: '',
+            value: null,
             url: null,
             extra: null,
             isPrimary: false,
@@ -476,24 +747,17 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
           ),
         ),
       );
-      number = primaryPhone.value;
     }
 
-    if (number == null || number.isEmpty) {
+    if (target.id.isEmpty) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('No number available')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No channel available to open')),
+      );
       return;
     }
 
-    final telUri = Uri.parse('tel:$number');
-    if (!await launchUrl(telUri)) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Unable to open dialer')));
-    }
+    await _launcher.openChannel(context, target);
   }
 
   Future<void> _openAddChannel(BuildContext context, ProfileData data) async {
@@ -591,6 +855,8 @@ class _ChannelList extends StatelessWidget {
   final void Function(String id) onOpen;
   final void Function(String id)? onLongPress;
   final void Function(String id) onTogglePrimary;
+  final void Function(String id) onEdit;
+  final void Function(String id) onDelete;
 
   const _ChannelList({
     required this.channels,
@@ -598,6 +864,8 @@ class _ChannelList extends StatelessWidget {
     required this.onOpen,
     this.onLongPress,
     required this.onTogglePrimary,
+    required this.onEdit,
+    required this.onDelete,
   });
 
   Color _colorForKind(String kind) {
@@ -621,69 +889,177 @@ class _ChannelList extends StatelessWidget {
         return Colors.indigo.shade500;
       case 'address':
         return Colors.orange.shade600;
+      case 'messenger':
+        return Colors.blueAccent;
       default:
         return Colors.black87;
     }
   }
 
+  IconData _faIconForKind(String kind) {
+    switch (kind.toLowerCase()) {
+      case 'mobile':
+      case 'phone':
+      case 'call':
+        return FontAwesomeIcons.phone;
+      case 'sms':
+        return FontAwesomeIcons.message;
+      case 'email':
+        return FontAwesomeIcons.envelope;
+      case 'whatsapp':
+        return FontAwesomeIcons.whatsapp;
+      case 'telegram':
+        return FontAwesomeIcons.telegram;
+      case 'instagram':
+        return FontAwesomeIcons.instagram;
+      case 'linkedin':
+        return FontAwesomeIcons.linkedin;
+      case 'website':
+        return FontAwesomeIcons.globe;
+      case 'address':
+        return FontAwesomeIcons.locationDot;
+      default:
+        return FontAwesomeIcons.link;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return ListView.separated(
+    final isDark = Theme.of(context).colorScheme.brightness == Brightness.dark;
+    final textColor = isDark ? Colors.white : Colors.black87;
+    final secondaryTextColor = isDark ? Colors.white70 : Colors.black54;
+    final iconColor = isDark ? Colors.white : Colors.black54;
+
+    return ListView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: channels.length,
-      separatorBuilder: (_, __) => const Divider(height: 1, thickness: 0.7),
       itemBuilder: (context, index) {
         final c = channels[index];
         final isSelected = selectedIds.contains(c.id);
-        final iconData = ChannelKind.getIcon(c.kind).icon ?? Icons.link;
-        final iconColor = _colorForKind(c.kind);
+        final iconData = _faIconForKind(c.kind);
+        final kindIconColor = _colorForKind(c.kind);
         final label = _labelForChannel(c);
+        final valueText = (c.value?.isNotEmpty == true)
+            ? c.value!
+            : (c.url?.isNotEmpty == true ? c.url! : '');
 
-        return InkWell(
-          onTap: () => onOpen(c.id),
-          onLongPress: onLongPress == null ? null : () => onLongPress!(c.id),
-          child: Container
-          (
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: isSelected
-                  ? Border(
-                      left: BorderSide(
-                        color: Theme.of(context).colorScheme.primary,
-                        width: 3,
+        return Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Primary channel badge
+              if (c.isPrimary)
+                Container(
+                  // Remove padding and decoration from this container
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.shade600,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      'Primary Channel',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
                       ),
-                    )
-                  : null,
-            ),
-            child: Row(
-              children: [
-                SizedBox(
-                  width: 44,
-                  child: Icon(iconData, color: iconColor, size: 24),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.black87,
-                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
-                IconButton(
-                  tooltip: c.isPrimary ? 'Primary' : 'Set as primary',
-                  icon: Icon(
-                    c.isPrimary ? Icons.star : Icons.star_border,
-                    color: c.isPrimary ? Colors.amber.shade600 : Colors.black38,
+              // Main content
+              InkWell(
+                onTap: () => onOpen(c.id),
+                onLongPress: onLongPress == null
+                    ? null
+                    : () => onLongPress!(c.id),
+                child: Container(
+                  // padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? Color.fromARGB(255, 29, 26, 33)
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: c.isPrimary
+                        ? Border.all(color: Colors.amber.shade600, width: 2)
+                        : null,
                   ),
-                  onPressed: () => onTogglePrimary(c.id),
+                  child: Container(
+                    padding: EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(12),
+                      border: isSelected
+                          ? Border(
+                              left: BorderSide(
+                                color: Theme.of(context).colorScheme.primary,
+                                width: 5,
+                              ),
+                            )
+                          : null,
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 44,
+                          child: FaIcon(
+                            iconData,
+                            color: kindIconColor,
+                            size: 22,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                label,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: textColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              if (valueText.isNotEmpty)
+                                const SizedBox(height: 2),
+                              if (valueText.isNotEmpty)
+                                Text(
+                                  valueText,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    color: secondaryTextColor,
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        // Action buttons: edit, delete (star removed)
+                        IconButton(
+                          tooltip: 'Edit',
+                          icon: Icon(Icons.edit, color: iconColor),
+                          onPressed: () => onEdit(c.id),
+                        ),
+                        IconButton(
+                          tooltip: 'Delete',
+                          icon: Icon(Icons.delete, color: Colors.redAccent),
+                          onPressed: () => onDelete(c.id),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
@@ -692,69 +1068,4 @@ class _ChannelList extends StatelessWidget {
 }
 
 // Subtle breathing animation wrapper for the avatar
-class _Breathing extends StatefulWidget {
-  final Widget child;
-  final double minScale;
-  final double maxScale;
-  final Duration duration;
-
-  const _Breathing({
-    required this.child,
-    this.minScale = 0.98,
-    this.maxScale = 1.04,
-    this.duration = const Duration(milliseconds: 2800),
-  });
-
-  @override
-  State<_Breathing> createState() => _BreathingState();
-}
-
-class _BreathingState extends State<_Breathing>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller;
-  late final Animation<double> _scale;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: widget.duration,
-    );
-    final curved = CurvedAnimation(
-      parent: _controller,
-      curve: Curves.easeInOut,
-      reverseCurve: Curves.easeInOut,
-    );
-    _scale = Tween<double>(begin: widget.minScale, end: widget.maxScale)
-        .animate(curved);
-
-    // Respect reduced motion if available
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final mq = context.mounted ? MediaQuery.maybeOf(context) : null;
-      final disable = mq?.disableAnimations ?? false;
-      if (!disable && mounted) {
-        _controller.repeat(reverse: true);
-      }
-    });
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final mq = MediaQuery.maybeOf(context);
-    final disable = mq?.disableAnimations ?? false;
-    if (disable) return widget.child;
-
-    return ScaleTransition(
-      scale: _scale,
-      child: widget.child,
-    );
-  }
-}
-
+// Breathing effect moved inside the Avatar so only the circle animates, not the username text.

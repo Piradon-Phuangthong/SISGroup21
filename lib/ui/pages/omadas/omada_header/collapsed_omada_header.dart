@@ -19,10 +19,6 @@ class CollapsedOmadaHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final screenW = MediaQuery.of(context).size.width;
-    // cap width so the pill is shorter than full row
-    final searchWidth = screenW * 0.82; // ~82% of row
-
     return Container(
       decoration: BoxDecoration(
         gradient: LinearGradient(
@@ -39,27 +35,34 @@ class CollapsedOmadaHeader extends StatelessWidget {
           child: Row(
             children: [
               // Shorter pill search (fixed max width + centered)
-              SizedBox(
-                width: searchWidth,
-                child: TextField(
-                  controller: searchController,
-                  onChanged: (_) => onSearchChanged(),
-                  textInputAction: TextInputAction.search,
-                  decoration: InputDecoration(
-                    hintText: 'Search Omadas...',
-                    prefixIcon: const Icon(Icons.search),
-                    filled: true,
-                    fillColor: Colors.white.withOpacity(0.18),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(28),
-                      borderSide: BorderSide.none,
-                    ),
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  style: const TextStyle(color: Colors.white),
+                  child: TextField(
+                    controller: searchController,
+                    onChanged: (_) => onSearchChanged(),
+                    textInputAction: TextInputAction.search,
+                    decoration: InputDecoration(
+                      hintText: 'Search Omadas...',
+                      prefixIcon: const Icon(
+                        Icons.search,
+                        color: Colors.white70,
+                        size: 20,
+                      ),
+                      hintStyle: TextStyle(
+                        color: Colors.white.withOpacity(0.7),
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                    ),
+                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                  ),
                 ),
               ),
               const SizedBox(width: 12),
