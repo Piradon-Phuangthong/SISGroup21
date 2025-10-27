@@ -904,6 +904,8 @@ class _ChannelList extends StatelessWidget {
         return FontAwesomeIcons.phone;
       case 'sms':
         return FontAwesomeIcons.message;
+      case 'messenger':
+        return FontAwesomeIcons.facebookMessenger;
       case 'email':
         return FontAwesomeIcons.envelope;
       case 'whatsapp':
@@ -950,30 +952,6 @@ class _ChannelList extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Primary channel badge
-              if (c.isPrimary)
-                Container(
-                  // Remove padding and decoration from this container
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.amber.shade600,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      'Primary Channel',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              // Main content
               InkWell(
                 onTap: () => onOpen(c.id),
                 onLongPress: onLongPress == null
@@ -986,9 +964,10 @@ class _ChannelList extends StatelessWidget {
                         ? Color.fromARGB(255, 29, 26, 33)
                         : Colors.white,
                     borderRadius: BorderRadius.circular(12),
-                    border: c.isPrimary
-                        ? Border.all(color: Colors.amber.shade600, width: 2)
-                        : null,
+                    // border: c.isPrimary
+                    //     ? Border.all(color: Colors.amber.shade600, width: 2)
+                    //     : null,
+                    border: null,
                   ),
                   child: Container(
                     padding: EdgeInsets.all(10),
@@ -1043,7 +1022,17 @@ class _ChannelList extends StatelessWidget {
                             ],
                           ),
                         ),
-                        // Action buttons: edit, delete (star removed)
+                        // Action buttons: edit, delete,star
+                        IconButton(
+                          tooltip: c.isPrimary ? 'Primary' : 'Set as primary',
+                          icon: Icon(
+                            c.isPrimary ? Icons.star : Icons.star_border,
+                            color: c.isPrimary
+                                ? Colors.amber.shade600
+                                : iconColor,
+                          ),
+                          onPressed: () => onTogglePrimary(c.id),
+                        ),
                         IconButton(
                           tooltip: 'Edit',
                           icon: Icon(Icons.edit, color: iconColor),
