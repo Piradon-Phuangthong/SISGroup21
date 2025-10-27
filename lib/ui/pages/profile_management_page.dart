@@ -570,7 +570,7 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
         await launchUrl(smsUri);
         break;
       case 'delete':
-        await _deleteChannel(context, ch);
+        await _deleteChannel(context, data, ch.id);
         break;
       default:
         break;
