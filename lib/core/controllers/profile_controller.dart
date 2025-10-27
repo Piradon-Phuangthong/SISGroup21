@@ -67,72 +67,62 @@ class ProfileController {
   /// Gets or creates the user's profile contact.
   /// This ensures we always use a dedicated contact for the user's profile.
   Future<ContactModel> _getOrCreateProfileContact(String? username) async {
-    print('ProfileController: Looking for profile contact with username: "$username"');
+    print('ProfileController: Looking for profile contact for current user');
     
-    if (username == null || username.isEmpty) {
-      print('ProfileController: ERROR - Username is null or empty!');
-      throw Exception('Username is required to create profile contact');
+    // Get the current user's profile ID
+    final profile = await _profiles.getCurrentProfile();
+    if (profile?.id == null) {
+      print('ProfileController: ERROR - No profile found for current user!');
+      throw Exception('User profile not found');
     }
+    
+    final userId = profile!.id;
+    print('ProfileController: Current user ID: $userId');
 
     // First, try to find a contact marked as profile contact
     final markedProfileContact = await _findMarkedProfileContact();
     if (markedProfileContact != null) {
+      print('ProfileController: Found marked profile contact: ${markedProfileContact.fullName} (ID: ${markedProfileContact.id})');
       return markedProfileContact;
     }
 
-    // If no marked profile contact, look for existing contacts
+    // Look for existing contacts owned by this user
     final candidates = await _contacts.getContacts(limit: 100);
     print('ProfileController: Found ${candidates.length} total contacts');
     
-    // Debug: Print all contact names to see what we have
+    // Debug: Print all contacts with their owner IDs
     for (int i = 0; i < candidates.length && i < 5; i++) {
       final candidate = candidates[i];
-      print('ProfileController: Contact $i: "${candidate.fullName}" (ID: ${candidate.id})');
+      print('ProfileController: Contact $i: "${candidate.fullName}" (ID: ${profile.id}, Owner: ${candidate.ownerId})');
     }
     
-    // Look for a contact that matches the username (case-insensitive)
-    // Try multiple matching strategies
-    for (final candidate in candidates) {
-      final candidateName = candidate.fullName?.toLowerCase() ?? '';
-      final usernameLower = username.toLowerCase();
-      print('ProfileController: Comparing "$candidateName" with "$usernameLower"');
-      
-      // Strategy 1: Exact match
-      if (candidateName == usernameLower) {
-        print('ProfileController: Found exact match profile contact: ${candidate.fullName} (ID: ${candidate.id})');
-        return candidate;
+    // Look for contacts owned by the current user
+    final userContacts = candidates.where((contact) => contact.ownerId == userId).toList();
+    print('ProfileController: Found ${userContacts.length} contacts owned by current user');
+    
+    if (userContacts.isNotEmpty) {
+      // Strategy 1: Look for contacts with very few or no channels (likely profile contacts)
+      final contactsWithChannelCount = <MapEntry<ContactModel, int>>[];
+      for (final candidate in userContacts) {
+        final channelCount = await _channelsRepo.getChannelsForContact(candidate.id).then((channels) => channels.length);
+        contactsWithChannelCount.add(MapEntry(candidate, channelCount));
       }
       
-      // Strategy 2: Username contains contact name or vice versa
-      if (candidateName.isNotEmpty && usernameLower.isNotEmpty) {
-        if (candidateName.contains(usernameLower) || usernameLower.contains(candidateName)) {
-          print('ProfileController: Found partial match profile contact: ${candidate.fullName} (ID: ${candidate.id})');
-          return candidate;
-        }
-      }
-    }
-    
-    // Strategy 3: Look for contacts with very few or no channels (likely profile contacts)
-    // Sort by channel count and pick the one with least channels
-    final contactsWithChannelCount = <MapEntry<ContactModel, int>>[];
-    for (final candidate in candidates) {
-      final channelCount = await _channelsRepo.getChannelsForContact(candidate.id).then((channels) => channels.length);
-      contactsWithChannelCount.add(MapEntry(candidate, channelCount));
-    }
-    
-    // Sort by channel count (ascending) and pick the first one
-    contactsWithChannelCount.sort((a, b) => a.value.compareTo(b.value));
-    if (contactsWithChannelCount.isNotEmpty) {
+      // Sort by channel count (ascending) and pick the one with least channels
+      contactsWithChannelCount.sort((a, b) => a.value.compareTo(b.value));
       final contactWithLeastChannels = contactsWithChannelCount.first.key;
       print('ProfileController: Using contact with least channels as profile contact: ${contactWithLeastChannels.fullName} (ID: ${contactWithLeastChannels.id})');
+      
+      // Mark this contact as the profile contact for future reference
+      await markAsProfileContact(contactWithLeastChannels.id);
       return contactWithLeastChannels;
     }
 
-    // If no matching contact found, create a new profile contact
-    print('ProfileController: No profile contact found matching username "$username", creating new one...');
+    // If no contacts found for this user, create a new profile contact
+    print('ProfileController: No contacts found for user, creating new profile contact...');
     try {
       final contact = await _contacts.createContact(
-        fullName: username,
+        fullName: username ?? 'My Profile',
         customFields: {'is_profile_contact': true},
       );
       print('ProfileController: Successfully created new profile contact: ${contact.fullName} (ID: ${contact.id})');
@@ -147,7 +137,7 @@ class ProfileController {
   /// This is a safety check to ensure channels are only added to the profile contact.
   Future<bool> isProfileContact(String contactId) async {
     final profile = await _profiles.getCurrentProfile();
-    if (profile?.username == null) return false;
+    if (profile?.id == null) return false;
     
     final profileContact = await _getOrCreateProfileContact(profile!.username);
     return profileContact.id == contactId;
@@ -166,10 +156,16 @@ class ProfileController {
 
   /// Finds the contact marked as profile contact in custom fields.
   Future<ContactModel?> _findMarkedProfileContact() async {
+    // Get the current user's profile ID
+    final profile = await _profiles.getCurrentProfile();
+    if (profile?.id == null) return null;
+    
+    final userId = profile!.id;
     final candidates = await _contacts.getContacts(limit: 100);
     
+    // Only look for contacts owned by the current user
     for (final candidate in candidates) {
-      if (candidate.customFields['is_profile_contact'] == true) {
+      if (candidate.ownerId == userId && candidate.customFields['is_profile_contact'] == true) {
         print('ProfileController: Found marked profile contact: ${candidate.fullName} (ID: ${candidate.id})');
         return candidate;
       }
