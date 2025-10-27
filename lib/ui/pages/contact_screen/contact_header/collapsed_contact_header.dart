@@ -14,11 +14,15 @@ class CollapsedContactHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 120,
+      height: 96,
       decoration: const BoxDecoration(
-        image: DecorationImage(
-          image: AssetImage("assets/jpg/banner.jpg"),
-          fit: BoxFit.cover,
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Color(0xFFFF5733), // Red-orange
+            Color(0xFF4A00B0), // Deep purple
+          ],
         ),
       ),
       child: Padding(
@@ -36,21 +40,34 @@ class CollapsedContactHeader extends StatelessWidget {
                   // Search field - takes most of the space
                   Expanded(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       decoration: BoxDecoration(
-                        color: Colors.grey[200]?.withAlpha(50),
+                        color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: TextField(
                         controller: searchController,
+                        onChanged: (_) => onSearchChanged(),
+                        textInputAction: TextInputAction.search,
                         decoration: InputDecoration(
-                          icon: Icon(Icons.person_search, color: Colors.white),
-                          hintText: "Search contacts...",
-                          hintStyle: TextStyle(color: Colors.white),
+                          hintText: 'Search contacts...',
+                          prefixIcon: const Icon(
+                            Icons.search,
+                            color: Colors.white70,
+                            size: 20,
+                          ),
+                          hintStyle: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                          ),
                           border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
                         ),
-                        style: TextStyle(color: Colors.black),
-                        onChanged: (value) => onSearchChanged(),
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                        ),
                       ),
                     ),
                   ),

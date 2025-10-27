@@ -51,16 +51,19 @@ class _OmadasScreenState extends State<OmadasScreen> {
 
   // ───────────────────── Data ─────────────────────
   Future<void> _loadAll() async {
-    setState(() { _isLoading = true; _error = null; });
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
     try {
       final results = await Future.wait([
         _omadaService.getMyOmadas(),
         _omadaService.getPublicOmadas(),
         _omadaService.getMyJoinRequests(),
       ]);
-      _myOmadas     = results[0] as List<OmadaModel>;
+      _myOmadas = results[0] as List<OmadaModel>;
       _publicOmadas = results[1] as List<OmadaModel>;
-      _myRequests   = results[2] as List<JoinRequestModel>;
+      _myRequests = results[2] as List<JoinRequestModel>;
       _applyClientFilters();
     } catch (e) {
       _error = e.toString();
@@ -75,7 +78,8 @@ class _OmadasScreenState extends State<OmadasScreen> {
     Future.delayed(const Duration(milliseconds: 300)).then((_) {
       final last = _lastSearchChangeAt;
       if (last == null) return;
-      if (DateTime.now().difference(last) >= const Duration(milliseconds: 290)) {
+      if (DateTime.now().difference(last) >=
+          const Duration(milliseconds: 290)) {
         _applyClientFilters();
       }
     });
@@ -144,7 +148,9 @@ class _OmadasScreenState extends State<OmadasScreen> {
   }
 
   Future<void> _openDiscoverSheet() async {
-    try { _publicOmadas = await _omadaService.getPublicOmadas(); } catch (_) {}
+    try {
+      _publicOmadas = await _omadaService.getPublicOmadas();
+    } catch (_) {}
     if (!mounted) return;
 
     await showModalBottomSheet(
@@ -163,16 +169,16 @@ class _OmadasScreenState extends State<OmadasScreen> {
   }
 
   Future<void> _openRequestsSheet() async {
-    try { _myRequests = await _omadaService.getMyJoinRequests(); } catch (_) {}
+    try {
+      _myRequests = await _omadaService.getMyJoinRequests();
+    } catch (_) {}
     if (!mounted) return;
 
     await showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      builder: (_) => _RequestsSheet(
-        requests: _myRequests,
-        onCancel: _cancelRequest,
-      ),
+      builder: (_) =>
+          _RequestsSheet(requests: _myRequests, onCancel: _cancelRequest),
     );
 
     await _loadAll();
@@ -182,8 +188,9 @@ class _OmadasScreenState extends State<OmadasScreen> {
     try {
       await _omadaService.cancelJoinRequest(omadaId);
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Request cancelled')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Request cancelled')));
       await _loadAll();
     } catch (e) {
       if (!mounted) return;
@@ -196,7 +203,7 @@ class _OmadasScreenState extends State<OmadasScreen> {
   // ───────────────────── UI (Sliver with custom headers) ─────────────────────
   @override
   Widget build(BuildContext context) {
-    const double expandedHeight = 256;
+    const double expandedHeight = 300;
     const double collapsedHeight = 96;
 
     return Scaffold(
@@ -211,10 +218,14 @@ class _OmadasScreenState extends State<OmadasScreen> {
             automaticallyImplyLeading: false, // 🚫 remove useless back button
             flexibleSpace: LayoutBuilder(
               builder: (context, constraints) {
-                final h = constraints.biggest.height;
-                final mid = (expandedHeight + collapsedHeight) / 2;
+                const double collpasedThreshold = 0.99;
+                final currentHeight = constraints.biggest.height;
+                final double t =
+                    ((currentHeight - collapsedHeight) /
+                            (expandedHeight - collapsedHeight))
+                        .clamp(0.0, 1.0);
 
-                if (h > mid) {
+                if (t > collpasedThreshold) {
                   return ExpandedOmadaHeader(
                     searchController: _searchController,
                     onSearchChanged: _onSearchChanged,
@@ -223,7 +234,7 @@ class _OmadasScreenState extends State<OmadasScreen> {
                     onCreate: _showCreateOmadaSheet,
                     // tweak gradient here if you like:
                     gradientStart: const Color(0xFF64bdfb),
-                    gradientEnd:   const Color(0xFFa257e8),
+                    gradientEnd: const Color(0xFFa257e8),
                   );
                 } else {
                   return CollapsedOmadaHeader(
@@ -231,16 +242,17 @@ class _OmadasScreenState extends State<OmadasScreen> {
                     onSearchChanged: _onSearchChanged,
                     onCreate: _showCreateOmadaSheet,
                     gradientStart: const Color(0xFF64bdfb),
-                    gradientEnd:   const Color(0xFFa257e8),
+                    gradientEnd: const Color(0xFFa257e8),
                   );
                 }
               },
             ),
           ),
 
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-              (context, index) {
+          SliverPadding(
+            padding: const EdgeInsets.only(top: 16),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate((context, index) {
                 if (_isLoading && _visibleOmadas.isEmpty) {
                   return const Padding(
                     padding: EdgeInsets.only(top: 48),
@@ -258,15 +270,14 @@ class _OmadasScreenState extends State<OmadasScreen> {
                 return Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: OmadaTokens.space16,
-                    vertical: OmadaTokens.space8,
+                    vertical: OmadaTokens.space2,
                   ),
                   child: OmadaCard(
                     omada: omada,
                     onTap: () => _navigateToOmada(omada),
                   ),
                 );
-              },
-              childCount: _childCount(),
+              }, childCount: _childCount()),
             ),
           ),
         ],
@@ -344,7 +355,9 @@ class _DiscoverOmadasSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (publicOmadas.isEmpty) {
-      return const SafeArea(child: Center(child: Text('No public Omadas available')));
+      return const SafeArea(
+        child: Center(child: Text('No public Omadas available')),
+      );
     }
 
     return DraggableScrollableSheet(
@@ -397,13 +410,19 @@ class _DiscoverOmadasSheet extends StatelessWidget {
                     ],
                   ),
                   trailing: isMember
-                      ? const Chip(label: Text('Member'), backgroundColor: Colors.green)
+                      ? const Chip(
+                          label: Text('Member'),
+                          backgroundColor: Colors.green,
+                        )
                       : pending
-                          ? const Chip(label: Text('Pending'), backgroundColor: Colors.orange)
-                          : IconButton(
-                              icon: const Icon(Icons.add),
-                              onPressed: () => onJoinOrRequest(omada),
-                            ),
+                      ? const Chip(
+                          label: Text('Pending'),
+                          backgroundColor: Colors.orange,
+                        )
+                      : IconButton(
+                          icon: const Icon(Icons.add),
+                          onPressed: () => onJoinOrRequest(omada),
+                        ),
                   onTap: isMember ? () => onOpenOmada(omada) : null,
                 ),
               );
@@ -417,19 +436,19 @@ class _DiscoverOmadasSheet extends StatelessWidget {
 
 // ───────────────────── Bottom sheet: Requests ─────────────────────
 class _RequestsSheet extends StatelessWidget {
-  const _RequestsSheet({
-    required this.requests,
-    required this.onCancel,
-  });
+  const _RequestsSheet({required this.requests, required this.onCancel});
 
   final List<JoinRequestModel> requests;
   final Future<void> Function(String omadaId) onCancel;
 
   IconData _icon(JoinRequestStatus s) {
     switch (s) {
-      case JoinRequestStatus.pending:  return Icons.pending;
-      case JoinRequestStatus.approved: return Icons.check_circle;
-      case JoinRequestStatus.rejected: return Icons.cancel;
+      case JoinRequestStatus.pending:
+        return Icons.pending;
+      case JoinRequestStatus.approved:
+        return Icons.check_circle;
+      case JoinRequestStatus.rejected:
+        return Icons.cancel;
     }
   }
 
@@ -471,11 +490,15 @@ class _RequestsSheet extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Status: ${r.status.dbValue}'),
-                      Text('Requested: ${_fmt(r.createdAt)}',
-                          style: Theme.of(context).textTheme.bodySmall),
+                      Text(
+                        'Requested: ${_fmt(r.createdAt)}',
+                        style: Theme.of(context).textTheme.bodySmall,
+                      ),
                       if (r.reviewedAt != null)
-                        Text('Reviewed: ${_fmt(r.reviewedAt!)}',
-                            style: Theme.of(context).textTheme.bodySmall),
+                        Text(
+                          'Reviewed: ${_fmt(r.reviewedAt!)}',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
                     ],
                   ),
                   trailing: r.isPending
