@@ -26,6 +26,7 @@ class ContactTile extends StatelessWidget {
     this.onFavouriteToggle,
   });
 
+
   @override
   Widget build(BuildContext context) {
     return ListTile(

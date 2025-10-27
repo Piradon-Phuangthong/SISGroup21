@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:omada/core/data/models/tag_model.dart';
 import 'package:omada/core/data/services/tag_service.dart';
 import 'package:omada/core/theme/design_tokens.dart';
+import 'package:omada/core/theme/app_theme.dart';
 import 'package:omada/ui/widgets/app_card.dart';
 
 class ManageTagsPage extends StatefulWidget {
@@ -27,20 +28,7 @@ class ManageTagsPage extends StatefulWidget {
 class _ManageTagsPageState extends State<ManageTagsPage> {
   late List<TagModel> tags;
   final TextEditingController _nameController = TextEditingController();
-  Color _selectedColor = const Color(0xFF3B82F6); // Default blue color
   bool _isCreating = false;
-
-  // Color palette matching the design
-  final List<Color> _colorPalette = [
-    const Color(0xFF3B82F6), // Light Blue
-    const Color(0xFFEF4444), // Red
-    const Color(0xFF22C55E), // Green
-    const Color(0xFF8B5CF6), // Purple
-    const Color(0xFFF59E0B), // Orange
-    const Color(0xFFEC4899), // Pink
-    const Color(0xFF1E40AF), // Dark Blue
-    const Color(0xFFEAB308), // Yellow/Gold
-  ];
 
   @override
   void initState() {
@@ -54,6 +42,12 @@ class _ManageTagsPageState extends State<ManageTagsPage> {
     super.dispose();
   }
 
+  /// Get color for a tag using hash-based color assignment
+  Color _getTagColor(BuildContext context, TagModel tag) {
+    final palette = Theme.of(context).extension<AppPaletteTheme>();
+    return palette?.colorForId(tag.id) ?? Theme.of(context).colorScheme.secondary;
+  }
+
   Future<void> _createTag() async {
     final name = _nameController.text.trim();
     if (name.isEmpty) return;
@@ -61,14 +55,13 @@ class _ManageTagsPageState extends State<ManageTagsPage> {
     setState(() => _isCreating = true);
 
     try {
-      // Create tag with color information (you may need to modify TagModel to include color)
+      // Create tag (color will be determined by hash-based system)
       await widget.tagService.createTag(name);
       _nameController.clear();
       
       final fetched = await widget.tagService.getTags();
       setState(() {
         tags = fetched;
-        _selectedColor = const Color(0xFF3B82F6); // Reset to default
       });
       widget.onTagsUpdated(fetched);
     } catch (e) {
@@ -234,60 +227,7 @@ class _ManageTagsPageState extends State<ManageTagsPage> {
                           onSubmitted: (_) => _createTag(),
                         ),
                         const SizedBox(height: OmadaTokens.space16),
-                        
-                        // Choose Color Section
-                        Text(
-                          'Choose Color',
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            fontWeight: FontWeight.w500,
-                            color: Colors.grey[700],
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        GridView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 4,
-                            crossAxisSpacing: 8,
-                            mainAxisSpacing: 8,
-                            childAspectRatio: 1.2,
-                          ),
-                          itemCount: _colorPalette.length,
-                          itemBuilder: (context, index) {
-                            final color = _colorPalette[index];
-                            final isSelected = color == _selectedColor;
-                            
-                            return GestureDetector(
-                              onTap: () => setState(() => _selectedColor = color),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  color: color,
-                                  shape: BoxShape.circle,
-                                  border: isSelected
-                                      ? Border.all(color: Colors.white, width: 3)
-                                      : null,
-                                  boxShadow: isSelected
-                                      ? [
-                                          BoxShadow(
-                                            color: color.withOpacity(0.5),
-                                            blurRadius: 8,
-                                            spreadRadius: 2,
-                                          ),
-                                        ]
-                                      : null,
-                                ),
-                                child: isSelected
-                                    ? const Icon(
-                                        Icons.check,
-                                        color: Colors.white,
-                                        size: 20,
-                                      )
-                                    : null,
-                              ),
-                            );
-                          },
-                        ),
+
                         const SizedBox(height: OmadaTokens.space20),
                         
                         // Create Tag Button
@@ -373,9 +313,8 @@ class _ManageTagsPageState extends State<ManageTagsPage> {
                             spacing: 8,
                             runSpacing: 8,
                             children: tags.map((tag) {
-                              // Use a color from the palette based on tag index
-                              final colorIndex = tag.hashCode % _colorPalette.length;
-                              final tagColor = _colorPalette[colorIndex];
+                              // Use hash-based color assignment
+                              final Color tagColor = _getTagColor(context, tag);
                               
                               return Container(
                                 padding: const EdgeInsets.symmetric(

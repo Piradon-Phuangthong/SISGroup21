@@ -535,6 +535,11 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
                     _setPrimaryChannel(context, data, ch.id),
                   },
                 ),
+              ListTile(
+                leading: const Icon(Icons.delete, color: Colors.red),
+                title: const Text('Delete', style: TextStyle(color: Colors.red)),
+                onTap: () => Navigator.pop(ctx, 'delete'),
+              ),
               const SizedBox(height: 4),
             ],
           ),
@@ -563,6 +568,9 @@ class _ProfileManagementPageState extends State<ProfileManagementPage> {
         if (num == null || num.isEmpty) break;
         final smsUri = Uri.parse('sms:$num');
         await launchUrl(smsUri);
+        break;
+      case 'delete':
+        await _deleteChannel(context, ch);
         break;
       default:
         break;
@@ -836,8 +844,8 @@ String _labelForChannel(ContactChannelModel c) {
       return 'WhatsApp';
     case 'website':
       return 'Website';
-    case 'telegram':
-      return 'Telegram';
+    case 'messenger':
+      return 'Messenger';
     case 'address':
       return 'Address';
     default:
